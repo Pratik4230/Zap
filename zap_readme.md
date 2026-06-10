@@ -35,8 +35,9 @@
 | **Monorepo** | pnpm Workspaces + Turborepo | Share types across web/workers/future Expo app |
 | **Frontend** | Next.js 15 (App Router) | SSR needed for SEO (landing, pricing, blog pages) |
 | **CF Adapter** | @opennextjs/cloudflare | Runs Next.js natively on Cloudflare Pages |
-| **API** | Next.js API Routes (App Router) | Collocated with frontend, simpler than separate worker |
-| **Redirect Engine** | Cloudflare Worker (Hono) | Edge runtime, sub-10ms, runs in 300+ cities globally |
+| **Backend API** | Next.js API Routes + Server Actions | Same app as frontend — no separate API server needed |
+| **Redirect Engine** | Raw Cloudflare Worker (no framework) | 60 lines of TS, too simple to need Hono or any framework |
+| **Analytics Worker** | Raw Cloudflare Worker (no framework) | Simple Queue consumer — reads events, writes to D1 |
 | **Database** | Cloudflare D1 (SQLite) | Free 5GB, global read replicas, edge-native |
 | **Cache** | Cloudflare KV | Sits in front of D1, slug→URL lookups in < 1ms |
 | **File Storage** | Cloudflare R2 | QR code images, OG images. No egress fees. |
@@ -58,8 +59,10 @@
 | Prisma | Not edge-compatible, Drizzle is faster for D1 |
 | Postgres/Neon | D1 is free + edge-native, fine for URL shortener |
 | React + Vite (SPA) | No SSR = bad SEO for landing/pricing pages |
+| Hono | Overkill for redirect worker (60 lines); Next.js handles the API |
+| tRPC | Not needed — frontend and API are in the same Next.js app (Server Actions) |
 | Turborepo alone | Still needs pnpm Workspaces underneath |
-| Next.js for redirects | Too heavy, Workers are purpose-built for this |
+| Separate Hono API Worker | Next.js API Routes do the same job, with auth + type safety built in |
 
 ---
 
