@@ -1,0 +1,34 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "redirect-worker",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-06-19",
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "zap-db",
+			"database_id": "d57b5010-ed1c-4fc5-8e58-ac86fa021b6a"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "ZAP_CACHE",
+			"id": "4c9da6442f2d46669bcdf5c48e1035fa"
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "ANALYTICS_QUEUE",
+				"queue": "zap-analytics"
+			}
+		]
+	}
+}
