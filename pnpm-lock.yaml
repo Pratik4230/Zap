@@ -19,6 +19,13 @@ importers:
         version: 5.9.2
 
   apps/analytics-worker:
+    dependencies:
+      '@zap/db':
+        specifier: workspace:^
+        version: link:../../packages/db
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260619.1)
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.12.4
