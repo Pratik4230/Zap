@@ -3,22 +3,34 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { useState } from "react";
+import { OAuthButtons } from "@/components/oauth-buttons";
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.email("Enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+function validate<K extends keyof z.infer<typeof schema>>(
+  field: K,
+  value: z.infer<typeof schema>[K]
+): string | undefined {
+  const result = schema.shape[field].safeParse(value);
+  return result.success ? undefined : result.error.issues[0]?.message;
+}
 
 export default function SignUpPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState("");
 
   const form = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-    },
+    defaultValues: { name: "", email: "", password: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
       const { error } = await authClient.signUp.email({
@@ -31,7 +43,8 @@ export default function SignUpPage() {
         setServerError(error.message ?? "Something went wrong");
         return;
       }
-      router.push("/dashboard");
+      // Redirect to email verification
+      router.push(`/verify-email?email=${encodeURIComponent(value.email)}`);
     },
   });
 
@@ -55,10 +68,7 @@ export default function SignUpPage() {
       >
         <form.Field
           name="name"
-          validators={{
-            onChange: ({ value }) =>
-              !value.trim() ? "Name is required" : undefined,
-          }}
+          validators={{ onChange: ({ value }) => validate("name", value) }}
         >
           {(field) => (
             <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -83,14 +93,7 @@ export default function SignUpPage() {
 
         <form.Field
           name="email"
-          validators={{
-            onChange: ({ value }) =>
-              !value
-                ? "Email is required"
-                : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                ? "Enter a valid email"
-                : undefined,
-          }}
+          validators={{ onChange: ({ value }) => validate("email", value) }}
         >
           {(field) => (
             <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -115,14 +118,7 @@ export default function SignUpPage() {
 
         <form.Field
           name="password"
-          validators={{
-            onChange: ({ value }) =>
-              !value
-                ? "Password is required"
-                : value.length < 8
-                ? "Password must be at least 8 characters"
-                : undefined,
-          }}
+          validators={{ onChange: ({ value }) => validate("password", value) }}
         >
           {(field) => (
             <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -166,6 +162,8 @@ export default function SignUpPage() {
             </Button>
           )}
         </form.Subscribe>
+
+        <OAuthButtons />
       </form>
 
       <p className="mt-5 text-center text-sm text-muted-foreground">

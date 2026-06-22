@@ -1,47 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { authClient } from "@/lib/auth-client";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { useState } from "react";
-import { OAuthButtons } from "@/components/oauth-buttons";
+import { Input } from "@/components/ui/input";
 
 const schema = z.object({
   email: z.email("Enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
 });
 
-function validate<K extends keyof z.infer<typeof schema>>(
-  field: K,
-  value: z.infer<typeof schema>[K]
-): string | undefined {
-  const result = schema.shape[field].safeParse(value);
-  return result.success ? undefined : result.error.issues[0]?.message;
-}
-
-export default function SignInPage() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState("");
 
   const form = useForm({
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
-      const { error } = await authClient.signIn.email({
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: value.email,
-        password: value.password,
-        callbackURL: "/dashboard",
+        type: "forget-password",
       });
       if (error) {
         setServerError(error.message ?? "Something went wrong");
         return;
       }
-      router.push("/dashboard");
+      router.push(`/reset-password?email=${encodeURIComponent(value.email)}`);
     },
   });
 
@@ -49,10 +38,10 @@ export default function SignInPage() {
     <>
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Welcome back
+          Forgot password?
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Sign in to manage your short links
+          Enter your email and we&apos;ll send a reset code
         </p>
       </div>
 
@@ -65,7 +54,12 @@ export default function SignInPage() {
       >
         <form.Field
           name="email"
-          validators={{ onChange: ({ value }) => validate("email", value) }}
+          validators={{
+            onChange: ({ value }) => {
+              const r = schema.shape.email.safeParse(value);
+              return r.success ? undefined : r.error.issues[0]?.message;
+            },
+          }}
         >
           {(field) => (
             <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -75,40 +69,6 @@ export default function SignInPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="Enter your email"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.isTouched && (
-                <FieldError
-                  errors={field.state.meta.errors.map((e) => ({ message: String(e) }))}
-                />
-              )}
-            </Field>
-          )}
-        </form.Field>
-
-        <form.Field
-          name="password"
-          validators={{ onChange: ({ value }) => validate("password", value) }}
-        >
-          {(field) => (
-            <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-              <div className="flex items-center justify-between">
-                <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs transition-colors"
-                  style={{ color: "oklch(0.769 0.188 70.08)" }}
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Input
-                id={field.name}
-                type="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
@@ -134,27 +94,22 @@ export default function SignInPage() {
               type="submit"
               disabled={isSubmitting}
               className="mt-1 w-full font-semibold"
-              style={{
-                background: "oklch(0.769 0.188 70.08)",
-                color: "oklch(0 0 0)",
-              }}
+              style={{ background: "oklch(0.769 0.188 70.08)", color: "oklch(0 0 0)" }}
             >
-              {isSubmitting ? "Signing in…" : "Sign in"}
+              {isSubmitting ? "Sending…" : "Send reset code"}
             </Button>
           )}
         </form.Subscribe>
-
-        <OAuthButtons />
       </form>
 
       <p className="mt-5 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        Remember it?{" "}
         <Link
-          href="/sign-up"
+          href="/sign-in"
           className="font-medium transition-colors"
           style={{ color: "oklch(0.769 0.188 70.08)" }}
         >
-          Sign up
+          Sign in
         </Link>
       </p>
     </>

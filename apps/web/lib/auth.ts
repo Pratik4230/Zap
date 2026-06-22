@@ -1,9 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { bearer } from "better-auth/plugins";
+import { bearer, emailOTP } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { createDb } from "@zap/db";
 import * as schema from "@zap/db/schema";
+import { sendOtpEmail } from "./email";
 
 export function createAuth(db: D1Database) {
   return betterAuth({
@@ -17,22 +18,39 @@ export function createAuth(db: D1Database) {
         verification: schema.verifications,
       },
     }),
+    session: {
+      expiresIn: 60 * 60 * 24 * 7, // 7 days
+      updateAge: 60 * 60 * 24,      // refresh if < 1 day remaining
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,
-      sendResetPassword: async ({ user, url }) => {
-        console.log(`[DEV] Password reset for ${user.email}: ${url}`);
-      },
+      requireEmailVerification: true,
     },
-    emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => {
-        console.log(`[DEV] Verify email for ${user.email}: ${url}`);
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       },
-      sendOnSignUp: true,
+      github: {
+        clientId: process.env.GITHUB_CLIENT_ID as string,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      },
     },
     plugins: [
       bearer(),
       nextCookies(),
+      emailOTP({
+        otpLength: 6,
+        expiresIn: 300, // 5 minutes
+        async sendVerificationOTP({ email, otp, type }) {
+          await sendOtpEmail({
+            to: email,
+            otp,
+            type: type === "forget-password" ? "forget-password" : "email-verification",
+          });
+        },
+      }),
     ],
   });
 }
