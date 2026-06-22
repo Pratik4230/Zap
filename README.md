@@ -1,159 +1,155 @@
-# Turborepo starter
+# Zap — URL Shortener
 
-This Turborepo starter is maintained by the Turborepo core team.
+A high-performance URL shortener built on Cloudflare's edge infrastructure. Monorepo powered by Turborepo + pnpm.
 
-## Using this example
+## Stack
 
-Run the following command:
+| Layer | Technology |
+|---|---|
+| Web app | Next.js + OpenNext.js (Cloudflare Pages) |
+| Auth | Better Auth + D1 |
+| DB | Cloudflare D1 (SQLite) + Drizzle ORM |
+| Edge redirect | Cloudflare Worker |
+| Analytics | Cloudflare Worker + Queue |
+| Email | Resend |
+| Package manager | pnpm workspaces |
 
-```sh
-npx create-turbo@latest
+## Apps & Packages
+
+```
+apps/
+  web/               → Next.js app (dashboard, auth)
+  redirect-worker/   → Cloudflare Worker — handles short link redirects
+  analytics-worker/  → Cloudflare Worker — processes click analytics
+packages/
+  db/                → Drizzle schema + migrations
 ```
 
-## What's inside?
+## Local Development
 
-This Turborepo includes the following packages/apps:
+### 1. Install dependencies
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+pnpm install
 ```
 
-Without global `turbo`, use your package manager:
+### 2. Set up environment
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+```bash
+bash setup.sh
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Create `apps/web/.dev.vars` with the following:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+```
+NEXTJS_ENV=development
+BETTER_AUTH_SECRET=<generate with: openssl rand -base64 32>
+BETTER_AUTH_URL=http://localhost:3000
 
-```sh
-turbo build --filter=docs
+RESEND_API_KEY=re_your_key_here
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
-Without global `turbo`:
+> `.dev.vars` is Wrangler's env file. Next.js reads it via OpenNext.js — do **not** use `.env` for the web app.
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+### 3. Apply DB migration (first time only)
+
+```bash
+cd apps/web
+npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/0000_silky_the_professor.sql
 ```
 
-### Develop
+### 4. Start dev servers
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+pnpm dev
 ```
 
-Without global `turbo`, use your package manager:
+- Web app → `http://localhost:3000`
+- Redirect worker → `http://localhost:8787`
+- Analytics worker → `http://localhost:8788`
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+## OAuth Setup
+
+**Google** → [console.cloud.google.com](https://console.cloud.google.com) → Credentials → OAuth 2.0 Client
+
+Authorized redirect URI:
+```
+http://localhost:3000/api/auth/callback/google
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+**GitHub** → [github.com/settings/developers](https://github.com/settings/developers) → OAuth Apps
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
+Authorization callback URL:
+```
+http://localhost:3000/api/auth/callback/github
 ```
 
-Without global `turbo`:
+> Add both local and production URLs to the same OAuth app.
 
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+## Database
+
+The local D1 database lives at:
+```
+apps/web/.wrangler/state/v3/d1/
 ```
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+### Query local DB
+```bash
+cd apps/web
+npx wrangler d1 execute zap-db --local --command "SELECT * FROM user;"
 ```
 
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
+### View in Drizzle Studio
+```bash
+cd packages/db
+npx drizzle-kit studio
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Schema changes workflow
+```bash
+# 1. Edit packages/db/src/schema.ts
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+# 2. Generate new migration
+cd packages/db
+npx drizzle-kit generate
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+# 3. Apply to local D1
+cd apps/web
+npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/<new-migration>.sql
 
-```sh
-turbo link
+# 4. Apply to production D1
+npx wrangler d1 execute zap-db --remote --file=../../packages/db/drizzle/<new-migration>.sql
 ```
 
-Without global `turbo`:
+> `drizzle-kit migrate` does not work with D1. Always use `wrangler d1 execute` to apply migrations.
 
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
+## Deployment
+
+```bash
+# Build + preview locally (with Wrangler runtime — full D1 access)
+cd apps/web
+pnpm preview
+
+# Deploy to Cloudflare Pages
+pnpm deploy
+
+# Set production secrets
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put GITHUB_CLIENT_SECRET
+npx wrangler secret put BETTER_AUTH_SECRET
 ```
 
-## Useful Links
+## Environment Files
 
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+| File | Purpose | Committed |
+|---|---|---|
+| `.env` | Root-level shared vars | ❌ gitignored |
+| `apps/web/.dev.vars` | Wrangler local secrets | ❌ gitignored |
+| `.env.example` | Template (no secrets) | ✅ committed |

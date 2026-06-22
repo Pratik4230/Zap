@@ -27,6 +27,7 @@ export default function VerifyEmailPage() {
   const [serverError, setServerError] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [sent, setSent] = useState(false);
+  const hasSentRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startCooldown = useCallback(() => {
@@ -55,16 +56,6 @@ export default function VerifyEmailPage() {
     startCooldown();
   }, [email, startCooldown]);
 
-  // Auto-send OTP on mount
-  useEffect(() => {
-    if (!email) {
-      router.replace("/sign-up");
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    handleSendOtp();
-  }, [email, router, handleSendOtp]);
-
   const form = useForm({
     defaultValues: { otp: "" },
     onSubmit: async ({ value }) => {
@@ -80,6 +71,18 @@ export default function VerifyEmailPage() {
       router.push("/dashboard");
     },
   });
+
+  useEffect(() => {
+    if (!email) {
+      router.replace("/sign-up");
+      return;
+    }
+    if (hasSentRef.current) return;
+    hasSentRef.current = true;
+    handleSendOtp();
+  }, [email, router, handleSendOtp]);
+
+  if (!email) return null;
 
   return (
     <>

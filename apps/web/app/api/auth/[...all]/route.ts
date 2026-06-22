@@ -3,7 +3,7 @@ import { createAuth } from "@/lib/auth";
 
 const handler = async (request: Request) => {
   const { env } = getCloudflareContext();
-  return createAuth(env.DB).handler(request);
+  return createAuth(env.DB, env).handler(request);
 };
 
 export { handler as GET, handler as POST };

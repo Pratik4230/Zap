@@ -6,7 +6,10 @@ import { createDb } from "@zap/db";
 import * as schema from "@zap/db/schema";
 import { sendOtpEmail } from "./email";
 
-export function createAuth(db: D1Database) {
+export function createAuth(
+  db: D1Database,
+  env: Pick<CloudflareEnv, "RESEND_API_KEY" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET">
+) {
   return betterAuth({
     appName: "Zap",
     database: drizzleAdapter(createDb(db), {
@@ -29,12 +32,12 @@ export function createAuth(db: D1Database) {
     },
     socialProviders: {
       google: {
-        clientId: process.env.GOOGLE_CLIENT_ID as string,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
       },
       github: {
-        clientId: process.env.GITHUB_CLIENT_ID as string,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+        clientId: env.GITHUB_CLIENT_ID,
+        clientSecret: env.GITHUB_CLIENT_SECRET,
       },
     },
     plugins: [
@@ -47,6 +50,7 @@ export function createAuth(db: D1Database) {
           await sendOtpEmail({
             to: email,
             otp,
+            apiKey: env.RESEND_API_KEY,
             type: type === "forget-password" ? "forget-password" : "email-verification",
           });
         },

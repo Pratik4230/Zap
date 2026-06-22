@@ -6,10 +6,11 @@ const FROM = "Zap <noreply@aixpense.in>";
 interface SendOtpEmailOptions {
   to: string;
   otp: string;
+  apiKey: string;
   type: "email-verification" | "forget-password";
 }
 
-export async function sendOtpEmail({ to, otp, type }: SendOtpEmailOptions) {
+export async function sendOtpEmail({ to, otp, apiKey, type }: SendOtpEmailOptions) {
   const isVerification = type === "email-verification";
 
   const subject = isVerification
@@ -72,7 +73,7 @@ export async function sendOtpEmail({ to, otp, type }: SendOtpEmailOptions) {
     </html>
   `;
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resend = new Resend(apiKey);
   await resend.emails.send({
     from: FROM,
     to,

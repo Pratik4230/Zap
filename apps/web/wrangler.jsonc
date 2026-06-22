@@ -38,6 +38,16 @@
       "binding": "ZAP_CACHE",
       "id": "4c9da6442f2d46669bcdf5c48e1035fa"
     }
-  ]
+  ],
+
+  "vars": {
+    "BETTER_AUTH_SECRET": "",
+    "BETTER_AUTH_URL": "",
+    "RESEND_API_KEY": "",
+    "GOOGLE_CLIENT_ID": "",
+    "GOOGLE_CLIENT_SECRET": "",
+    "GITHUB_CLIENT_ID": "",
+    "GITHUB_CLIENT_SECRET": ""
+  }
 
 }
