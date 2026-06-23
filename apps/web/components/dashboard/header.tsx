@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, User, Settings } from "lucide-react";
+import { Menu, LogOut,  Settings } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
@@ -76,10 +76,7 @@ export function DashboardHeader() {
             <p className="text-xs text-muted-foreground">{user?.email}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => router.push("/settings")}>
-            <User size={14} className="mr-2" />
-            Profile
-          </DropdownMenuItem>
+       
           <DropdownMenuItem onClick={() => router.push("/settings")}>
             <Settings size={14} className="mr-2" />
             Settings
