@@ -3,44 +3,63 @@
 import { BarChart3, Globe, Monitor, Smartphone, Tablet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
-const TOP_LINKS = [
-  { slug: "launch", clicks: 3102, change: "+12%" },
-  { slug: "gh-repo", clicks: 1240, change: "+8%" },
-  { slug: "portfolio", clicks: 830, change: "+3%" },
-  { slug: "docs", clicks: 567, change: "-2%" },
-  { slug: "discord", clicks: 421, change: "+1%" },
-];
+const DEVICE_ICONS: Record<string, React.ElementType> = {
+  desktop: Monitor,
+  mobile: Smartphone,
+  tablet: Tablet,
+};
 
-const DEVICES = [
-  { label: "Desktop", icon: Monitor, value: 58, color: AMBER },
-  { label: "Mobile", icon: Smartphone, value: 35, color: "oklch(0.7 0.15 200)" },
-  { label: "Tablet", icon: Tablet, value: 7, color: "oklch(0.65 0.15 280)" },
-];
+const DEVICE_COLORS: Record<string, string> = {
+  desktop: AMBER,
+  mobile: "oklch(0.7 0.15 200)",
+  tablet: "oklch(0.65 0.15 280)",
+  unknown: "oklch(0.5 0 0)",
+};
 
-const COUNTRIES = [
-  { country: "India", code: "IN", clicks: 18420 },
-  { country: "United States", code: "US", clicks: 12300 },
-  { country: "United Kingdom", code: "GB", clicks: 4100 },
-  { country: "Germany", code: "DE", clicks: 2800 },
-  { country: "Canada", code: "CA", clicks: 2100 },
-];
+interface AnalyticsData {
+  daily: { date: string; label: string; clicks: number }[];
+  totalClicks: number;
+  topLinks: { slug: string; domain: string; title: string | null; clicks: number }[];
+  countries: { country: string; count: number }[];
+  devices: { device: string; count: number; pct: number }[];
+}
 
-const DAILY = [
-  { day: "Mon", clicks: 1240 },
-  { day: "Tue", clicks: 2100 },
-  { day: "Wed", clicks: 1800 },
-  { day: "Thu", clicks: 3200 },
-  { day: "Fri", clicks: 2700 },
-  { day: "Sat", clicks: 980 },
-  { day: "Sun", clicks: 760 },
-];
+async function fetchAnalytics(): Promise<AnalyticsData> {
+  const res = await fetch("/api/analytics");
+  if (!res.ok) throw new Error("Failed to fetch analytics");
+  return res.json() as Promise<AnalyticsData>;
+}
 
-const MAX_DAILY = Math.max(...DAILY.map((d) => d.clicks));
+const SKELETON_HEIGHTS = [45, 70, 55, 90, 75, 40, 60];
+
+function BarSkeleton() {
+  return (
+    <div className="flex items-end gap-3 h-40">
+      {SKELETON_HEIGHTS.map((h, i) => (
+        <div key={i} className="flex flex-1 flex-col items-center gap-2">
+          <Skeleton className="w-full" style={{ height: `${h}%` }} />
+          <Skeleton className="h-3 w-6" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function AnalyticsPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["analytics"],
+    queryFn: fetchAnalytics,
+  });
+
+  const maxDaily = data ? Math.max(...data.daily.map((d) => d.clicks), 1) : 1;
+  const maxCountry = data?.countries[0]?.count ?? 1;
+  const maxLink = data?.topLinks[0]?.clicks ?? 1;
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,7 +69,6 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      {/* Clicks over time */}
       <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
         <CardHeader className="px-6 pt-5 pb-4">
           <div className="flex items-center justify-between">
@@ -58,68 +76,83 @@ export default function AnalyticsPage() {
               <BarChart3 size={16} style={{ color: AMBER }} />
               Clicks — Last 7 Days
             </CardTitle>
-            <Badge variant="outline" className="text-xs border-white/10 text-muted-foreground">
-              12,780 total
-            </Badge>
+            {isLoading ? (
+              <Skeleton className="h-5 w-24" />
+            ) : (
+              <Badge variant="outline" className="text-xs border-white/10 text-muted-foreground">
+                {(data?.totalClicks ?? 0).toLocaleString()} clicks
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-          <div className="flex items-end gap-3 h-40">
-            {DAILY.map(({ day, clicks }) => {
-              const height = Math.max(4, (clicks / MAX_DAILY) * 100);
-              return (
-                <div key={day} className="flex flex-1 flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{clicks.toLocaleString()}</span>
-                  <div className="w-full rounded-t-md transition-all duration-500 relative group" style={{
-                    height: `${height}%`,
-                    background: `${AMBER}30`,
-                    border: `1px solid ${AMBER}40`,
-                  }}>
-                    <div className="absolute inset-0 rounded-t-md opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: `${AMBER}50` }} />
+          {isLoading ? (
+            <BarSkeleton />
+          ) : (
+            <div className="flex items-end gap-3 h-40">
+              {data?.daily.map(({ label, clicks: count }) => {
+                const height = Math.max(4, (count / maxDaily) * 100);
+                return (
+                  <div key={label} className="flex flex-1 flex-col items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{count > 0 ? count.toLocaleString() : ""}</span>
+                    <div
+                      className="w-full rounded-t-md transition-all duration-500 relative group"
+                      style={{ height: `${height}%`, background: `${AMBER}30`, border: `1px solid ${AMBER}40` }}
+                    >
+                      <div
+                        className="absolute inset-0 rounded-t-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: `${AMBER}50` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">{label}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{day}</span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Top links */}
         <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
           <CardHeader className="px-6 pt-5 pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Top Links</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-5 space-y-3">
-            {TOP_LINKS.map(({ slug, clicks, change }, i) => {
-              const maxClicks = TOP_LINKS[0].clicks;
-              const pct = (clicks / maxClicks) * 100;
-              const isPositive = change.startsWith("+");
-              return (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-1 w-full" />
+                </div>
+              ))
+            ) : data?.topLinks.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No link data yet</p>
+            ) : (
+              data?.topLinks.map(({ slug, domain, clicks: count }, i) => (
                 <div key={slug} className="space-y-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground/60 w-4 font-mono">{i + 1}</span>
-                      <span className="text-sm font-medium text-foreground">go.zap.dev/{slug}</span>
+                      <span className="text-sm font-medium text-foreground">{domain}/{slug}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>{change}</span>
-                      <span className="text-sm font-mono text-muted-foreground">{clicks.toLocaleString()}</span>
-                    </div>
+                    <span className="text-sm font-mono text-muted-foreground">{count.toLocaleString()}</span>
                   </div>
                   <div className="h-1 rounded-full bg-white/6">
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: AMBER }} />
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${(count / maxLink) * 100}%`, background: AMBER }}
+                    />
                   </div>
                 </div>
-              );
-            })}
+              ))
+            )}
           </CardContent>
         </Card>
 
-        {/* Countries */}
         <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
           <CardHeader className="px-6 pt-5 pb-4">
             <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
@@ -128,52 +161,82 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-5 space-y-3">
-            {COUNTRIES.map(({ country, code, clicks }) => {
-              const maxClicks = COUNTRIES[0].clicks;
-              const pct = (clicks / maxClicks) * 100;
-              return (
-                <div key={code} className="space-y-1">
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <Skeleton className="h-1 w-full" />
+                </div>
+              ))
+            ) : data?.countries.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No click data yet</p>
+            ) : (
+              data?.countries.map(({ country, count }) => (
+                <div key={country} className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">{country}</span>
-                    <span className="text-sm font-mono text-muted-foreground">{clicks.toLocaleString()}</span>
+                    <span className="text-sm font-mono text-muted-foreground">{count.toLocaleString()}</span>
                   </div>
                   <div className="h-1 rounded-full bg-white/6">
-                    <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: AMBER }} />
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${(count / maxCountry) * 100}%`, background: AMBER }}
+                    />
                   </div>
                 </div>
-              );
-            })}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Devices */}
       <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
-       <CardHeader className="px-6 pt-5 pb-4">
+        <CardHeader className="px-6 pt-5 pb-4">
           <CardTitle className="text-base font-semibold text-foreground">Device Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-          <div className="flex items-center gap-8">
-            {DEVICES.map(({ label, icon: Icon, value, color }) => (
-              <div key={label} className="flex flex-col items-center gap-3">
-                <div className="relative flex h-20 w-20 items-center justify-center">
-                  <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="oklch(1 0 0 / 6%)" strokeWidth="2.5" />
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke={color} strokeWidth="2.5"
-                      strokeDasharray={`${value} 100`} strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <Icon size={14} style={{ color }} />
+          {isLoading ? (
+            <div className="flex items-center gap-8">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-3">
+                  <Skeleton className="h-20 w-20 rounded-full" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          ) : data?.devices.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No device data yet</p>
+          ) : (
+            <div className="flex items-center gap-8 flex-wrap">
+              {data?.devices.map(({ device, pct }) => {
+                const Icon = DEVICE_ICONS[device] ?? Monitor;
+                const color = DEVICE_COLORS[device] ?? AMBER;
+                return (
+                  <div key={device} className="flex flex-col items-center gap-3">
+                    <div className="relative flex h-20 w-20 items-center justify-center">
+                      <svg className="h-20 w-20 -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="oklch(1 0 0 / 6%)" strokeWidth="2.5" />
+                        <circle
+                          cx="18" cy="18" r="15.9" fill="none" stroke={color} strokeWidth="2.5"
+                          strokeDasharray={`${pct} 100`} strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <Icon size={14} style={{ color }} />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-foreground">{pct}%</p>
+                      <p className="text-xs text-muted-foreground capitalize">{device}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl font-bold text-foreground">{value}%</p>
-                  <p className="text-xs text-muted-foreground">{label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
