@@ -28,6 +28,13 @@ out/
 build
 dist
 
+# Wrangler & Cloudflare
+.wrangler/
+.open-next/
+
+# Workers tmp
+tmp/
+
 
 # Debug
 npm-debug.log*
