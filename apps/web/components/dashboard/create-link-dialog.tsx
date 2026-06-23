@@ -40,19 +40,33 @@ function generateSlug() {
 interface CreateLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: () => void;
 }
 
-export function CreateLinkDialog({ open, onOpenChange }: CreateLinkDialogProps) {
+export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDialogProps) {
   const [serverError, setServerError] = useState("");
 
   const form = useForm({
     defaultValues: { destination: "", slug: "", title: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
-      const slug = value.slug || generateSlug();
-      console.log("Creating link:", { ...value, slug });
+      const res = await fetch("/api/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destinationUrl: value.destination,
+          slug: value.slug || undefined,
+          title: value.title || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        setServerError(res.status === 409 ? "That slug is already taken. Try another." : (data.error ?? "Something went wrong"));
+        return;
+      }
       onOpenChange(false);
       form.reset();
+      onCreated?.();
     },
   });
 
