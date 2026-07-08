@@ -1,4 +1,4 @@
-import type { Link } from "@zap/db";
+import type { Link } from "@xaply/db";
 
 export async function getLinkFromCache(
   kv: KVNamespace,

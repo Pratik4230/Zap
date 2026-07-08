@@ -2,8 +2,8 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { bearer, emailOTP } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
-import { createDb } from "@zap/db";
-import * as schema from "@zap/db/schema";
+import { createDb } from "@xaply/db";
+import * as schema from "@xaply/db/schema";
 import { sendOtpEmail } from "./email";
 
 export function createAuth(
@@ -11,7 +11,7 @@ export function createAuth(
   env: Pick<CloudflareEnv, "RESEND_API_KEY" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET">
 ) {
   return betterAuth({
-    appName: "Zap",
+    appName: "Xaply",
     database: drizzleAdapter(createDb(db), {
       provider: "sqlite",
       schema: {

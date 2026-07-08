@@ -49,7 +49,7 @@ const FEATURES = [
   {
     icon: Link2,
     title: "Branded domain",
-    description: "All links live on go.zap.dev — bring your own domain on Pro.",
+    description: "All links live on go.xaply.in — bring your own domain on Pro.",
   },
 ];
 
@@ -61,7 +61,7 @@ const STEPS = [
 
 function DemoLink() {
   const [copied, setCopied] = useState(false);
-  const url = "go.zap.dev/launch";
+  const url = "go.xaply.in/launch";
 
   return (
     <div
@@ -101,7 +101,7 @@ export default function LandingPage() {
             >
               <Zap size={16} style={{ color: AMBER }} strokeWidth={2.5} />
             </div>
-            <span className="text-base font-bold tracking-tight text-foreground">Zap</span>
+            <span className="text-base font-bold tracking-tight text-foreground">Xaply</span>
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex">
@@ -151,7 +151,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground leading-relaxed">
-            Zap turns your long URLs into compact, trackable links — powered by Cloudflare&apos;s global network for instant redirects anywhere on earth.
+            Xaply turns your long URLs into compact, trackable links — powered by Cloudflare&apos;s global network for instant redirects anywhere on earth.
           </p>
 
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -180,7 +180,7 @@ export default function LandingPage() {
               <div className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
               <div className="h-2.5 w-2.5 rounded-full bg-amber-500/70" />
               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
-              <span className="ml-2 text-xs text-muted-foreground/50">zap.dev — dashboard</span>
+              <span className="ml-2 text-xs text-muted-foreground/50">xaply.in — dashboard</span>
             </div>
             <div className="space-y-2.5 pt-1">
               <div
@@ -282,7 +282,7 @@ export default function LandingPage() {
               <Zap size={24} style={{ color: AMBER }} strokeWidth={2.5} />
             </div>
             <h2 className="mb-3 text-3xl font-bold tracking-tight text-foreground">
-              Ready to zap your links?
+              Ready to shorten your links?
             </h2>
             <p className="mb-8 text-muted-foreground">
               Free to start. No credit card required.
@@ -303,10 +303,10 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap size={14} style={{ color: AMBER }} strokeWidth={2.5} />
-            <span className="text-sm font-semibold text-foreground">Zap</span>
+            <span className="text-sm font-semibold text-foreground">Xaply</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Zap. All rights reserved.
+            © {new Date().getFullYear()} Xaply. All rights reserved.
           </p>
         </div>
       </footer>

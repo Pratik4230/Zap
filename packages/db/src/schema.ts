@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { SHORT_LINK_DOMAIN } from "./constants";
 import {
   integer,
   sqliteTable,
@@ -112,7 +113,7 @@ export const links = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     slug: text("slug").notNull(),
-    domain: text("domain").notNull().default("go.zap.dev"),
+    domain: text("domain").notNull().default(SHORT_LINK_DOMAIN),
     destinationUrl: text("destination_url").notNull(),
     title: text("title"),
     passwordHash: text("password_hash"),

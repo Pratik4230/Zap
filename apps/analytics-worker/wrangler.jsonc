@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "analytics-worker",
+	"name": "xaply-analytics",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-06-19",
 	"observability": {

@@ -1,4 +1,4 @@
-import type { ClickEvent } from "@zap/db";
+import type { ClickEvent } from "@xaply/db";
 
 export function buildClickEvent(
   linkId: string,

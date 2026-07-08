@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           ⚡
         </span>
         <span className="text-xl font-semibold tracking-tight text-foreground">
-          Zap
+          Xaply
         </span>
       </Link>
 
@@ -42,7 +42,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <p className="mt-8 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Zap. All rights reserved.
+        © {new Date().getFullYear()} Xaply. All rights reserved.
       </p>
     </div>
   );

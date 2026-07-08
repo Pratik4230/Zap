@@ -17,7 +17,7 @@
 		"wrangler": "^4.101.0"
 	},
 	"dependencies": {
-		"@zap/db": "workspace:^",
+		"@xaply/db": "workspace:^",
 		"drizzle-orm": "^0.45.2"
 	}
 }

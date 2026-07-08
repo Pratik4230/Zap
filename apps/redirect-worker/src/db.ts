@@ -1,6 +1,6 @@
-import { createDb, links } from "@zap/db";
+import { createDb, links } from "@xaply/db";
 import { and, eq, gt, isNull, or } from "drizzle-orm";
-import type { Link } from "@zap/db";
+import type { Link } from "@xaply/db";
 
 export async function getLinkBySlug(
   d1: D1Database,

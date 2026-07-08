@@ -1,4 +1,4 @@
-# Zap — URL Shortener
+# Xaply — URL Shortener
 
 A high-performance URL shortener built on Cloudflare's edge infrastructure. Monorepo powered by Turborepo + pnpm.
 

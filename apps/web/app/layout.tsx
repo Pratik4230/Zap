@@ -1,4 +1,5 @@
 import { Geist_Mono, Inter } from "next/font/google"
+import type { Metadata } from "next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -11,6 +12,11 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "Xaply — URL Shortener",
+  description: "Short links that move fast. Built on Cloudflare Edge.",
+}
 
 export default function RootLayout({
   children,

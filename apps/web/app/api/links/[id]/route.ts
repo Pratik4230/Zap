@@ -1,8 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
 import { createAuth } from "@/lib/auth";
-import { createDb } from "@zap/db";
-import { links } from "@zap/db/schema";
+import { createDb } from "@xaply/db";
+import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 
 async function getSession(request: NextRequest, env: CloudflareEnv) {
@@ -31,6 +31,8 @@ export async function PATCH(
 
   if (!updated) return NextResponse.json({ error: "Link not found" }, { status: 404 });
 
+  void env.ZAP_CACHE.delete(updated.slug);
+
   return NextResponse.json({ link: updated });
 }
 
@@ -50,6 +52,8 @@ export async function DELETE(
     .returning();
 
   if (!deleted) return NextResponse.json({ error: "Link not found" }, { status: 404 });
+
+  void env.ZAP_CACHE.delete(deleted.slug);
 
   return NextResponse.json({ success: true });
 }

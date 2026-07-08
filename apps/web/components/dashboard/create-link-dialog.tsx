@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
+import { SHORT_LINK_DOMAIN } from "@xaply/db";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -144,7 +145,7 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                 <div className="flex gap-2">
                   <div className="flex flex-1 items-center overflow-hidden rounded-md border border-input bg-transparent text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <span className="shrink-0 border-r border-input px-3 py-2.5 text-muted-foreground text-xs">
-                      go.zap.dev/
+                      {SHORT_LINK_DOMAIN}/
                     </span>
                     <input
                       id={field.name}

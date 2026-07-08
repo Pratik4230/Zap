@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "redirect-worker",
+	"name": "xaply-redirect",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-06-19",
 	"observability": {
@@ -9,6 +9,9 @@
 	"upload_source_maps": true,
 	"compatibility_flags": [
 		"nodejs_compat"
+	],
+	"routes": [
+		{ "pattern": "go.xaply.in/*", "zone_name": "xaply.in" }
 	],
 	"d1_databases": [
 		{

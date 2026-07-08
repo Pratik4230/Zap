@@ -21,7 +21,7 @@
     "@tanstack/react-form": "^1.33.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/zod-form-adapter": "^0.42.1",
-    "@zap/db": "workspace:^",
+    "@xaply/db": "workspace:^",
     "better-auth": "^1.6.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

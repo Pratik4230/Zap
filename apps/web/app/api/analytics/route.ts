@@ -1,8 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
 import { createAuth } from "@/lib/auth";
-import { createDb } from "@zap/db";
-import { links, clicks } from "@zap/db/schema";
+import { createDb } from "@xaply/db";
+import { links, clicks } from "@xaply/db/schema";
 import { and, eq, gte, sql, desc } from "drizzle-orm";
 
 async function getSession(request: NextRequest, env: CloudflareEnv) {

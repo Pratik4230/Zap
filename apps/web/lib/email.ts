@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM = "Zap <noreply@aixpense.in>";
+const FROM = "Xaply <noreply@xaply.in>";
 
 
 interface SendOtpEmailOptions {
@@ -14,8 +14,8 @@ export async function sendOtpEmail({ to, otp, apiKey, type }: SendOtpEmailOption
   const isVerification = type === "email-verification";
 
   const subject = isVerification
-    ? "Verify your Zap account"
-    : "Reset your Zap password";
+    ? "Verify your Xaply account"
+    : "Reset your Xaply password";
 
   const heading = isVerification
     ? "Verify your email"
@@ -41,7 +41,7 @@ export async function sendOtpEmail({ to, otp, apiKey, type }: SendOtpEmailOption
               <tr>
                 <td style="padding-bottom:32px;text-align:center;">
                   <span style="font-size:28px;">⚡</span>
-                  <span style="font-size:20px;font-weight:600;color:#fafafa;margin-left:8px;vertical-align:middle;">Zap</span>
+                  <span style="font-size:20px;font-weight:600;color:#fafafa;margin-left:8px;vertical-align:middle;">Xaply</span>
                 </td>
               </tr>
               <!-- Card -->
@@ -62,7 +62,7 @@ export async function sendOtpEmail({ to, otp, apiKey, type }: SendOtpEmailOption
               <!-- Footer -->
               <tr>
                 <td style="padding-top:24px;text-align:center;">
-                  <p style="margin:0;font-size:12px;color:#52525b;">© ${new Date().getFullYear()} Zap. All rights reserved.</p>
+                  <p style="margin:0;font-size:12px;color:#52525b;">© ${new Date().getFullYear()} Xaply. All rights reserved.</p>
                 </td>
               </tr>
             </table>

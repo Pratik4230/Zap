@@ -28,7 +28,7 @@ export function Sidebar() {
         >
           <Zap size={16} style={{ color: AMBER }} strokeWidth={2.5} />
         </div>
-        <span className="text-base font-bold tracking-tight text-foreground">Zap</span>
+        <span className="text-base font-bold tracking-tight text-foreground">Xaply</span>
       </div>
 
       {/* Navigation */}
@@ -70,7 +70,7 @@ export function Sidebar() {
       {/* Footer */}
       <div className="border-t border-white/6 p-3">
         <p className="px-3 text-xs text-muted-foreground/50">
-          Zap © {new Date().getFullYear()}
+          Xaply © {new Date().getFullYear()}
         </p>
       </div>
     </aside>

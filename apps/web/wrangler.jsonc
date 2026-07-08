@@ -1,11 +1,15 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "web",
+	"name": "xaply",
 	"compatibility_date": "2026-06-10",
 	"compatibility_flags": [
 		"nodejs_compat",
 		"global_fetch_strictly_public"
+	],
+	"routes": [
+		{ "pattern": "xaply.in/*", "zone_name": "xaply.in" },
+		{ "pattern": "www.xaply.in/*", "zone_name": "xaply.in" }
 	],
 	"assets": {
 		"directory": ".open-next/assets",
@@ -13,41 +17,29 @@
 	},
 	"services": [
 		{
-			// Self-reference service binding, the service name must match the worker name
-			// see https://opennext.js.org/cloudflare/caching
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "web"
+			"service": "xaply"
 		}
 	],
 	"images": {
-		// Enable image optimization
-		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
 	},
 	"d1_databases": [
 		{
-			// Access in code via: env.DB
 			"binding": "DB",
 			"database_name": "zap-db",
 			"database_id": "d57b5010-ed1c-4fc5-8e58-ac86fa021b6a"
 		}
 	],
-	
-  "kv_namespaces": [
-    {
-      "binding": "ZAP_CACHE",
-      "id": "4c9da6442f2d46669bcdf5c48e1035fa"
-    }
-  ],
-
-  "vars": {
-    "BETTER_AUTH_SECRET": "",
-    "BETTER_AUTH_URL": "",
-    "RESEND_API_KEY": "",
-    "GOOGLE_CLIENT_ID": "",
-    "GOOGLE_CLIENT_SECRET": "",
-    "GITHUB_CLIENT_ID": "",
-    "GITHUB_CLIENT_SECRET": ""
-  }
-
+	"kv_namespaces": [
+		{
+			"binding": "ZAP_CACHE",
+			"id": "4c9da6442f2d46669bcdf5c48e1035fa"
+		}
+	],
+	"vars": {
+		"BETTER_AUTH_URL": "https://xaply.in",
+		"GOOGLE_CLIENT_ID": "704988536404-6n3pk1ulm5u9k0id39p7mb81r9o5prmf.apps.googleusercontent.com",
+		"GITHUB_CLIENT_ID": "Ov23liuuTAUYkePHCDTn"
+	}
 }

@@ -1,5 +1,5 @@
-import { createDb, clicks, links } from "@zap/db";
-import type { ClickEvent } from "@zap/db";
+import { createDb, clicks, links } from "@xaply/db";
+import type { ClickEvent } from "@xaply/db";
 import { eq, sql } from "drizzle-orm";
 
 interface WorkerEnv {

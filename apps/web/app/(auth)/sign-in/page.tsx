@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { OAuthButtons } from "@/components/oauth-buttons";
 
 const schema = z.object({
@@ -26,22 +27,31 @@ function validate<K extends keyof z.infer<typeof schema>>(
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/dashboard";
   const [serverError, setServerError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
+      setUnverifiedEmail("");
       const { error } = await authClient.signIn.email({
         email: value.email,
         password: value.password,
-        callbackURL: "/dashboard",
+        callbackURL: next,
       });
       if (error) {
-        setServerError(error.message ?? "Something went wrong");
+        const msg = error.message ?? "";
+        if (msg.toLowerCase().includes("verif")) {
+          setUnverifiedEmail(value.email);
+          return;
+        }
+        setServerError(msg || "Something went wrong");
         return;
       }
-      router.push("/dashboard");
+      router.push(next);
     },
   });
 
@@ -122,11 +132,25 @@ export default function SignInPage() {
           )}
         </form.Field>
 
-        {serverError && (
+        {unverifiedEmail ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3.5 py-3 text-sm">
+            <p className="text-amber-400 font-medium">Email not verified</p>
+            <p className="mt-1 text-muted-foreground">
+              Check your inbox or{" "}
+              <Link
+                href={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
+                className="font-medium text-amber-400 hover:underline"
+              >
+                resend the code
+              </Link>
+              .
+            </p>
+          </div>
+        ) : serverError ? (
           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
             {serverError}
           </p>
-        )}
+        ) : null}
 
         <form.Subscribe selector={(s) => s.isSubmitting}>
           {(isSubmitting) => (

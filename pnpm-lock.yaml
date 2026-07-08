@@ -20,7 +20,7 @@ importers:
 
   apps/analytics-worker:
     dependencies:
-      '@zap/db':
+      '@xaply/db':
         specifier: workspace:^
         version: link:../../packages/db
       drizzle-orm:
@@ -45,7 +45,7 @@ importers:
 
   apps/redirect-worker:
     dependencies:
-      '@zap/db':
+      '@xaply/db':
         specifier: workspace:^
         version: link:../../packages/db
       drizzle-orm:
@@ -85,7 +85,7 @@ importers:
       '@tanstack/zod-form-adapter':
         specifier: ^0.42.1
         version: 0.42.1(zod@4.4.3)
-      '@zap/db':
+      '@xaply/db':
         specifier: workspace:^
         version: link:../../packages/db
       better-auth:

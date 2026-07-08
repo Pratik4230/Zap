@@ -14,7 +14,7 @@ export default {
     const slug = url.pathname.slice(1);
 
     if (!slug) {
-      return new Response("Zap", { status: 200 });
+      return new Response("Xaply", { status: 200 });
     }
 
     const domain = url.hostname;

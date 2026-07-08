@@ -1,8 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
 import { createAuth } from "@/lib/auth";
-import { createDb } from "@zap/db";
-import { links } from "@zap/db/schema";
+import { createDb, SHORT_LINK_DOMAIN } from "@xaply/db";
+import { links } from "@xaply/db/schema";
 import { eq,  desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -49,12 +49,14 @@ export async function POST(request: NextRequest) {
         id: nanoid(),
         userId: session.user.id,
         slug: finalSlug,
-        domain: "go.zap.dev",
+        domain: SHORT_LINK_DOMAIN,
         destinationUrl,
         title: title || null,
         status: "active",
       })
       .returning();
+
+    void env.ZAP_CACHE.put(finalSlug, JSON.stringify(link), { expirationTtl: 60 * 60 * 24 * 7 });
 
     return NextResponse.json({ link }, { status: 201 });
   } catch {
