@@ -39,6 +39,7 @@
 	],
 	"vars": {
 		"BETTER_AUTH_URL": "https://xaply.in",
+		"NEXT_PUBLIC_APP_URL": "https://xaply.in",
 		"GOOGLE_CLIENT_ID": "704988536404-6n3pk1ulm5u9k0id39p7mb81r9o5prmf.apps.googleusercontent.com",
 		"GITHUB_CLIENT_ID": "Ov23liuuTAUYkePHCDTn"
 	}
