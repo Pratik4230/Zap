@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM = "Xaply <noreply@xaply.in>";
+const FROM = "Xaply <noreply@aixpense.in>";
 
 
 interface SendOtpEmailOptions {
