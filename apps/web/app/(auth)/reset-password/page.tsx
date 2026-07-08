@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
@@ -17,7 +17,7 @@ const schema = z.object({
   confirmPassword: z.string().min(1, "Please confirm your password"),
 });
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
 
@@ -213,5 +213,13 @@ export default function ResetPasswordPage() {
         </form.Subscribe>
       </form>
     </>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
