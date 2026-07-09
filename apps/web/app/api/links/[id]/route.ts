@@ -1,29 +1,46 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createAuth } from "@/lib/auth";
-import { createDb } from "@xaply/db";
+import { createDb, validateDestinationUrl, validateLinkStatus, validateTitle } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
-
-async function getSession(request: NextRequest, env: CloudflareEnv) {
-  const auth = createAuth(env.DB, env);
-  const session = await auth.api.getSession({ headers: request.headers });
-  return session;
-}
+import { isSession, requireSession } from "@/lib/api-auth";
+import { LINK_MUTATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { env } = getCloudflareContext();
-  const session = await getSession(request, env);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSession(request, env);
+  if (!isSession(session)) return session;
+
+  const rl = await rateLimit({
+    kv: env.ZAP_CACHE,
+    key: `mutate:${session.user.id}`,
+    ...LINK_MUTATE_LIMIT,
+  });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
   const { id } = await params;
-  const body = await request.json() as {
-    status?: "active" | "paused";
-    title?: string | null;
-    destinationUrl?: string;
+  if (!id || typeof id !== "string" || id.length > 64) {
+    return NextResponse.json({ error: "Invalid link id" }, { status: 400 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const input = body as {
+    status?: unknown;
+    title?: unknown;
+    destinationUrl?: unknown;
   };
 
   const updates: {
@@ -33,27 +50,32 @@ export async function PATCH(
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
-  if (body.status !== undefined) {
-    if (body.status !== "active" && body.status !== "paused") {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  if (input.status !== undefined) {
+    const statusResult = validateLinkStatus(input.status);
+    if (!statusResult.ok) {
+      return NextResponse.json({ error: statusResult.error }, { status: 400 });
     }
-    updates.status = body.status;
+    updates.status = statusResult.value;
   }
 
-  if (body.title !== undefined) {
-    updates.title = body.title?.trim() || null;
+  if (input.title !== undefined) {
+    const titleResult = validateTitle(input.title);
+    if (!titleResult.ok) {
+      return NextResponse.json({ error: titleResult.error }, { status: 400 });
+    }
+    updates.title = titleResult.value || null;
   }
 
-  if (body.destinationUrl !== undefined) {
-    if (!body.destinationUrl) {
-      return NextResponse.json({ error: "destinationUrl is required" }, { status: 400 });
+  if (input.destinationUrl !== undefined) {
+    const urlResult = validateDestinationUrl(input.destinationUrl);
+    if (!urlResult.ok) {
+      return NextResponse.json({ error: urlResult.error }, { status: 400 });
     }
-    try {
-      new URL(body.destinationUrl);
-    } catch {
-      return NextResponse.json({ error: "Invalid destination URL" }, { status: 400 });
-    }
-    updates.destinationUrl = body.destinationUrl;
+    updates.destinationUrl = urlResult.value;
+  }
+
+  if (Object.keys(updates).length === 1) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
   const db = createDb(env.DB);
@@ -75,10 +97,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { env } = getCloudflareContext();
-  const session = await getSession(request, env);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSession(request, env);
+  if (!isSession(session)) return session;
+
+  const rl = await rateLimit({
+    kv: env.ZAP_CACHE,
+    key: `mutate:${session.user.id}`,
+    ...LINK_MUTATE_LIMIT,
+  });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
   const { id } = await params;
+  if (!id || typeof id !== "string" || id.length > 64) {
+    return NextResponse.json({ error: "Invalid link id" }, { status: 400 });
+  }
+
   const db = createDb(env.DB);
   const [deleted] = await db
     .delete(links)

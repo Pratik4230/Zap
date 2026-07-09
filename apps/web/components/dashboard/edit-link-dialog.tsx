@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -13,15 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { validateDestinationField, validateTitleField } from "@/lib/validation";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
-
-const schema = z.object({
-  destination: z
-    .url("Enter a valid URL (include https://)")
-    .min(1, "Destination URL is required"),
-  title: z.string().max(100, "Title must be under 100 characters"),
-});
 
 export interface EditableLink {
   id: string;
@@ -56,9 +49,17 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
     },
     onSubmit: async ({ value }) => {
       setServerError("");
+
+      const destinationError = validateDestinationField(value.destination);
+      const titleError = validateTitleField(value.title);
+      if (destinationError || titleError) {
+        setServerError(destinationError ?? titleError ?? "Invalid input");
+        return;
+      }
+
       try {
         await onSave({
-          destinationUrl: value.destination,
+          destinationUrl: value.destination.trim(),
           title: value.title.trim() || null,
         });
       } catch (error) {
@@ -94,12 +95,7 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
       >
         <form.Field
           name="destination"
-          validators={{
-            onChange: ({ value }) => {
-              const r = schema.shape.destination.safeParse(value);
-              return r.success ? undefined : r.error.issues[0]?.message;
-            },
-          }}
+          validators={{ onChange: ({ value }) => validateDestinationField(value) }}
         >
           {(field) => (
             <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -123,12 +119,7 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
 
         <form.Field
           name="title"
-          validators={{
-            onChange: ({ value }) => {
-              const r = schema.shape.title.safeParse(value);
-              return r.success ? undefined : r.error.issues[0]?.message;
-            },
-          }}
+          validators={{ onChange: ({ value }) => validateTitleField(value) }}
         >
           {(field) => (
             <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>

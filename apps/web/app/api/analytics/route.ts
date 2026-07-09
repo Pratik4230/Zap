@@ -1,19 +1,22 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createAuth } from "@/lib/auth";
 import { createDb } from "@xaply/db";
 import { links, clicks } from "@xaply/db/schema";
 import { and, eq, gte, sql, desc } from "drizzle-orm";
-
-async function getSession(request: NextRequest, env: CloudflareEnv) {
-  const auth = createAuth(env.DB, env);
-  return auth.api.getSession({ headers: request.headers });
-}
+import { isSession, requireSession } from "@/lib/api-auth";
+import { API_READ_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
-  const session = await getSession(request, env);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSession(request, env);
+  if (!isSession(session)) return session;
+
+  const rl = await rateLimit({
+    kv: env.ZAP_CACHE,
+    key: `analytics:${session.user.id}`,
+    ...API_READ_LIMIT,
+  });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
   const db = createDb(env.DB);
   const userId = session.user.id;

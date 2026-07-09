@@ -4,11 +4,20 @@ import { bearer, emailOTP } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { createDb } from "@xaply/db";
 import * as schema from "@xaply/db/schema";
+import { createAuthRateLimitStorage } from "./auth-rate-limit";
 import { sendOtpEmail } from "./email";
 
 export function createAuth(
   db: D1Database,
-  env: Pick<CloudflareEnv, "RESEND_API_KEY" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET">
+  env: Pick<
+    CloudflareEnv,
+    | "ZAP_CACHE"
+    | "RESEND_API_KEY"
+    | "GOOGLE_CLIENT_ID"
+    | "GOOGLE_CLIENT_SECRET"
+    | "GITHUB_CLIENT_ID"
+    | "GITHUB_CLIENT_SECRET"
+  >
 ) {
   return betterAuth({
     appName: "Xaply",
@@ -21,6 +30,20 @@ export function createAuth(
         verification: schema.verifications,
       },
     }),
+    advanced: {
+      ipAddress: {
+        ipAddressHeaders: ["cf-connecting-ip"],
+      },
+    },
+    rateLimit: {
+      enabled: process.env.NODE_ENV === "production",
+      window: 60,
+      max: 100,
+      customStorage: createAuthRateLimitStorage(env.ZAP_CACHE),
+      customRules: {
+        "/get-session": false,
+      },
+    },
     session: {
       expiresIn: 60 * 60 * 24 * 7, // 7 days
       updateAge: 60 * 60 * 24,      // refresh if < 1 day remaining
@@ -46,6 +69,7 @@ export function createAuth(
       emailOTP({
         otpLength: 6,
         expiresIn: 300, // 5 minutes
+        allowedAttempts: 5,
         async sendVerificationOTP({ email, otp, type }) {
           await sendOtpEmail({
             to: email,

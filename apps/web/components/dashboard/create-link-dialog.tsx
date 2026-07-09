@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 import { Shuffle } from "lucide-react";
 import {
   Dialog,
@@ -16,22 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { SHORT_LINK_DOMAIN } from "@xaply/db";
+import {
+  validateDestinationField,
+  validateSlugField,
+  validateTitleField,
+} from "@/lib/validation";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
-
-const slugSchema = z
-  .string()
-  .min(2, "Slug must be at least 2 characters")
-  .max(50, "Slug must be under 50 characters")
-  .regex(/^[a-z0-9-_]+$/, "Only lowercase letters, numbers, hyphens and underscores");
-
-const schema = z.object({
-  destination: z
-    .url("Enter a valid URL (include https://)")
-    .min(1, "Destination URL is required"),
-  slug: slugSchema.optional().or(z.literal("")),
-  title: z.string().max(100, "Title must be under 100 characters").optional(),
-});
 
 function generateSlug() {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -51,18 +41,33 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
     defaultValues: { destination: "", slug: "", title: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
+
+      const destinationError = validateDestinationField(value.destination);
+      const slugError = validateSlugField(value.slug);
+      const titleError = validateTitleField(value.title);
+      if (destinationError || slugError || titleError) {
+        setServerError(destinationError ?? slugError ?? titleError ?? "Invalid input");
+        return;
+      }
+
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          destinationUrl: value.destination,
+          destinationUrl: value.destination.trim(),
           slug: value.slug || undefined,
           title: value.title || undefined,
         }),
       });
       if (!res.ok) {
         const data = await res.json() as { error?: string };
-        setServerError(res.status === 409 ? "That slug is already taken. Try another." : (data.error ?? "Something went wrong"));
+        setServerError(
+          res.status === 409
+            ? "That slug is already taken. Try another."
+            : res.status === 429
+              ? "Too many requests. Please wait and try again."
+              : (data.error ?? "Something went wrong")
+        );
         return;
       }
       onOpenChange(false);
@@ -93,15 +98,9 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
           }}
           className="flex flex-col gap-4 pt-1"
         >
-          {/* Destination URL */}
           <form.Field
             name="destination"
-            validators={{
-              onChange: ({ value }) => {
-                const r = schema.shape.destination.safeParse(value);
-                return r.success ? undefined : r.error.issues[0]?.message;
-              },
-            }}
+            validators={{ onChange: ({ value }) => validateDestinationField(value) }}
           >
             {(field) => (
               <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -125,16 +124,9 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
 
           <Separator className="bg-white/6" />
 
-          {/* Slug */}
           <form.Field
             name="slug"
-            validators={{
-              onChange: ({ value }) => {
-                if (!value) return undefined;
-                const r = slugSchema.safeParse(value);
-                return r.success ? undefined : r.error.issues[0]?.message;
-              },
-            }}
+            validators={{ onChange: ({ value }) => validateSlugField(value) }}
           >
             {(field) => (
               <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
@@ -175,10 +167,12 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
             )}
           </form.Field>
 
-          {/* Title */}
-          <form.Field name="title">
+          <form.Field
+            name="title"
+            validators={{ onChange: ({ value }) => validateTitleField(value) }}
+          >
             {(field) => (
-              <Field>
+              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
                 <FieldLabel htmlFor={field.name}>
                   Title{" "}
                   <span className="text-xs font-normal text-muted-foreground">(optional)</span>
@@ -189,7 +183,11 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                   placeholder="Enter a descriptive title"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
                 />
+                {field.state.meta.isTouched && (
+                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                )}
               </Field>
             )}
           </form.Field>

@@ -1,21 +1,23 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createAuth } from "@/lib/auth";
-import { createDb, SHORT_LINK_DOMAIN } from "@xaply/db";
+import { createDb, SHORT_LINK_DOMAIN, validateDestinationUrl, validateSlug, validateTitle } from "@xaply/db";
 import { links } from "@xaply/db/schema";
-import { eq,  desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
-
-async function getSession(request: NextRequest, env: CloudflareEnv) {
-  const auth = createAuth(env.DB, env);
-  const session = await auth.api.getSession({ headers: request.headers });
-  return session;
-}
+import { isSession, requireSession } from "@/lib/api-auth";
+import { API_READ_LIMIT, LINK_CREATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
-  const session = await getSession(request, env);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSession(request, env);
+  if (!isSession(session)) return session;
+
+  const rl = await rateLimit({
+    kv: env.ZAP_CACHE,
+    key: `read:${session.user.id}`,
+    ...API_READ_LIMIT,
+  });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
   const db = createDb(env.DB);
   const userLinks = await db
@@ -29,18 +31,55 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const { env } = getCloudflareContext();
-  const session = await getSession(request, env);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireSession(request, env);
+  if (!isSession(session)) return session;
 
-  const body = await request.json() as { destinationUrl: string; slug?: string; title?: string };
-  const { destinationUrl, slug, title } = body;
+  const rl = await rateLimit({
+    kv: env.ZAP_CACHE,
+    key: `create:${session.user.id}`,
+    ...LINK_CREATE_LIMIT,
+  });
+  if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
-  if (!destinationUrl) {
-    return NextResponse.json({ error: "destinationUrl is required" }, { status: 400 });
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const { destinationUrl, slug, title } = body as {
+    destinationUrl?: unknown;
+    slug?: unknown;
+    title?: unknown;
+  };
+
+  const urlResult = validateDestinationUrl(destinationUrl);
+  if (!urlResult.ok) {
+    return NextResponse.json({ error: urlResult.error }, { status: 400 });
+  }
+
+  const titleResult = validateTitle(title);
+  if (!titleResult.ok) {
+    return NextResponse.json({ error: titleResult.error }, { status: 400 });
+  }
+
+  let finalSlug: string;
+  if (slug === undefined || slug === null || slug === "") {
+    finalSlug = nanoid(7);
+  } else {
+    const slugResult = validateSlug(slug);
+    if (!slugResult.ok) {
+      return NextResponse.json({ error: slugResult.error }, { status: 400 });
+    }
+    finalSlug = slugResult.value;
   }
 
   const db = createDb(env.DB);
-  const finalSlug = slug || nanoid(7);
 
   try {
     const [link] = await db
@@ -50,8 +89,8 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         slug: finalSlug,
         domain: SHORT_LINK_DOMAIN,
-        destinationUrl,
-        title: title || null,
+        destinationUrl: urlResult.value,
+        title: titleResult.value || null,
         status: "active",
       })
       .returning();

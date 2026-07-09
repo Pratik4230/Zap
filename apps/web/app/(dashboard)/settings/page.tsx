@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { validateProfileNameField } from "@/lib/validation";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -34,6 +35,7 @@ export default function SettingsPage() {
   const { data: user } = useQuery({ queryKey: ["session"], queryFn: fetchSession });
 
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -134,12 +136,23 @@ export default function SettingsPage() {
             <Input
               placeholder={user?.name ?? "Your name"}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameError(validateProfileNameField(e.target.value) ?? "");
+              }}
             />
+            {nameError && <p className="text-sm text-destructive">{nameError}</p>}
           </div>
           <Button
-            disabled={!name.trim() || profileMutation.isPending}
-            onClick={() => profileMutation.mutate(name)}
+            disabled={!name.trim() || !!nameError || profileMutation.isPending}
+            onClick={() => {
+              const error = validateProfileNameField(name);
+              if (error) {
+                setNameError(error);
+                return;
+              }
+              profileMutation.mutate(name.trim());
+            }}
             className="font-semibold"
             style={{ background: AMBER, color: "oklch(0 0 0)" }}
           >
