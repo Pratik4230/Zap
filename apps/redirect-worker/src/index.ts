@@ -1,12 +1,13 @@
 import {
   APP_URL,
   assertSafeRedirectUrl,
+  isLinkRedirectAllowed,
   isValidSlugPath,
   rateLimitKv,
   REDIRECT_IP_LIMIT,
 } from "@xaply/db";
 import { getLinkFromCache, cacheLinkInKV } from "./kv";
-import { getLinkBySlug } from "./db";
+import { getLinkBySlug, markLinkExpired, shouldExpireForClickLimit } from "./db";
 import { buildClickEvent } from "./analytics";
 
 interface WorkerEnv {
@@ -19,14 +20,12 @@ function getClientIp(request: Request): string {
   return request.headers.get("cf-connecting-ip") ?? "unknown";
 }
 
-function isLinkActive(link: {
-  status: string;
-  expiresAt: Date | string | null;
-}): boolean {
-  if (link.status !== "active") return false;
-  if (!link.expiresAt) return true;
-  const expiresAt = link.expiresAt instanceof Date ? link.expiresAt : new Date(link.expiresAt);
-  return expiresAt > new Date();
+function linkUnavailableResponse(reason: "expired" | "limit"): Response {
+  const message =
+    reason === "limit"
+      ? "This link has reached its click limit."
+      : "This link has expired.";
+  return new Response(message, { status: 410 });
 }
 
 export default {
@@ -68,8 +67,17 @@ export default {
       }
 
       ctx.waitUntil(cacheLinkInKV(env.ZAP_CACHE, slug, link));
-    } else if (!isLinkActive(link)) {
-      return new Response("Link not found", { status: 404 });
+    }
+
+    if (!isLinkRedirectAllowed(link)) {
+      const reason = shouldExpireForClickLimit(link) ? "limit" : "expired";
+      ctx.waitUntil(
+        Promise.all([
+          markLinkExpired(env.DB, link.id),
+          env.ZAP_CACHE.delete(slug),
+        ])
+      );
+      return linkUnavailableResponse(reason);
     }
 
     if (!assertSafeRedirectUrl(link.destinationUrl)) {

@@ -37,6 +37,8 @@ interface Link {
   destinationUrl: string;
   title: string | null;
   clickCount: number;
+  clickLimit: number | null;
+  expiresAt: string | null;
   status: LinkStatus;
   createdAt: string;
 }
@@ -66,20 +68,42 @@ async function updateLink({
   id,
   destinationUrl,
   title,
+  expiresAt,
+  clickLimit,
 }: {
   id: string;
   destinationUrl: string;
   title: string | null;
+  expiresAt: string | null;
+  clickLimit: number | null;
 }) {
   const res = await fetch(`/api/links/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ destinationUrl, title }),
+    body: JSON.stringify({ destinationUrl, title, expiresAt, clickLimit }),
   });
   if (!res.ok) {
     const data = await res.json() as { error?: string };
     throw new Error(data.error ?? "Failed to update link");
   }
+}
+
+function formatClickCount(link: Link) {
+  if (link.clickLimit != null) {
+    return `${link.clickCount.toLocaleString()} / ${link.clickLimit.toLocaleString()}`;
+  }
+  return link.clickCount.toLocaleString();
+}
+
+function formatLimits(link: Link) {
+  const parts: string[] = [];
+  if (link.expiresAt) {
+    parts.push(`Expires ${new Date(link.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`);
+  }
+  if (link.clickLimit != null) {
+    parts.push(`Max ${link.clickLimit.toLocaleString()} clicks`);
+  }
+  return parts.join(" · ");
 }
 
 function StatusBadge({ status }: { status: LinkStatus }) {
@@ -281,6 +305,9 @@ export default function DashboardPage() {
                         </button>
                       </div>
                       {link.title && <p className="mt-0.5 text-xs text-muted-foreground truncate max-w-45">{link.title}</p>}
+                      {formatLimits(link) && (
+                        <p className="mt-0.5 text-xs text-muted-foreground/80 truncate max-w-45">{formatLimits(link)}</p>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="max-w-60 truncate block text-sm text-muted-foreground">
@@ -288,7 +315,7 @@ export default function DashboardPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm font-medium text-foreground">
-                      {link.clickCount.toLocaleString()}
+                      {formatClickCount(link)}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={link.status} />

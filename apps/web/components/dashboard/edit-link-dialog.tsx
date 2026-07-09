@@ -12,7 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { validateDestinationField, validateTitleField } from "@/lib/validation";
+import {
+  validateClickLimitField,
+  validateDestinationField,
+  validateExpiresAtField,
+  validateTitleField,
+  toDatetimeLocalValue,
+} from "@/lib/validation";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -22,20 +28,30 @@ export interface EditableLink {
   domain: string;
   destinationUrl: string;
   title: string | null;
+  expiresAt: string | null;
+  clickLimit: number | null;
+  clickCount: number;
+}
+
+export interface EditLinkValues {
+  destinationUrl: string;
+  title: string | null;
+  expiresAt: string | null;
+  clickLimit: number | null;
 }
 
 interface EditLinkDialogProps {
   link: EditableLink | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (values: { destinationUrl: string; title: string | null }) => Promise<void>;
+  onSave: (values: EditLinkValues) => Promise<void>;
   isSaving: boolean;
 }
 
 interface EditLinkFormProps {
   link: EditableLink;
   onClose: () => void;
-  onSave: (values: { destinationUrl: string; title: string | null }) => Promise<void>;
+  onSave: (values: EditLinkValues) => Promise<void>;
   isSaving: boolean;
 }
 
@@ -46,14 +62,26 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
     defaultValues: {
       destination: link.destinationUrl,
       title: link.title ?? "",
+      expiresAt: toDatetimeLocalValue(link.expiresAt),
+      clickLimit: link.clickLimit != null ? String(link.clickLimit) : "",
     },
     onSubmit: async ({ value }) => {
       setServerError("");
 
       const destinationError = validateDestinationField(value.destination);
       const titleError = validateTitleField(value.title);
-      if (destinationError || titleError) {
-        setServerError(destinationError ?? titleError ?? "Invalid input");
+      const expiresAtError = validateExpiresAtField(value.expiresAt);
+      const clickLimitError = validateClickLimitField(value.clickLimit);
+      if (destinationError || titleError || expiresAtError || clickLimitError) {
+        setServerError(
+          destinationError ?? titleError ?? expiresAtError ?? clickLimitError ?? "Invalid input"
+        );
+        return;
+      }
+
+      const clickLimit = value.clickLimit ? Number(value.clickLimit) : null;
+      if (clickLimit != null && link.clickCount >= clickLimit) {
+        setServerError("Click limit must be greater than current click count");
         return;
       }
 
@@ -61,6 +89,8 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
         await onSave({
           destinationUrl: value.destination.trim(),
           title: value.title.trim() || null,
+          expiresAt: value.expiresAt ? new Date(value.expiresAt).toISOString() : null,
+          clickLimit,
         });
       } catch (error) {
         setServerError(error instanceof Error ? error.message : "Something went wrong");
@@ -75,7 +105,7 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
           Edit link
         </DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
-          Update where this short link redirects. Slug and click stats stay the same.
+          Update destination, limits, and title. Slug and short URL stay the same.
         </DialogDescription>
       </DialogHeader>
 
@@ -84,6 +114,10 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
         <span className="font-medium text-foreground">
           {link.domain}/{link.slug}
         </span>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {link.clickCount.toLocaleString()} clicks recorded
+          {link.clickLimit != null ? ` · limit ${link.clickLimit.toLocaleString()}` : ""}
+        </p>
       </div>
 
       <form
@@ -131,6 +165,56 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
                 id={field.name}
                 type="text"
                 placeholder="Enter a descriptive title"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+              />
+              {field.state.meta.isTouched && (
+                <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+              )}
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field
+          name="expiresAt"
+          validators={{ onChange: ({ value }) => validateExpiresAtField(value) }}
+        >
+          {(field) => (
+            <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+              <FieldLabel htmlFor={field.name}>
+                Expires at{" "}
+                <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+              </FieldLabel>
+              <Input
+                id={field.name}
+                type="datetime-local"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+              />
+              {field.state.meta.isTouched && (
+                <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+              )}
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field
+          name="clickLimit"
+          validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
+        >
+          {(field) => (
+            <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+              <FieldLabel htmlFor={field.name}>
+                Max clicks{" "}
+                <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+              </FieldLabel>
+              <Input
+                id={field.name}
+                type="number"
+                min={link.clickCount + 1}
+                placeholder="e.g. 100"
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}

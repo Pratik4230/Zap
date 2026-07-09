@@ -1,4 +1,4 @@
-import { createDb, clicks, links } from "@xaply/db";
+import { createDb, clicks, links, isLinkWithinClickLimit } from "@xaply/db";
 import type { ClickEvent } from "@xaply/db";
 import { eq, sql } from "drizzle-orm";
 
@@ -33,6 +33,19 @@ export default {
             })
             .where(eq(links.id, event.linkId)),
         ]);
+
+        const [link] = await db
+          .select()
+          .from(links)
+          .where(eq(links.id, event.linkId))
+          .limit(1);
+
+        if (link && link.clickLimit != null && !isLinkWithinClickLimit(link)) {
+          await db
+            .update(links)
+            .set({ status: "expired", updatedAt: new Date() })
+            .where(eq(links.id, event.linkId));
+        }
 
         message.ack();
       } catch {

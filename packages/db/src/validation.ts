@@ -3,6 +3,8 @@ export const SLUG_MAX_LENGTH = 50;
 export const TITLE_MAX_LENGTH = 100;
 export const NAME_MAX_LENGTH = 100;
 export const DESTINATION_MAX_LENGTH = 2048;
+export const MAX_CLICK_LIMIT = 1_000_000;
+export const MAX_EXPIRY_YEARS = 10;
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$/;
 const BLOCKED_PROTOCOLS = ["javascript:", "data:", "file:", "vbscript:", "blob:"];
@@ -110,4 +112,88 @@ export function isValidSlugPath(slug: string): boolean {
   if (!slug || slug.length > SLUG_MAX_LENGTH) return false;
   if (slug.includes("/") || slug.includes("\\") || slug.includes("..")) return false;
   return /^[a-zA-Z0-9_-]+$/.test(slug);
+}
+
+export function validateExpiresAt(
+  input: unknown
+): { ok: true; value: Date | null } | { ok: false; error: string } {
+  if (input === null || input === undefined || input === "") {
+    return { ok: true, value: null };
+  }
+  if (typeof input !== "string") {
+    return { ok: false, error: "expiresAt must be a string" };
+  }
+  const trimmed = input.trim();
+  if (!trimmed) return { ok: true, value: null };
+
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) {
+    return { ok: false, error: "Invalid expiry date" };
+  }
+  if (date <= new Date()) {
+    return { ok: false, error: "Expiry must be in the future" };
+  }
+  const max = new Date();
+  max.setFullYear(max.getFullYear() + MAX_EXPIRY_YEARS);
+  if (date > max) {
+    return { ok: false, error: `Expiry cannot be more than ${MAX_EXPIRY_YEARS} years ahead` };
+  }
+  return { ok: true, value: date };
+}
+
+export function validateClickLimit(
+  input: unknown
+): { ok: true; value: number | null } | { ok: false; error: string } {
+  if (input === null || input === undefined || input === "") {
+    return { ok: true, value: null };
+  }
+
+  let value: number;
+  if (typeof input === "number") {
+    value = input;
+  } else if (typeof input === "string") {
+    const trimmed = input.trim();
+    if (!trimmed) return { ok: true, value: null };
+    if (!/^\d+$/.test(trimmed)) {
+      return { ok: false, error: "Click limit must be a whole number" };
+    }
+    value = Number(trimmed);
+  } else {
+    return { ok: false, error: "clickLimit must be a number" };
+  }
+
+  if (!Number.isInteger(value) || value < 1) {
+    return { ok: false, error: "Click limit must be at least 1" };
+  }
+  if (value > MAX_CLICK_LIMIT) {
+    return { ok: false, error: `Click limit cannot exceed ${MAX_CLICK_LIMIT.toLocaleString()}` };
+  }
+  return { ok: true, value };
+}
+
+export function isLinkNotExpired(link: { expiresAt: Date | string | null }): boolean {
+  if (!link.expiresAt) return true;
+  const expiresAt = link.expiresAt instanceof Date ? link.expiresAt : new Date(link.expiresAt);
+  return expiresAt > new Date();
+}
+
+export function isLinkWithinClickLimit(link: {
+  clickCount: number;
+  clickLimit: number | null;
+}): boolean {
+  if (link.clickLimit == null) return true;
+  return link.clickCount < link.clickLimit;
+}
+
+export function isLinkRedirectAllowed(link: {
+  status: string;
+  expiresAt: Date | string | null;
+  clickCount: number;
+  clickLimit: number | null;
+}): boolean {
+  return (
+    link.status === "active" &&
+    isLinkNotExpired(link) &&
+    isLinkWithinClickLimit(link)
+  );
 }

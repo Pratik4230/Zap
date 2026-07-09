@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, validateDestinationUrl, validateLinkStatus, validateTitle } from "@xaply/db";
+import { createDb, validateClickLimit, validateDestinationUrl, validateExpiresAt, validateLinkStatus, validateTitle } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
@@ -41,12 +41,16 @@ export async function PATCH(
     status?: unknown;
     title?: unknown;
     destinationUrl?: unknown;
+    expiresAt?: unknown;
+    clickLimit?: unknown;
   };
 
   const updates: {
-    status?: "active" | "paused";
+    status?: "active" | "paused" | "expired";
     title?: string | null;
     destinationUrl?: string;
+    expiresAt?: Date | null;
+    clickLimit?: number | null;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
@@ -74,11 +78,46 @@ export async function PATCH(
     updates.destinationUrl = urlResult.value;
   }
 
+  if (input.expiresAt !== undefined) {
+    const expiresAtResult = validateExpiresAt(input.expiresAt);
+    if (!expiresAtResult.ok) {
+      return NextResponse.json({ error: expiresAtResult.error }, { status: 400 });
+    }
+    updates.expiresAt = expiresAtResult.value;
+  }
+
+  if (input.clickLimit !== undefined) {
+    const clickLimitResult = validateClickLimit(input.clickLimit);
+    if (!clickLimitResult.ok) {
+      return NextResponse.json({ error: clickLimitResult.error }, { status: 400 });
+    }
+    updates.clickLimit = clickLimitResult.value;
+  }
+
   if (Object.keys(updates).length === 1) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
   const db = createDb(env.DB);
+
+  const [existing] = await db
+    .select()
+    .from(links)
+    .where(and(eq(links.id, id), eq(links.userId, session.user.id)))
+    .limit(1);
+
+  if (!existing) return NextResponse.json({ error: "Link not found" }, { status: 404 });
+
+  if (
+    updates.clickLimit != null &&
+    existing.clickCount >= updates.clickLimit
+  ) {
+    return NextResponse.json(
+      { error: "Click limit must be greater than current click count" },
+      { status: 400 }
+    );
+  }
+
   const [updated] = await db
     .update(links)
     .set(updates)

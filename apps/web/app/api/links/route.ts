@@ -1,6 +1,14 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, SHORT_LINK_DOMAIN, validateDestinationUrl, validateSlug, validateTitle } from "@xaply/db";
+import {
+  createDb,
+  SHORT_LINK_DOMAIN,
+  validateClickLimit,
+  validateDestinationUrl,
+  validateExpiresAt,
+  validateSlug,
+  validateTitle,
+} from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -52,10 +60,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { destinationUrl, slug, title } = body as {
+  const { destinationUrl, slug, title, expiresAt, clickLimit } = body as {
     destinationUrl?: unknown;
     slug?: unknown;
     title?: unknown;
+    expiresAt?: unknown;
+    clickLimit?: unknown;
   };
 
   const urlResult = validateDestinationUrl(destinationUrl);
@@ -66,6 +76,16 @@ export async function POST(request: NextRequest) {
   const titleResult = validateTitle(title);
   if (!titleResult.ok) {
     return NextResponse.json({ error: titleResult.error }, { status: 400 });
+  }
+
+  const expiresAtResult = validateExpiresAt(expiresAt);
+  if (!expiresAtResult.ok) {
+    return NextResponse.json({ error: expiresAtResult.error }, { status: 400 });
+  }
+
+  const clickLimitResult = validateClickLimit(clickLimit);
+  if (!clickLimitResult.ok) {
+    return NextResponse.json({ error: clickLimitResult.error }, { status: 400 });
   }
 
   let finalSlug: string;
@@ -91,6 +111,8 @@ export async function POST(request: NextRequest) {
         domain: SHORT_LINK_DOMAIN,
         destinationUrl: urlResult.value,
         title: titleResult.value || null,
+        expiresAt: expiresAtResult.value,
+        clickLimit: clickLimitResult.value,
         status: "active",
       })
       .returning();

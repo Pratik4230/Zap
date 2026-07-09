@@ -1,5 +1,7 @@
 import {
+  validateClickLimit,
   validateDestinationUrl,
+  validateExpiresAt,
   validateProfileName,
   validateSlug,
   validateTitle,
@@ -24,4 +26,21 @@ export function validateTitleField(value: string): string | undefined {
 
 export function validateProfileNameField(value: string): string | undefined {
   return fieldError(validateProfileName(value));
+}
+
+export function validateExpiresAtField(value: string): string | undefined {
+  return fieldError(validateExpiresAt(value));
+}
+
+export function validateClickLimitField(value: string): string | undefined {
+  return fieldError(validateClickLimit(value));
+}
+
+/** Format a Date for `<input type="datetime-local" />` */
+export function toDatetimeLocalValue(date: Date | string | null | undefined): string {
+  if (!date) return "";
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

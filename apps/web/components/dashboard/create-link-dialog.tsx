@@ -16,7 +16,9 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { SHORT_LINK_DOMAIN } from "@xaply/db";
 import {
+  validateClickLimitField,
   validateDestinationField,
+  validateExpiresAtField,
   validateSlugField,
   validateTitleField,
 } from "@/lib/validation";
@@ -38,15 +40,19 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
   const [serverError, setServerError] = useState("");
 
   const form = useForm({
-    defaultValues: { destination: "", slug: "", title: "" },
+    defaultValues: { destination: "", slug: "", title: "", expiresAt: "", clickLimit: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
 
       const destinationError = validateDestinationField(value.destination);
       const slugError = validateSlugField(value.slug);
       const titleError = validateTitleField(value.title);
-      if (destinationError || slugError || titleError) {
-        setServerError(destinationError ?? slugError ?? titleError ?? "Invalid input");
+      const expiresAtError = validateExpiresAtField(value.expiresAt);
+      const clickLimitError = validateClickLimitField(value.clickLimit);
+      if (destinationError || slugError || titleError || expiresAtError || clickLimitError) {
+        setServerError(
+          destinationError ?? slugError ?? titleError ?? expiresAtError ?? clickLimitError ?? "Invalid input"
+        );
         return;
       }
 
@@ -57,6 +63,8 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
           destinationUrl: value.destination.trim(),
           slug: value.slug || undefined,
           title: value.title || undefined,
+          expiresAt: value.expiresAt ? new Date(value.expiresAt).toISOString() : undefined,
+          clickLimit: value.clickLimit ? Number(value.clickLimit) : undefined,
         }),
       });
       if (!res.ok) {
@@ -181,6 +189,58 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                   id={field.name}
                   type="text"
                   placeholder="Enter a descriptive title"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                />
+                {field.state.meta.isTouched && (
+                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                )}
+              </Field>
+            )}
+          </form.Field>
+
+          <Separator className="bg-white/6" />
+
+          <form.Field
+            name="expiresAt"
+            validators={{ onChange: ({ value }) => validateExpiresAtField(value) }}
+          >
+            {(field) => (
+              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                <FieldLabel htmlFor={field.name}>
+                  Expires at{" "}
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </FieldLabel>
+                <Input
+                  id={field.name}
+                  type="datetime-local"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                />
+                {field.state.meta.isTouched && (
+                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                )}
+              </Field>
+            )}
+          </form.Field>
+
+          <form.Field
+            name="clickLimit"
+            validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
+          >
+            {(field) => (
+              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                <FieldLabel htmlFor={field.name}>
+                  Max clicks{" "}
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </FieldLabel>
+                <Input
+                  id={field.name}
+                  type="number"
+                  min={1}
+                  placeholder="e.g. 100"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
