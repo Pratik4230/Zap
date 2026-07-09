@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Copy, ExternalLink, MoreHorizontal, Plus, TrendingUp, Link2, MousePointerClick, Activity } from "lucide-react";
+import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, TrendingUp, Link2, MousePointerClick, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateLinkDialog } from "@/components/dashboard/create-link-dialog";
+import { EditLinkDialog, type EditableLink } from "@/components/dashboard/edit-link-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -61,6 +62,26 @@ async function toggleLink(id: string, status: LinkStatus) {
   if (!res.ok) throw new Error("Failed to update link");
 }
 
+async function updateLink({
+  id,
+  destinationUrl,
+  title,
+}: {
+  id: string;
+  destinationUrl: string;
+  title: string | null;
+}) {
+  const res = await fetch(`/api/links/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ destinationUrl, title }),
+  });
+  if (!res.ok) {
+    const data = await res.json() as { error?: string };
+    throw new Error(data.error ?? "Failed to update link");
+  }
+}
+
 function StatusBadge({ status }: { status: LinkStatus }) {
   const config: Record<LinkStatus, { label: string; class: string }> = {
     active: { label: "Active", class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
@@ -71,8 +92,9 @@ function StatusBadge({ status }: { status: LinkStatus }) {
   return <Badge variant="outline" className={`text-xs font-medium ${cls}`}>{label}</Badge>;
 }
 
-function LinkActions({ link, onDelete, onToggle }: {
+function LinkActions({ link, onEdit, onDelete, onToggle }: {
   link: Link;
+  onEdit: (link: Link) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, status: LinkStatus) => void;
 }) {
@@ -87,6 +109,9 @@ function LinkActions({ link, onDelete, onToggle }: {
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied!"); }}>
           <Copy size={13} className="mr-2" /> Copy short URL
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(link)}>
+          <Pencil size={13} className="mr-2" /> Edit link
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => window.open(link.destinationUrl, "_blank")}>
           <ExternalLink size={13} className="mr-2" /> Open destination
@@ -108,6 +133,7 @@ function LinkActions({ link, onDelete, onToggle }: {
 
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [editLink, setEditLink] = useState<EditableLink | null>(null);
   const queryClient = useQueryClient();
 
   const { data: userLinks, isLoading } = useQuery({
@@ -128,6 +154,15 @@ export default function DashboardPage() {
     mutationFn: ({ id, status }: { id: string; status: LinkStatus }) => toggleLink(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["links"] }),
     onError: () => toast.error("Failed to update link"),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: updateLink,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["links"] });
+      toast.success("Link updated");
+      setEditLink(null);
+    },
   });
 
   const totalClicks = userLinks?.reduce((sum, l) => sum + l.clickCount, 0) ?? 0;
@@ -264,6 +299,7 @@ export default function DashboardPage() {
                     <TableCell>
                       <LinkActions
                         link={link}
+                        onEdit={setEditLink}
                         onDelete={(id) => deleteMutation.mutate(id)}
                         onToggle={(id, status) => toggleMutation.mutate({ id, status })}
                       />
@@ -277,6 +313,17 @@ export default function DashboardPage() {
       </Card>
 
       <CreateLinkDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={handleCreated} />
+      <EditLinkDialog
+        link={editLink}
+        open={editLink !== null}
+        onOpenChange={(open) => { if (!open) setEditLink(null); }}
+        isSaving={editMutation.isPending}
+        onSave={(values) =>
+          editLink
+            ? editMutation.mutateAsync({ id: editLink.id, ...values })
+            : Promise.reject(new Error("No link selected"))
+        }
+      />
     </div>
   );
 }

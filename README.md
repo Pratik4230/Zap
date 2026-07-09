@@ -1,155 +1,139 @@
 # Xaply — URL Shortener
 
-A high-performance URL shortener built on Cloudflare's edge infrastructure. Monorepo powered by Turborepo + pnpm.
+URL shortener on Cloudflare: `xaply.in` (app) + `go.xaply.in` (redirects).
 
-## Stack
 
-| Layer | Technology |
-|---|---|
-| Web app | Next.js + OpenNext.js (Cloudflare Pages) |
-| Auth | Better Auth + D1 |
-| DB | Cloudflare D1 (SQLite) + Drizzle ORM |
-| Edge redirect | Cloudflare Worker |
-| Analytics | Cloudflare Worker + Queue |
-| Email | Resend |
-| Package manager | pnpm workspaces |
+| App              | Path                    | Deploy                          |
+| ---------------- | ----------------------- | ------------------------------- |
+| Web (Next.js)    | `apps/web`              | `pnpm run deploy`               |
+| Redirect worker  | `apps/redirect-worker`  | `pnpm run deploy`               |
+| Analytics worker | `apps/analytics-worker` | `pnpm run deploy`               |
+| DB schema        | `packages/` `db`        | migrate, then redeploy all apps |
 
-## Apps & Packages
 
-```
-apps/
-  web/               → Next.js app (dashboard, auth)
-  redirect-worker/   → Cloudflare Worker — handles short link redirects
-  analytics-worker/  → Cloudflare Worker — processes click analytics
-packages/
-  db/                → Drizzle schema + migrations
-```
-
-## Local Development
-
-### 1. Install dependencies
+## Local dev
 
 ```bash
 pnpm install
-```
-
-### 2. Set up environment
-
-```bash
-bash setup.sh
-```
-
-Create `apps/web/.dev.vars` with the following:
-
-```
-NEXTJS_ENV=development
-BETTER_AUTH_SECRET=<generate with: openssl rand -base64 32>
-BETTER_AUTH_URL=http://localhost:3000
-
-RESEND_API_KEY=re_your_key_here
-
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-```
-
-> `.dev.vars` is Wrangler's env file. Next.js reads it via OpenNext.js — do **not** use `.env` for the web app.
-
-### 3. Apply DB migration (first time only)
-
-```bash
-cd apps/web
-npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/0000_silky_the_professor.sql
-```
-
-### 4. Start dev servers
-
-```bash
+# create apps/web/.dev.vars (see below)
+cd apps/web && npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/0000_silky_the_professor.sql
 pnpm dev
 ```
 
-- Web app → `http://localhost:3000`
-- Redirect worker → `http://localhost:8787`
-- Analytics worker → `http://localhost:8788`
+`apps/web/.dev.vars`:
 
-## OAuth Setup
-
-**Google** → [console.cloud.google.com](https://console.cloud.google.com) → Credentials → OAuth 2.0 Client
-
-Authorized redirect URI:
 ```
-http://localhost:3000/api/auth/callback/google
-```
-
-**GitHub** → [github.com/settings/developers](https://github.com/settings/developers) → OAuth Apps
-
-Authorization callback URL:
-```
-http://localhost:3000/api/auth/callback/github
+NEXTJS_ENV=development
+BETTER_AUTH_SECRET=<openssl rand -base64 32>
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+RESEND_API_KEY=re_...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
 ```
 
-> Add both local and production URLs to the same OAuth app.
+- Web → `localhost:3000` · Redirect → `localhost:8787` · Analytics → `localhost:8788`
+- Local D1 data → `apps/web/.wrangler/state/v3/d1/`
 
-## Database
+## Database (D1 + Drizzle)
 
-The local D1 database lives at:
-```
-apps/web/.wrangler/state/v3/d1/
-```
+**One DB (`zap-db`) shared by all apps.** Schema lives in `packages/db/src/schema.ts`.
 
-### Query local DB
+### First-time setup
+
 ```bash
+# local
 cd apps/web
-npx wrangler d1 execute zap-db --local --command "SELECT * FROM user;"
+npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/0000_silky_the_professor.sql
+
+# production
+npx wrangler d1 execute zap-db --remote --file=../../packages/db/drizzle/0000_silky_the_professor.sql
 ```
 
-### View in Drizzle Studio
-```bash
-cd packages/db
-npx drizzle-kit studio
-```
+### Schema change workflow
 
-### Schema changes workflow
 ```bash
 # 1. Edit packages/db/src/schema.ts
+# 2. Generate migration
+cd packages/db && npx drizzle-kit generate
 
-# 2. Generate new migration
-cd packages/db
-npx drizzle-kit generate
-
-# 3. Apply to local D1
+# 3. Apply locally
 cd apps/web
-npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/<new-migration>.sql
+npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/<migration>.sql
 
-# 4. Apply to production D1
-npx wrangler d1 execute zap-db --remote --file=../../packages/db/drizzle/<new-migration>.sql
+# 4. Apply to production
+npx wrangler d1 execute zap-db --remote --file=../../packages/db/drizzle/<migration>.sql
+
+# 5. Redeploy ALL apps (db package is shared)
+cd apps/web && NEXT_PUBLIC_APP_URL=https://xaply.in pnpm run deploy
+cd ../redirect-worker && pnpm run deploy
+cd ../analytics-worker && pnpm run deploy
 ```
 
-> `drizzle-kit migrate` does not work with D1. Always use `wrangler d1 execute` to apply migrations.
+> Don't use `drizzle-kit migrate` with D1 — always `wrangler d1 execute`.
 
-## Deployment
+### Useful DB commands
 
 ```bash
-# Build + preview locally (with Wrangler runtime — full D1 access)
 cd apps/web
-pnpm preview
 
-# Deploy to Cloudflare Pages
-pnpm deploy
+# query local
+npx wrangler d1 execute zap-db --local --command "SELECT * FROM links LIMIT 5;"
 
-# Set production secrets
+# query production
+npx wrangler d1 execute zap-db --remote --command "SELECT * FROM links LIMIT 5;"
+
+# Drizzle Studio (local sqlite)
+cd packages/db && npx drizzle-kit studio
+```
+
+## Deploy
+
+**Code changes don't go live until you redeploy the changed app.**
+
+```bash
+# web only
+cd apps/web
+NEXT_PUBLIC_APP_URL=https://xaply.in pnpm run deploy
+
+# redirect worker only
+cd apps/redirect-worker && pnpm run deploy
+
+# analytics worker only
+cd apps/analytics-worker && pnpm run deploy
+```
+
+
+| Changed                  | Redeploy                                   |
+| ------------------------ | ------------------------------------------ |
+| `apps/web/`              | web                                        |
+| `apps/redirect-worker/`  | redirect-worker                            |
+| `apps/analytics-worker/` | analytics-worker                           |
+| `packages/db/`           | migrate remote D1 → redeploy all 3 apps (see above) |
+
+
+### Production secrets (web app, one-time)
+
+```bash
+cd apps/web
+npx wrangler secret put BETTER_AUTH_SECRET
 npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put GITHUB_CLIENT_SECRET
-npx wrangler secret put BETTER_AUTH_SECRET
 ```
 
-## Environment Files
+`BETTER_AUTH_URL` and OAuth client IDs are in `apps/web/wrangler.jsonc`.
 
-| File | Purpose | Committed |
-|---|---|---|
-| `.env` | Root-level shared vars | ❌ gitignored |
-| `apps/web/.dev.vars` | Wrangler local secrets | ❌ gitignored |
-| `.env.example` | Template (no secrets) | ✅ committed |
+## OAuth callbacks
+
+Add both local + production to Google/GitHub:
+
+```
+http://localhost:3000/api/auth/callback/google
+http://localhost:3000/api/auth/callback/github
+https://xaply.in/api/auth/callback/google
+https://xaply.in/api/auth/callback/github
+```
+

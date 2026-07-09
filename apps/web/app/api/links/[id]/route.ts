@@ -20,12 +20,46 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const body = await request.json() as { status?: "active" | "paused"; title?: string; destinationUrl?: string };
+  const body = await request.json() as {
+    status?: "active" | "paused";
+    title?: string | null;
+    destinationUrl?: string;
+  };
+
+  const updates: {
+    status?: "active" | "paused";
+    title?: string | null;
+    destinationUrl?: string;
+    updatedAt: Date;
+  } = { updatedAt: new Date() };
+
+  if (body.status !== undefined) {
+    if (body.status !== "active" && body.status !== "paused") {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    updates.status = body.status;
+  }
+
+  if (body.title !== undefined) {
+    updates.title = body.title?.trim() || null;
+  }
+
+  if (body.destinationUrl !== undefined) {
+    if (!body.destinationUrl) {
+      return NextResponse.json({ error: "destinationUrl is required" }, { status: 400 });
+    }
+    try {
+      new URL(body.destinationUrl);
+    } catch {
+      return NextResponse.json({ error: "Invalid destination URL" }, { status: 400 });
+    }
+    updates.destinationUrl = body.destinationUrl;
+  }
 
   const db = createDb(env.DB);
   const [updated] = await db
     .update(links)
-    .set({ ...body, updatedAt: new Date() })
+    .set(updates)
     .where(and(eq(links.id, id), eq(links.userId, session.user.id)))
     .returning();
 
