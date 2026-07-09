@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, TrendingUp, Link2, MousePointerClick, Activity } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, TrendingUp, Link2, MousePointerClick, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +123,7 @@ function LinkActions({ link, onEdit, onDelete, onToggle }: {
   onDelete: (id: string) => void;
   onToggle: (id: string, status: LinkStatus) => void;
 }) {
+  const router = useRouter();
   const shortUrl = `https://${link.domain}/${link.slug}`;
   return (
     <DropdownMenu>
@@ -131,6 +133,9 @@ function LinkActions({ link, onEdit, onDelete, onToggle }: {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={() => router.push(`/dashboard/links/${link.id}/analytics`)}>
+          <BarChart3 size={13} className="mr-2" /> View analytics
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied!"); }}>
           <Copy size={13} className="mr-2" /> Copy short URL
         </DropdownMenuItem>
