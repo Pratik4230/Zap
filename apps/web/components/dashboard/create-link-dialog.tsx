@@ -19,6 +19,7 @@ import {
   validateClickLimitField,
   validateDestinationField,
   validateExpiresAtField,
+  validateLinkPasswordField,
   validateSlugField,
   validateTitleField,
 } from "@/lib/validation";
@@ -40,7 +41,7 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
   const [serverError, setServerError] = useState("");
 
   const form = useForm({
-    defaultValues: { destination: "", slug: "", title: "", expiresAt: "", clickLimit: "" },
+    defaultValues: { destination: "", slug: "", title: "", expiresAt: "", clickLimit: "", password: "" },
     onSubmit: async ({ value }) => {
       setServerError("");
 
@@ -49,9 +50,10 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
       const titleError = validateTitleField(value.title);
       const expiresAtError = validateExpiresAtField(value.expiresAt);
       const clickLimitError = validateClickLimitField(value.clickLimit);
-      if (destinationError || slugError || titleError || expiresAtError || clickLimitError) {
+      const passwordError = validateLinkPasswordField(value.password);
+      if (destinationError || slugError || titleError || expiresAtError || clickLimitError || passwordError) {
         setServerError(
-          destinationError ?? slugError ?? titleError ?? expiresAtError ?? clickLimitError ?? "Invalid input"
+          destinationError ?? slugError ?? titleError ?? expiresAtError ?? clickLimitError ?? passwordError ?? "Invalid input"
         );
         return;
       }
@@ -65,6 +67,7 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
           title: value.title || undefined,
           expiresAt: value.expiresAt ? new Date(value.expiresAt).toISOString() : undefined,
           clickLimit: value.clickLimit ? Number(value.clickLimit) : undefined,
+          password: value.password.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -241,6 +244,32 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                   type="number"
                   min={1}
                   placeholder="e.g. 100"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                />
+                {field.state.meta.isTouched && (
+                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                )}
+              </Field>
+            )}
+          </form.Field>
+
+          <form.Field
+            name="password"
+            validators={{ onChange: ({ value }) => validateLinkPasswordField(value) }}
+          >
+            {(field) => (
+              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                <FieldLabel htmlFor={field.name}>
+                  Password{" "}
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </FieldLabel>
+                <Input
+                  id={field.name}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Require a password to open this link"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}

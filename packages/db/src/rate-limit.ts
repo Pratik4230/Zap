@@ -24,3 +24,6 @@ export async function rateLimitKv(
 
 /** 300 redirects per minute per IP */
 export const REDIRECT_IP_LIMIT = { limit: 300, windowSeconds: 60 };
+
+/** 10 password guesses per minute per IP + slug */
+export const REDIRECT_PASSWORD_GUESS_LIMIT = { limit: 10, windowSeconds: 60 };

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, QrCode, TrendingUp, Link2, MousePointerClick, Activity, BarChart3, Search, X } from "lucide-react";
+import { Copy, ExternalLink, Lock, MoreHorizontal, Pencil, Plus, QrCode, TrendingUp, Link2, MousePointerClick, Activity, BarChart3, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,7 @@ interface Link {
   clickLimit: number | null;
   expiresAt: string | null;
   status: LinkStatus;
+  hasPassword: boolean;
   createdAt: string;
 }
 
@@ -128,17 +129,27 @@ async function updateLink({
   title,
   expiresAt,
   clickLimit,
+  password,
 }: {
   id: string;
   destinationUrl: string;
   title: string | null;
   expiresAt: string | null;
   clickLimit: number | null;
+  password?: string | null;
 }) {
+  const body: Record<string, unknown> = {
+    destinationUrl,
+    title,
+    expiresAt,
+    clickLimit,
+  };
+  if (password !== undefined) body.password = password;
+
   const res = await fetch(`/api/links/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ destinationUrl, title, expiresAt, clickLimit }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const data = await res.json() as { error?: string };
@@ -155,6 +166,7 @@ function formatClickCount(link: Link) {
 
 function formatLimits(link: Link) {
   const parts: string[] = [];
+  if (link.hasPassword) parts.push("Password protected");
   if (link.expiresAt) {
     parts.push(`Expires ${new Date(link.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`);
   }
@@ -497,7 +509,10 @@ export default function DashboardPage() {
                       </div>
                       {link.title && <p className="mt-0.5 text-xs text-muted-foreground truncate max-w-45">{link.title}</p>}
                       {formatLimits(link) && (
-                        <p className="mt-0.5 text-xs text-muted-foreground/80 truncate max-w-45">{formatLimits(link)}</p>
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground/80 truncate max-w-45">
+                          {link.hasPassword && <Lock size={11} className="shrink-0" />}
+                          <span className="truncate">{formatLimits(link)}</span>
+                        </p>
                       )}
                     </TableCell>
                     <TableCell>

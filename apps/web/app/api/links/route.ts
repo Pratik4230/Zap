@@ -3,9 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   createDb,
   SHORT_LINK_DOMAIN,
+  hashLinkPassword,
+  toPublicLink,
+  toPublicLinks,
   validateClickLimit,
   validateDestinationUrl,
   validateExpiresAt,
+  validateLinkPassword,
   validateSlug,
   validateTitle,
 } from "@xaply/db";
@@ -32,7 +36,10 @@ export async function GET(request: NextRequest) {
   const db = createDb(env.DB);
   const result = await queryLinksPage(db, session.user.id, params);
 
-  return NextResponse.json(result);
+  return NextResponse.json({
+    ...result,
+    links: toPublicLinks(result.links),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -58,12 +65,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { destinationUrl, slug, title, expiresAt, clickLimit } = body as {
+  const { destinationUrl, slug, title, expiresAt, clickLimit, password } = body as {
     destinationUrl?: unknown;
     slug?: unknown;
     title?: unknown;
     expiresAt?: unknown;
     clickLimit?: unknown;
+    password?: unknown;
   };
 
   const urlResult = validateDestinationUrl(destinationUrl);
@@ -84,6 +92,16 @@ export async function POST(request: NextRequest) {
   const clickLimitResult = validateClickLimit(clickLimit);
   if (!clickLimitResult.ok) {
     return NextResponse.json({ error: clickLimitResult.error }, { status: 400 });
+  }
+
+  const passwordResult = validateLinkPassword(password);
+  if (!passwordResult.ok) {
+    return NextResponse.json({ error: passwordResult.error }, { status: 400 });
+  }
+
+  let passwordHash: string | null = null;
+  if (passwordResult.value) {
+    passwordHash = await hashLinkPassword(passwordResult.value);
   }
 
   let finalSlug: string;
@@ -111,13 +129,14 @@ export async function POST(request: NextRequest) {
         title: titleResult.value || null,
         expiresAt: expiresAtResult.value,
         clickLimit: clickLimitResult.value,
+        passwordHash,
         status: "active",
       })
       .returning();
 
     void env.ZAP_CACHE.put(finalSlug, JSON.stringify(link), { expirationTtl: 60 * 60 * 24 * 7 });
 
-    return NextResponse.json({ link }, { status: 201 });
+    return NextResponse.json({ link: toPublicLink(link) }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
   }

@@ -5,15 +5,23 @@ import {
   isValidSlugPath,
   rateLimitKv,
   REDIRECT_IP_LIMIT,
+  REDIRECT_PASSWORD_GUESS_LIMIT,
+  verifyLinkPassword,
 } from "@xaply/db";
 import { getLinkFromCache, cacheLinkInKV } from "./kv";
 import { getLinkBySlug, markLinkExpired, shouldExpireForClickLimit } from "./db";
 import { buildClickEvent } from "./analytics";
+import {
+  createUnlockCookie,
+  isUnlockCookieValid,
+  renderPasswordPage,
+} from "./password-page";
 
 interface WorkerEnv {
   ZAP_CACHE: KVNamespace;
   DB: D1Database;
   ANALYTICS_QUEUE: Queue;
+  LINK_PASSWORD_SECRET: string;
 }
 
 function getClientIp(request: Request): string {
@@ -26,6 +34,24 @@ function linkUnavailableResponse(reason: "expired" | "limit"): Response {
       ? "This link has reached its click limit."
       : "This link has expired.";
   return new Response(message, { status: 410 });
+}
+
+async function issueRedirect(
+  request: Request,
+  env: WorkerEnv,
+  ctx: ExecutionContext,
+  link: NonNullable<Awaited<ReturnType<typeof getLinkBySlug>>>
+): Promise<Response> {
+  if (!assertSafeRedirectUrl(link.destinationUrl)) {
+    return new Response("Invalid destination", { status: 410 });
+  }
+
+  ctx.waitUntil(
+    env.ANALYTICS_QUEUE.send(
+      buildClickEvent(link.id, request as Request<unknown, IncomingRequestCfProperties>)
+    )
+  );
+  return Response.redirect(link.destinationUrl, 302);
 }
 
 export default {
@@ -80,12 +106,69 @@ export default {
       return linkUnavailableResponse(reason);
     }
 
-    if (!assertSafeRedirectUrl(link.destinationUrl)) {
-      return new Response("Invalid destination", { status: 410 });
+    if (link.passwordHash) {
+      if (request.method === "POST") {
+        const guessRl = await rateLimitKv(
+          env.ZAP_CACHE,
+          `pwd:${ip}:${slug}`,
+          REDIRECT_PASSWORD_GUESS_LIMIT.limit,
+          REDIRECT_PASSWORD_GUESS_LIMIT.windowSeconds
+        );
+        if (!guessRl.success) {
+          return renderPasswordPage({
+            slug,
+            title: link.title,
+            error: "Too many attempts. Please wait and try again.",
+          });
+        }
+
+        let password = "";
+        const contentType = request.headers.get("content-type") ?? "";
+        if (contentType.includes("application/x-www-form-urlencoded")) {
+          const form = await request.formData();
+          const value = form.get("password");
+          password = typeof value === "string" ? value : "";
+        } else {
+          return new Response("Unsupported content type", { status: 415 });
+        }
+
+        const valid = await verifyLinkPassword(password, link.passwordHash);
+        if (!valid) {
+          return renderPasswordPage({
+            slug,
+            title: link.title,
+            error: "Incorrect password. Try again.",
+          });
+        }
+
+        const cookie = await createUnlockCookie(
+          link.id,
+          slug,
+          env.LINK_PASSWORD_SECRET,
+          url.protocol === "https:"
+        );
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: `/${slug}`,
+            "Set-Cookie": cookie,
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+
+      if (request.method !== "GET") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+
+      const unlocked = await isUnlockCookieValid(request, link.id, env.LINK_PASSWORD_SECRET);
+      if (!unlocked) {
+        return renderPasswordPage({ slug, title: link.title });
+      }
+    } else if (request.method !== "GET") {
+      return new Response("Method not allowed", { status: 405 });
     }
 
-    ctx.waitUntil(env.ANALYTICS_QUEUE.send(buildClickEvent(link.id, request)));
-
-    return Response.redirect(link.destinationUrl, 302);
+    return issueRedirect(request, env, ctx, link);
   },
 } satisfies ExportedHandler<WorkerEnv>;

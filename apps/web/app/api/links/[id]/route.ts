@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, validateClickLimit, validateDestinationUrl, validateExpiresAt, validateLinkStatus, validateTitle } from "@xaply/db";
+import { createDb, hashLinkPassword, toPublicLink, validateClickLimit, validateDestinationUrl, validateExpiresAt, validateLinkPassword, validateLinkStatus, validateTitle } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
@@ -43,6 +43,7 @@ export async function PATCH(
     destinationUrl?: unknown;
     expiresAt?: unknown;
     clickLimit?: unknown;
+    password?: unknown;
   };
 
   const updates: {
@@ -51,6 +52,7 @@ export async function PATCH(
     destinationUrl?: string;
     expiresAt?: Date | null;
     clickLimit?: number | null;
+    passwordHash?: string | null;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
@@ -94,6 +96,18 @@ export async function PATCH(
     updates.clickLimit = clickLimitResult.value;
   }
 
+  if (input.password !== undefined) {
+    if (input.password === null || input.password === "") {
+      updates.passwordHash = null;
+    } else {
+      const passwordResult = validateLinkPassword(input.password);
+      if (!passwordResult.ok) {
+        return NextResponse.json({ error: passwordResult.error }, { status: 400 });
+      }
+      updates.passwordHash = await hashLinkPassword(passwordResult.value);
+    }
+  }
+
   if (Object.keys(updates).length === 1) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
@@ -128,7 +142,7 @@ export async function PATCH(
 
   void env.ZAP_CACHE.delete(updated.slug);
 
-  return NextResponse.json({ link: updated });
+  return NextResponse.json({ link: toPublicLink(updated) });
 }
 
 export async function DELETE(

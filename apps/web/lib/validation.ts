@@ -2,6 +2,7 @@ import {
   validateClickLimit,
   validateDestinationUrl,
   validateExpiresAt,
+  validateLinkPassword,
   validateProfileName,
   validateSlug,
   validateTitle,
@@ -34,6 +35,11 @@ export function validateExpiresAtField(value: string): string | undefined {
 
 export function validateClickLimitField(value: string): string | undefined {
   return fieldError(validateClickLimit(value));
+}
+
+export function validateLinkPasswordField(value: string): string | undefined {
+  if (!value) return undefined;
+  return fieldError(validateLinkPassword(value));
 }
 
 /** Format a Date for `<input type="datetime-local" />` */
