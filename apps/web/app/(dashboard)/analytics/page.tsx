@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Globe, MapPin, Monitor, Smartphone, Tablet } from "lucide-react";
+import { BarChart3, Globe, MapPin, Monitor, Smartphone, Tablet, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
-const DEVICE_ICONS: Record<string, React.ElementType> = {
+const DEVICE_ICONS: Record<string, LucideIcon> = {
   desktop: Monitor,
   mobile: Smartphone,
   tablet: Tablet,
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <BarChart3 size={16} style={{ color: AMBER }} />
-              Clicks — Last 7 Days
+              Clicks, Last 7 Days
             </CardTitle>
             {isLoading ? (
               <Skeleton className="h-5 w-24" />

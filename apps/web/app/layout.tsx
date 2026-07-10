@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Providers } from "@/components/providers"
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/lib/site";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
 
@@ -14,8 +15,8 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Xaply — URL Shortener",
-  description: "Short links that move fast. Built on Cloudflare Edge.",
+  title: siteConfig.title,
+  description: siteConfig.description,
 }
 
 export default function RootLayout({

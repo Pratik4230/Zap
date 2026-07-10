@@ -121,7 +121,7 @@ export default function SettingsPage() {
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-foreground">{user?.email ?? "—"}</p>
+              <p className="text-sm text-foreground">{user?.email ?? "Not set"}</p>
               {user?.emailVerified && (
                 <span className="flex items-center gap-1 text-xs text-emerald-400">
                   <ShieldCheck size={12} /> Verified

@@ -323,7 +323,7 @@ export default function DashboardPage() {
     { label: "Active Links", value: (summary?.activeLinks ?? 0).toString(), icon: Activity },
     {
       label: "Active Rate",
-      value: (summary?.totalLinks ?? 0) > 0 ? `${summary?.activeRate ?? 0}%` : "—",
+      value: (summary?.totalLinks ?? 0) > 0 ? `${summary?.activeRate ?? 0}%` : "N/A",
       icon: TrendingUp,
     },
   ];

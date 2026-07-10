@@ -22,6 +22,13 @@ export async function middleware(request: NextRequest) {
   const isProtected = PROTECTED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const isAuthRoute = AUTH_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
+  if (pathname === "/") {
+    const valid = await hasValidSession(request);
+    if (valid) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
   if (isProtected) {
     const valid = await hasValidSession(request);
     if (!valid) {
@@ -43,5 +50,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/analytics/:path*", "/settings/:path*", "/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"],
+  matcher: ["/", "/dashboard/:path*", "/analytics/:path*", "/settings/:path*", "/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"],
 };
