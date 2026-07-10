@@ -36,3 +36,18 @@ export function formatCountRows<T extends string | null>(
     count: Number(r.count),
   }));
 }
+
+export function formatCityRows(
+  rows: { city: string | null; country: string | null; count: number | string }[]
+) {
+  return rows
+    .filter((r) => r.city?.trim())
+    .map((r) => {
+      const city = r.city!.trim();
+      const country = r.country?.trim();
+      return {
+        label: country ? `${city}, ${country}` : city,
+        count: Number(r.count),
+      };
+    });
+}

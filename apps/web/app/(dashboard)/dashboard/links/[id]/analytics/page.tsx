@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { use } from "react";
-import { ArrowLeft, BarChart3, ExternalLink, Globe, Link2, Monitor, Smartphone, Tablet } from "lucide-react";
+import { ArrowLeft, BarChart3, ExternalLink, Globe, Link2, MapPin, Monitor, Smartphone, Tablet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ interface LinkAnalyticsData {
   daily: { date: string; label: string; clicks: number }[];
   totalClicks: number;
   countries: { label: string; count: number }[];
+  cities: { label: string; count: number }[];
   devices: { device: string; count: number; pct: number }[];
   browsers: { label: string; count: number }[];
   os: { label: string; count: number }[];
@@ -123,6 +124,7 @@ export default function LinkAnalyticsPage({
 
   const maxDaily = data ? Math.max(...data.daily.map((d) => d.clicks), 1) : 1;
   const maxCountry = data?.countries[0]?.count ?? 1;
+  const maxCity = data?.cities[0]?.count ?? 1;
   const maxBrowser = data?.browsers[0]?.count ?? 1;
   const maxOs = data?.os[0]?.count ?? 1;
   const maxReferrer = data?.referrers[0]?.count ?? 1;
@@ -288,6 +290,28 @@ export default function LinkAnalyticsPage({
 
         <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
           <CardHeader className="px-6 pt-5 pb-4">
+            <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+              <MapPin size={16} style={{ color: AMBER }} />
+              Top Cities
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-6 pb-5">
+            {isLoading ? (
+              <Skeleton className="h-32 w-full" />
+            ) : (
+              <CountList
+                items={data?.cities ?? []}
+                emptyMessage="No city data yet"
+                max={maxCity}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
+          <CardHeader className="px-6 pt-5 pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Top Referrers</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-5">
@@ -302,9 +326,7 @@ export default function LinkAnalyticsPage({
             )}
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
           <CardHeader className="px-6 pt-5 pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Browsers</CardTitle>
@@ -321,7 +343,9 @@ export default function LinkAnalyticsPage({
             )}
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
           <CardHeader className="px-6 pt-5 pb-4">
             <CardTitle className="text-base font-semibold text-foreground">Operating Systems</CardTitle>

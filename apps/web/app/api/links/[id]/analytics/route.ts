@@ -2,10 +2,11 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
 import { createDb } from "@xaply/db";
 import { links, clicks } from "@xaply/db/schema";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, ne, sql } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
 import {
   buildLast7DaysDaily,
+  formatCityRows,
   formatCountRows,
   formatDeviceBreakdown,
 } from "@/lib/analytics-helpers";
@@ -47,8 +48,9 @@ export async function GET(
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const linkFilter = and(eq(clicks.linkId, link.id), gte(clicks.timestamp, sevenDaysAgo));
+  const cityFilter = and(linkFilter, isNotNull(clicks.city), ne(clicks.city, ""));
 
-  const [dailyRaw, countriesRaw, devicesRaw, browsersRaw, osRaw, referrersRaw] =
+  const [dailyRaw, countriesRaw, citiesRaw, devicesRaw, browsersRaw, osRaw, referrersRaw] =
     await Promise.all([
       db
         .select({
@@ -70,6 +72,18 @@ export async function GET(
         .groupBy(clicks.country)
         .orderBy(sql`count(*) desc`)
         .limit(5),
+
+      db
+        .select({
+          city: clicks.city,
+          country: clicks.country,
+          count: sql<number>`count(*)`,
+        })
+        .from(clicks)
+        .where(cityFilter)
+        .groupBy(clicks.city, clicks.country)
+        .orderBy(sql`count(*) desc`)
+        .limit(7),
 
       db
         .select({
@@ -133,6 +147,7 @@ export async function GET(
     daily,
     totalClicks,
     countries: formatCountRows(countriesRaw, "Unknown"),
+    cities: formatCityRows(citiesRaw),
     devices: formatDeviceBreakdown(devicesRaw),
     browsers: formatCountRows(browsersRaw, "Unknown"),
     os: formatCountRows(osRaw, "Unknown"),

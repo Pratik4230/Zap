@@ -2,9 +2,10 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
 import { createDb } from "@xaply/db";
 import { links, clicks } from "@xaply/db/schema";
-import { and, eq, gte, sql, desc } from "drizzle-orm";
+import { and, eq, gte, isNotNull, ne, sql, desc } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
 import { API_READ_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { formatCityRows } from "@/lib/analytics-helpers";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
@@ -24,7 +25,10 @@ export async function GET(request: NextRequest) {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const [dailyRaw, topLinks, countriesRaw, devicesRaw] = await Promise.all([
+  const clickWindow = and(eq(links.userId, userId), gte(clicks.timestamp, sevenDaysAgo));
+  const cityFilter = and(clickWindow, isNotNull(clicks.city), ne(clicks.city, ""));
+
+  const [dailyRaw, topLinks, countriesRaw, citiesRaw, devicesRaw] = await Promise.all([
     db
       .select({
         date: sql<string>`date(${clicks.timestamp}, 'unixepoch')`,
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
       })
       .from(clicks)
       .innerJoin(links, eq(clicks.linkId, links.id))
-      .where(and(eq(links.userId, userId), gte(clicks.timestamp, sevenDaysAgo)))
+      .where(clickWindow)
       .groupBy(sql`date(${clicks.timestamp}, 'unixepoch')`)
       .orderBy(sql`date(${clicks.timestamp}, 'unixepoch')`),
 
@@ -55,10 +59,23 @@ export async function GET(request: NextRequest) {
       })
       .from(clicks)
       .innerJoin(links, eq(clicks.linkId, links.id))
-      .where(and(eq(links.userId, userId), gte(clicks.timestamp, sevenDaysAgo)))
+      .where(clickWindow)
       .groupBy(clicks.country)
       .orderBy(sql`count(*) desc`)
       .limit(5),
+
+    db
+      .select({
+        city: clicks.city,
+        country: clicks.country,
+        count: sql<number>`count(*)`,
+      })
+      .from(clicks)
+      .innerJoin(links, eq(clicks.linkId, links.id))
+      .where(cityFilter)
+      .groupBy(clicks.city, clicks.country)
+      .orderBy(sql`count(*) desc`)
+      .limit(7),
 
     db
       .select({
@@ -67,7 +84,7 @@ export async function GET(request: NextRequest) {
       })
       .from(clicks)
       .innerJoin(links, eq(clicks.linkId, links.id))
-      .where(and(eq(links.userId, userId), gte(clicks.timestamp, sevenDaysAgo)))
+      .where(clickWindow)
       .groupBy(clicks.device)
       .orderBy(sql`count(*) desc`),
   ]);
@@ -99,5 +116,7 @@ export async function GET(request: NextRequest) {
     count: Number(c.count),
   }));
 
-  return NextResponse.json({ daily, totalClicks, topLinks, countries, devices });
+  const cities = formatCityRows(citiesRaw);
+
+  return NextResponse.json({ daily, totalClicks, topLinks, countries, cities, devices });
 }

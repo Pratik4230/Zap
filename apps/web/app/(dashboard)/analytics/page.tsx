@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Globe, Monitor, Smartphone, Tablet } from "lucide-react";
+import { BarChart3, Globe, MapPin, Monitor, Smartphone, Tablet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,6 +26,7 @@ interface AnalyticsData {
   totalClicks: number;
   topLinks: { slug: string; domain: string; title: string | null; clicks: number }[];
   countries: { country: string; count: number }[];
+  cities: { label: string; count: number }[];
   devices: { device: string; count: number; pct: number }[];
 }
 
@@ -58,6 +59,7 @@ export default function AnalyticsPage() {
 
   const maxDaily = data ? Math.max(...data.daily.map((d) => d.clicks), 1) : 1;
   const maxCountry = data?.countries[0]?.count ?? 1;
+  const maxCity = data?.cities[0]?.count ?? 1;
   const maxLink = data?.topLinks[0]?.clicks ?? 1;
 
   return (
@@ -192,6 +194,47 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
+        <CardHeader className="px-6 pt-5 pb-4">
+          <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+            <MapPin size={16} style={{ color: AMBER }} />
+            Top Cities
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-5 space-y-3">
+          {isLoading ? (
+            Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="space-y-1">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+                <Skeleton className="h-1 w-full" />
+              </div>
+            ))
+          ) : data?.cities.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No city data yet</p>
+          ) : (
+            data?.cities.map(({ label, count }) => (
+              <div key={label} className="space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-foreground truncate">{label}</span>
+                  <span className="text-sm font-mono text-muted-foreground shrink-0">
+                    {count.toLocaleString()}
+                  </span>
+                </div>
+                <div className="h-1 rounded-full bg-white/6">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${(count / maxCity) * 100}%`, background: AMBER }}
+                  />
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
         <CardHeader className="px-6 pt-5 pb-4">
