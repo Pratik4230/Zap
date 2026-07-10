@@ -10,9 +10,10 @@ import {
   validateTitle,
 } from "@xaply/db";
 import { links } from "@xaply/db/schema";
-import { eq, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { isSession, requireSession } from "@/lib/api-auth";
+import { parseLinksListParams } from "@/lib/filter-links";
+import { queryLinksPage } from "@/lib/links-list-query";
 import { API_READ_LIMIT, LINK_CREATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
@@ -27,14 +28,11 @@ export async function GET(request: NextRequest) {
   });
   if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
+  const params = parseLinksListParams(request.nextUrl.searchParams);
   const db = createDb(env.DB);
-  const userLinks = await db
-    .select()
-    .from(links)
-    .where(eq(links.userId, session.user.id))
-    .orderBy(desc(links.createdAt));
+  const result = await queryLinksPage(db, session.user.id, params);
 
-  return NextResponse.json({ links: userLinks });
+  return NextResponse.json(result);
 }
 
 export async function POST(request: NextRequest) {

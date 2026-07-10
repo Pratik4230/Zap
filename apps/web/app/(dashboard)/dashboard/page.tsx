@@ -1,11 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, TrendingUp, Link2, MousePointerClick, Activity, BarChart3 } from "lucide-react";
+import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, TrendingUp, Link2, MousePointerClick, Activity, BarChart3, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -24,8 +32,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateLinkDialog } from "@/components/dashboard/create-link-dialog";
 import { EditLinkDialog, type EditableLink } from "@/components/dashboard/edit-link-dialog";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { InfiniteScrollSentinel } from "@/components/dashboard/infinite-scroll-sentinel";
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import {
+  LINK_SEARCH_DEBOUNCE_MS,
+  LINK_SEARCH_MAX_LENGTH,
+  LINKS_PAGE_SIZE,
+  type LinkSortOption,
+  type LinkStatusFilter,
+} from "@/lib/filter-links";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -44,11 +61,49 @@ interface Link {
   createdAt: string;
 }
 
-async function fetchLinks(): Promise<Link[]> {
-  const res = await fetch("/api/links");
+interface LinksPageResponse {
+  links: Link[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
+interface LinksSummary {
+  totalLinks: number;
+  totalClicks: number;
+  activeLinks: number;
+  activeRate: number;
+}
+
+async function fetchLinksPage({
+  page,
+  q,
+  status,
+  sort,
+}: {
+  page: number;
+  q: string;
+  status: LinkStatusFilter;
+  sort: LinkSortOption;
+}): Promise<LinksPageResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(LINKS_PAGE_SIZE),
+    status,
+    sort,
+  });
+  if (q) params.set("q", q);
+
+  const res = await fetch(`/api/links?${params}`);
   if (!res.ok) throw new Error("Failed to fetch links");
-  const data = await res.json() as { links: Link[] };
-  return data.links;
+  return res.json() as Promise<LinksPageResponse>;
+}
+
+async function fetchLinksSummary(): Promise<LinksSummary> {
+  const res = await fetch("/api/links/summary");
+  if (!res.ok) throw new Error("Failed to fetch summary");
+  return res.json() as Promise<LinksSummary>;
 }
 
 async function deleteLink(id: string) {
@@ -160,20 +215,69 @@ function LinkActions({ link, onEdit, onDelete, onToggle }: {
   );
 }
 
+function invalidateLinksData(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ["links"] });
+  void queryClient.invalidateQueries({ queryKey: ["links-summary"] });
+}
+
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editLink, setEditLink] = useState<EditableLink | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<LinkStatusFilter>("all");
+  const [sortBy, setSortBy] = useState<LinkSortOption>("newest");
+  const debouncedSearch = useDebouncedValue(search, LINK_SEARCH_DEBOUNCE_MS);
   const queryClient = useQueryClient();
 
-  const { data: userLinks, isLoading } = useQuery({
-    queryKey: ["links"],
-    queryFn: fetchLinks,
+  const { data: summary, isLoading: isSummaryLoading } = useQuery({
+    queryKey: ["links-summary"],
+    queryFn: fetchLinksSummary,
   });
+
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["links", debouncedSearch, statusFilter, sortBy],
+    queryFn: ({ pageParam }) =>
+      fetchLinksPage({
+        page: pageParam,
+        q: debouncedSearch,
+        status: statusFilter,
+        sort: sortBy,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+  });
+
+  const loadedLinks = useMemo(
+    () => data?.pages.flatMap((page) => page.links) ?? [],
+    [data]
+  );
+
+  const filteredTotal = data?.pages[0]?.total ?? 0;
+  const hasActiveFilters = debouncedSearch.length > 0 || statusFilter !== "all";
+  const isSearchPending = search !== debouncedSearch;
+  const hasNoLinksEver = summary?.totalLinks === 0 && !isSummaryLoading;
+
+  const clearFilters = useCallback(() => {
+    setSearch("");
+    setStatusFilter("all");
+    setSortBy("newest");
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteLink,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["links"] });
+      invalidateLinksData(queryClient);
       toast.success("Link deleted");
     },
     onError: () => toast.error("Failed to delete link"),
@@ -181,33 +285,35 @@ export default function DashboardPage() {
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: LinkStatus }) => toggleLink(id, status),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["links"] }),
+    onSuccess: () => invalidateLinksData(queryClient),
     onError: () => toast.error("Failed to update link"),
   });
 
   const editMutation = useMutation({
     mutationFn: updateLink,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["links"] });
+      invalidateLinksData(queryClient);
       toast.success("Link updated");
       setEditLink(null);
     },
   });
 
-  const totalClicks = userLinks?.reduce((sum, l) => sum + l.clickCount, 0) ?? 0;
-  const activeLinks = userLinks?.filter((l) => l.status === "active").length ?? 0;
-  const totalLinks = userLinks?.length ?? 0;
-
   const stats = [
-    { label: "Total Links", value: totalLinks.toString(), icon: Link2 },
-    { label: "Total Clicks", value: totalClicks.toLocaleString(), icon: MousePointerClick },
-    { label: "Active Links", value: activeLinks.toString(), icon: Activity },
-    { label: "Active Rate", value: totalLinks > 0 ? `${Math.round((activeLinks / totalLinks) * 100)}%` : "—", icon: TrendingUp },
+    { label: "Total Links", value: (summary?.totalLinks ?? 0).toString(), icon: Link2 },
+    { label: "Total Clicks", value: (summary?.totalClicks ?? 0).toLocaleString(), icon: MousePointerClick },
+    { label: "Active Links", value: (summary?.activeLinks ?? 0).toString(), icon: Activity },
+    {
+      label: "Active Rate",
+      value: (summary?.totalLinks ?? 0) > 0 ? `${summary?.activeRate ?? 0}%` : "—",
+      icon: TrendingUp,
+    },
   ];
 
   const handleCreated = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["links"] });
+    invalidateLinksData(queryClient);
   }, [queryClient]);
+
+  const showTableLoading = isLoading || isSearchPending || (isFetching && !isFetchingNextPage);
 
   return (
     <div className="space-y-6">
@@ -240,7 +346,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              {isLoading ? (
+              {isSummaryLoading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <p className="text-2xl font-bold text-foreground">{value}</p>
@@ -251,11 +357,70 @@ export default function DashboardPage() {
       </div>
 
       <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
-        <CardHeader className="px-6 pt-5 pb-4 flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-semibold text-foreground">All Links</CardTitle>
-          {!isLoading && (
-            <p className="text-xs text-muted-foreground">{userLinks?.length ?? 0} links</p>
-          )}
+        <CardHeader className="px-6 pt-5 pb-4 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base font-semibold text-foreground">All Links</CardTitle>
+            {!showTableLoading && (
+              <p className="text-xs text-muted-foreground">
+                {hasActiveFilters
+                  ? `${loadedLinks.length} of ${filteredTotal} links`
+                  : `${filteredTotal} links`}
+                {hasNextPage ? " · scroll for more" : ""}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                type="search"
+                placeholder="Search slug, title, or destination…"
+                value={search}
+                maxLength={LINK_SEARCH_MAX_LENGTH}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Select
+                value={statusFilter}
+                onValueChange={(v) => setStatusFilter(v as LinkStatusFilter)}
+              >
+                <SelectTrigger className="w-full sm:w-36">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as LinkSortOption)}>
+                <SelectTrigger className="w-full sm:w-36">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest first</SelectItem>
+                  <SelectItem value="oldest">Oldest first</SelectItem>
+                  <SelectItem value="clicks">Most clicks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <div className="border-t border-white/6">
           <Table>
@@ -270,7 +435,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {showTableLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i} className="border-white/6">
                     <TableCell className="pl-6"><Skeleton className="h-4 w-32" /></TableCell>
@@ -281,7 +446,7 @@ export default function DashboardPage() {
                     <TableCell />
                   </TableRow>
                 ))
-              ) : userLinks?.length === 0 ? (
+              ) : hasNoLinksEver ? (
                 <TableRow className="border-white/6">
                   <TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">
                     No links yet.{" "}
@@ -294,8 +459,22 @@ export default function DashboardPage() {
                     </button>
                   </TableCell>
                 </TableRow>
+              ) : loadedLinks.length === 0 ? (
+                <TableRow className="border-white/6">
+                  <TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">
+                    No links match your filters.{" "}
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="font-medium transition-colors"
+                      style={{ color: AMBER }}
+                    >
+                      Clear filters
+                    </button>
+                  </TableCell>
+                </TableRow>
               ) : (
-                userLinks?.map((link) => (
+                loadedLinks.map((link) => (
                   <TableRow key={link.id} className="border-white/6 hover:bg-white/2 group">
                     <TableCell className="pl-6">
                       <div className="flex items-center gap-2">
@@ -341,6 +520,11 @@ export default function DashboardPage() {
               )}
             </TableBody>
           </Table>
+          <InfiniteScrollSentinel
+            hasMore={Boolean(hasNextPage)}
+            isLoading={isFetchingNextPage}
+            onLoadMore={handleLoadMore}
+          />
         </div>
       </Card>
 

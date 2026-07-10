@@ -34,7 +34,7 @@ GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 ```
 
-- Web → `localhost:3000` · Redirect → `localhost:8787` · Analytics → `localhost:8788`
+- Web → `localhost:3000` · Redirect → `localhost:8789` · Analytics → `localhost:8788`
 - Local D1 data → `apps/web/.wrangler/state/v3/d1/`
 
 ## Database (D1 + Drizzle)
