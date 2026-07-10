@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, TrendingUp, Link2, MousePointerClick, Activity, BarChart3, Search, X } from "lucide-react";
+import { Copy, ExternalLink, MoreHorizontal, Pencil, Plus, QrCode, TrendingUp, Link2, MousePointerClick, Activity, BarChart3, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateLinkDialog } from "@/components/dashboard/create-link-dialog";
 import { EditLinkDialog, type EditableLink } from "@/components/dashboard/edit-link-dialog";
+import { LinkQrDialog } from "@/components/dashboard/link-qr-dialog";
 import { InfiniteScrollSentinel } from "@/components/dashboard/infinite-scroll-sentinel";
+import { buildShortUrl } from "@/lib/short-url";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -172,14 +174,15 @@ function StatusBadge({ status }: { status: LinkStatus }) {
   return <Badge variant="outline" className={`text-xs font-medium ${cls}`}>{label}</Badge>;
 }
 
-function LinkActions({ link, onEdit, onDelete, onToggle }: {
+function LinkActions({ link, onEdit, onDelete, onToggle, onShowQr }: {
   link: Link;
   onEdit: (link: Link) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, status: LinkStatus) => void;
+  onShowQr: (link: Link) => void;
 }) {
   const router = useRouter();
-  const shortUrl = `https://${link.domain}/${link.slug}`;
+  const shortUrl = buildShortUrl(link.domain, link.slug);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -193,6 +196,9 @@ function LinkActions({ link, onEdit, onDelete, onToggle }: {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(shortUrl); toast.success("Copied!"); }}>
           <Copy size={13} className="mr-2" /> Copy short URL
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onShowQr(link)}>
+          <QrCode size={13} className="mr-2" /> QR code
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onEdit(link)}>
           <Pencil size={13} className="mr-2" /> Edit link
@@ -223,6 +229,7 @@ function invalidateLinksData(queryClient: ReturnType<typeof useQueryClient>) {
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editLink, setEditLink] = useState<EditableLink | null>(null);
+  const [qrLink, setQrLink] = useState<Link | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LinkStatusFilter>("all");
   const [sortBy, setSortBy] = useState<LinkSortOption>("newest");
@@ -482,7 +489,7 @@ export default function DashboardPage() {
                           {link.domain}/{link.slug}
                         </span>
                         <button
-                          onClick={() => { navigator.clipboard.writeText(`https://${link.domain}/${link.slug}`); toast.success("Copied!"); }}
+                          onClick={() => { navigator.clipboard.writeText(buildShortUrl(link.domain, link.slug)); toast.success("Copied!"); }}
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Copy size={12} className="text-muted-foreground hover:text-foreground" />
@@ -511,6 +518,7 @@ export default function DashboardPage() {
                       <LinkActions
                         link={link}
                         onEdit={setEditLink}
+                        onShowQr={setQrLink}
                         onDelete={(id) => deleteMutation.mutate(id)}
                         onToggle={(id, status) => toggleMutation.mutate({ id, status })}
                       />
@@ -540,6 +548,15 @@ export default function DashboardPage() {
             : Promise.reject(new Error("No link selected"))
         }
       />
+      {qrLink && (
+        <LinkQrDialog
+          open={qrLink !== null}
+          onOpenChange={(open) => { if (!open) setQrLink(null); }}
+          domain={qrLink.domain}
+          slug={qrLink.slug}
+          title={qrLink.title}
+        />
+      )}
     </div>
   );
 }
