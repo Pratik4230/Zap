@@ -33,4 +33,7 @@
 	"vars": {
 		"LINK_PASSWORD_SECRET": "bohottezhorahehotumesachmelagatahaiissemeproductionmainusekarunga",
 	},
+	"triggers": {
+		"crons": ["0 3 * * *"],
+	},
 }

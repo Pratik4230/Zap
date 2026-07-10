@@ -16,6 +16,7 @@ import {
   isUnlockCookieValid,
   renderPasswordPage,
 } from "./password-page";
+import { runExpireLinksCron } from "./expire-cron";
 
 interface WorkerEnv {
   ZAP_CACHE: KVNamespace;
@@ -170,5 +171,9 @@ export default {
     }
 
     return issueRedirect(request, env, ctx, link);
+  },
+
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(runExpireLinksCron(env));
   },
 } satisfies ExportedHandler<WorkerEnv>;
