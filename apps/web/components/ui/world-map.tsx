@@ -4,7 +4,6 @@ import { useRef } from "react"
 import Image from "next/image"
 import { motion } from "motion/react"
 import DottedMap from "dotted-map"
-import { useTheme } from "next-themes"
 
 interface MapProps {
   dots?: Array<{
@@ -12,25 +11,20 @@ interface MapProps {
     end: { lat: number; lng: number; label?: string }
   }>
   lineColor?: string
-  forceDark?: boolean
 }
 
 export default function WorldMap({
   dots = [],
   lineColor = "#f59e0b",
-  forceDark = false,
 }: MapProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const map = new DottedMap({ height: 100, grid: "diagonal" })
 
-  const { theme } = useTheme()
-  const isDark = forceDark || theme === "dark"
-
   const svgMap = map.getSVG({
     radius: 0.22,
-    color: isDark ? "#FFFFFF40" : "#00000040",
+    color: "#FFFFFF40",
     shape: "circle",
-    backgroundColor: isDark ? "black" : "white",
+    backgroundColor: "black",
   })
 
   const projectPoint = (lat: number, lng: number) => {

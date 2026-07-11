@@ -3,34 +3,35 @@
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
+import { CtaSection } from "@/components/landing/cta-section";
+import { DemoLink } from "@/components/landing/demo-link";
+import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { HeroDotBackground } from "@/components/landing/hero-dot-background";
 import { HeroHeadline } from "@/components/landing/hero-headline";
-import { DemoLink } from "@/components/landing/demo-link";
+import { HeroStats } from "@/components/landing/hero-stats";
 import { HowItWorksSteps } from "@/components/landing/how-it-works-steps";
+import { PricingCard } from "@/components/landing/pricing-card";
 import {
   AMBER,
   AMBER_BORDER,
   AMBER_DIM,
-  FAQ,
   FEATURES,
-  FREE_TIER,
-  HERO_STATS,
   HIGHLIGHTS,
-  
 } from "@/lib/landing";
 import { siteConfig } from "@/lib/site";
+import "./landing-micro.css";
 
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-black">
       <header className="sticky top-0 z-50 border-b border-white/6 bg-black/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="group flex items-center gap-2.5">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg"
+              className="landing-logo-badge flex h-8 w-8 items-center justify-center rounded-lg"
               style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}` }}
             >
-              <AppIcon size={20} />
+              <AppIcon size={20} className="landing-logo-icon" />
             </div>
             <span className="text-base font-bold tracking-tight text-foreground">Xaply</span>
           </Link>
@@ -40,7 +41,7 @@ export function LandingPage() {
               <a
                 key={item}
                 href={`#${item.toLowerCase()}`}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="landing-nav-link text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {item}
               </a>
@@ -70,8 +71,8 @@ export function LandingPage() {
 
         <div className="relative mx-auto max-w-3xl">
           <div
-            className="mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
-            style={{ borderColor: AMBER_BORDER, color: AMBER, background: AMBER_DIM }}
+            className="landing-hero-badge mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
+            style={{ borderColor: AMBER_BORDER, color: AMBER, backgroundColor: AMBER_DIM }}
           >
             <AppIcon size={14} />
             Runs on Cloudflare Edge. Sub-10ms redirects worldwide.
@@ -87,10 +88,11 @@ export function LandingPage() {
           <div className="relative z-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/sign-up"
-              className="flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+              className="group flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
               style={{ background: AMBER, color: "oklch(0 0 0)" }}
             >
-              Start for free <ArrowRight size={15} />
+              Start for free
+              <ArrowRight size={15} className="landing-cta-arrow" />
             </Link>
             <Link
               href="/sign-in"
@@ -101,17 +103,7 @@ export function LandingPage() {
             </Link>
           </div>
 
-          <div className="relative z-10 mx-auto mt-10 grid max-w-lg grid-cols-3 gap-3">
-            {HERO_STATS.map(({ label, value }) => (
-              <div
-                key={label}
-                className="rounded-xl border border-white/8 bg-neutral-950 px-3 py-3"
-              >
-                <p className="text-lg font-bold text-foreground">{value}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{label}</p>
-              </div>
-            ))}
-          </div>
+          <HeroStats />
 
           <div className="relative z-10 mx-auto mt-10 max-w-md rounded-2xl border border-white/8 bg-neutral-950 p-4 text-left">
             <div className="mb-2 flex items-center gap-2 px-1">
@@ -128,7 +120,7 @@ export function LandingPage() {
               </div>
               <div className="flex items-center gap-2 px-1">
                 <div className="h-px flex-1 bg-white/6" />
-                <AppIcon size={14} />
+                <AppIcon size={14} className="landing-divider-icon" />
                 <div className="h-px flex-1 bg-white/6" />
               </div>
               <DemoLink />
@@ -152,12 +144,12 @@ export function LandingPage() {
               key={title}
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black p-8 transition-colors hover:border-amber-500/30"
             >
-              <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-amber-500/80 via-amber-400/30 to-transparent" />
+              <div className="landing-highlight-accent absolute inset-x-0 top-0 h-px bg-linear-to-r from-amber-500/80 via-amber-400/30 to-transparent" />
               <p className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: AMBER }}>
                 {tag}
               </p>
               <div
-                className="mt-5 mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
+                className="landing-highlight-icon mt-5 mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
                 style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}` }}
               >
                 <Icon size={20} style={{ color: AMBER }} />
@@ -167,7 +159,10 @@ export function LandingPage() {
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{description}</p>
               <ul className="mt-5 space-y-2 border-t border-white/6 pt-5">
                 {points.map((point) => (
-                  <li key={point} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <li
+                    key={point}
+                    className="landing-highlight-check flex items-start gap-2 text-sm text-muted-foreground"
+                  >
                     <Check size={14} className="mt-0.5 shrink-0" style={{ color: AMBER }} />
                     {point}
                   </li>
@@ -194,11 +189,11 @@ export function LandingPage() {
             {FEATURES.map(({ icon: Icon, title, hook, description, points }) => (
               <div
                 key={title}
-                className="rounded-2xl border border-white/8 bg-neutral-950 p-7 transition-colors hover:border-amber-500/20"
+                className="group rounded-2xl border border-white/8 bg-neutral-950 p-7 transition-colors hover:border-amber-500/20"
               >
                 <div className="flex items-start gap-4">
                   <div
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                    className="landing-feature-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
                     style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}` }}
                   >
                     <Icon size={22} style={{ color: AMBER }} />
@@ -215,7 +210,7 @@ export function LandingPage() {
                   {points.map((point) => (
                     <li
                       key={point}
-                      className="rounded-full border border-white/8 bg-black px-3 py-1 text-xs text-muted-foreground"
+                      className="landing-feature-pill rounded-full border border-white/8 bg-black px-3 py-1 text-xs text-muted-foreground"
                     >
                       {point}
                     </li>
@@ -228,7 +223,6 @@ export function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden bg-neutral-950 px-6 py-24">
-        {/* ambient glow */}
         <div
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
           aria-hidden
@@ -240,7 +234,6 @@ export function LandingPage() {
         </div>
 
         <div className="relative mx-auto max-w-5xl">
-          {/* heading */}
           <div className="mb-16 text-center">
             <span
               className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-semibold tracking-widest uppercase"
@@ -262,7 +255,6 @@ export function LandingPage() {
             <p className="mt-3 text-muted-foreground">No setup guide. No config files. Just paste, share, and watch.</p>
           </div>
 
-          {/* steps */}
           <HowItWorksSteps />
         </div>
       </section>
@@ -278,37 +270,7 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div
-            className="mx-auto max-w-md rounded-3xl border p-8"
-            style={{
-              background: "oklch(0.1 0 0)",
-              borderColor: AMBER_BORDER,
-              boxShadow: "0 0 60px oklch(0.769 0.188 70.08 / 8%)",
-            }}
-          >
-            <div className="mb-6 text-center">
-              <p className="text-sm font-medium" style={{ color: AMBER }}>
-                Free forever
-              </p>
-              <p className="mt-2 text-5xl font-bold tracking-tight text-foreground">$0</p>
-              <p className="mt-1 text-sm text-muted-foreground">No credit card. No trial limits.</p>
-            </div>
-            <ul className="space-y-3">
-              {FREE_TIER.map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-sm text-foreground">
-                  <Check size={15} style={{ color: AMBER }} className="shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/sign-up"
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: AMBER, color: "oklch(0 0 0)" }}
-            >
-              Create free account <ArrowRight size={15} />
-            </Link>
-          </div>
+          <PricingCard />
         </div>
       </section>
 
@@ -319,50 +281,11 @@ export function LandingPage() {
               Frequently asked questions
             </h2>
           </div>
-          <div className="space-y-4">
-            {FAQ.map(({ q, a }) => (
-              <div
-                key={q}
-                className="rounded-2xl border border-white/8 bg-black p-5"
-              >
-                <h3 className="font-semibold text-foreground">{q}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a}</p>
-              </div>
-            ))}
-          </div>
+          <FaqAccordion />
         </div>
       </section>
 
-      <section className="bg-black px-6 py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <div
-            className="rounded-3xl border p-12"
-            style={{
-              background: "oklch(0.1 0 0)",
-              borderColor: AMBER_BORDER,
-              boxShadow: "0 0 60px oklch(0.769 0.188 70.08 / 8%)",
-            }}
-          >
-            <div
-              className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
-              style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}` }}
-            >
-              <AppIcon size={40} />
-            </div>
-            <h2 className="mb-3 text-3xl font-bold tracking-tight text-foreground">
-              Ready to shorten your links?
-            </h2>
-            <p className="mb-8 text-muted-foreground">Free to start. No credit card required.</p>
-            <Link
-              href="/sign-up"
-              className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: AMBER, color: "oklch(0 0 0)" }}
-            >
-              Create your account <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <CtaSection />
 
       <footer className="border-t border-white/6 bg-black px-6 py-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 md:flex-row md:items-center md:justify-between">

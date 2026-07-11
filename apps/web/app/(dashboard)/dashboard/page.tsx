@@ -45,39 +45,25 @@ import {
   type LinkSortOption,
   type LinkStatusFilter,
 } from "@/lib/filter-links";
+import {
+  addLinkToCache,
+  applySummaryCreate,
+  applySummaryDelete,
+  applySummaryToggle,
+  cancelLinksQueries,
+  findLinkInCache,
+  removeLinkFromCache,
+  restoreLinksQueries,
+  snapshotLinksQueries,
+  updateLinkInCache,
+  type DashboardLink,
+  type LinksPageResponse,
+  type LinksSummary,
+  type LinkStatus,
+} from "@/lib/links-query-cache";
+import { cn } from "@/lib/utils";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
-
-type LinkStatus = "active" | "paused" | "expired";
-
-interface Link {
-  id: string;
-  slug: string;
-  domain: string;
-  destinationUrl: string;
-  title: string | null;
-  clickCount: number;
-  clickLimit: number | null;
-  expiresAt: string | null;
-  status: LinkStatus;
-  hasPassword: boolean;
-  createdAt: string;
-}
-
-interface LinksPageResponse {
-  links: Link[];
-  page: number;
-  limit: number;
-  total: number;
-  hasMore: boolean;
-}
-
-interface LinksSummary {
-  totalLinks: number;
-  totalClicks: number;
-  activeLinks: number;
-  activeRate: number;
-}
 
 async function fetchLinksPage({
   page,
@@ -155,16 +141,19 @@ async function updateLink({
     const data = await res.json() as { error?: string };
     throw new Error(data.error ?? "Failed to update link");
   }
+
+  const data = await res.json() as { link: DashboardLink };
+  return data.link;
 }
 
-function formatClickCount(link: Link) {
+function formatClickCount(link: DashboardLink) {
   if (link.clickLimit != null) {
     return `${link.clickCount.toLocaleString()} / ${link.clickLimit.toLocaleString()}`;
   }
   return link.clickCount.toLocaleString();
 }
 
-function formatLimits(link: Link) {
+function formatLimits(link: DashboardLink) {
   const parts: string[] = [];
   if (link.hasPassword) parts.push("Password protected");
   if (link.expiresAt) {
@@ -187,11 +176,11 @@ function StatusBadge({ status }: { status: LinkStatus }) {
 }
 
 function LinkActions({ link, onEdit, onDelete, onToggle, onShowQr }: {
-  link: Link;
-  onEdit: (link: Link) => void;
+  link: DashboardLink;
+  onEdit: (link: DashboardLink) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, status: LinkStatus) => void;
-  onShowQr: (link: Link) => void;
+  onShowQr: (link: DashboardLink) => void;
 }) {
   const router = useRouter();
   const shortUrl = buildShortUrl(link.domain, link.slug);
@@ -233,20 +222,28 @@ function LinkActions({ link, onEdit, onDelete, onToggle, onShowQr }: {
   );
 }
 
-function invalidateLinksData(queryClient: ReturnType<typeof useQueryClient>) {
-  void queryClient.invalidateQueries({ queryKey: ["links"] });
-  void queryClient.invalidateQueries({ queryKey: ["links-summary"] });
-}
-
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editLink, setEditLink] = useState<EditableLink | null>(null);
-  const [qrLink, setQrLink] = useState<Link | null>(null);
+  const [qrLink, setQrLink] = useState<DashboardLink | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LinkStatusFilter>("all");
   const [sortBy, setSortBy] = useState<LinkSortOption>("newest");
+  const [mutatingLinkIds, setMutatingLinkIds] = useState<Set<string>>(() => new Set());
   const debouncedSearch = useDebouncedValue(search, LINK_SEARCH_DEBOUNCE_MS);
   const queryClient = useQueryClient();
+
+  const markLinkMutating = useCallback((id: string) => {
+    setMutatingLinkIds((current) => new Set(current).add(id));
+  }, []);
+
+  const clearLinkMutating = useCallback((id: string) => {
+    setMutatingLinkIds((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+  }, []);
 
   const { data: summary, isLoading: isSummaryLoading } = useQuery({
     queryKey: ["links-summary"],
@@ -256,7 +253,6 @@ export default function DashboardPage() {
   const {
     data,
     isLoading,
-    isFetching,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -295,25 +291,94 @@ export default function DashboardPage() {
 
   const deleteMutation = useMutation({
     mutationFn: deleteLink,
+    onMutate: async (id) => {
+      markLinkMutating(id);
+      await cancelLinksQueries(queryClient);
+
+      const previousLinks = snapshotLinksQueries(queryClient);
+      const previousSummary = queryClient.getQueryData<LinksSummary>(["links-summary"]);
+      const deletedLink = findLinkInCache(queryClient, id);
+
+      removeLinkFromCache(queryClient, id);
+      if (deletedLink) applySummaryDelete(queryClient, deletedLink);
+
+      return { previousLinks, previousSummary, id };
+    },
     onSuccess: () => {
-      invalidateLinksData(queryClient);
       toast.success("Link deleted");
     },
-    onError: () => toast.error("Failed to delete link"),
+    onError: (_error, id, context) => {
+      if (context?.previousLinks) restoreLinksQueries(queryClient, context.previousLinks);
+      if (context?.previousSummary) {
+        queryClient.setQueryData(["links-summary"], context.previousSummary);
+      }
+      toast.error("Failed to delete link");
+    },
+    onSettled: (_data, _error, id) => {
+      clearLinkMutating(id);
+    },
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: LinkStatus }) => toggleLink(id, status),
-    onSuccess: () => invalidateLinksData(queryClient),
-    onError: () => toast.error("Failed to update link"),
+    onMutate: async ({ id, status }) => {
+      markLinkMutating(id);
+      await cancelLinksQueries(queryClient);
+
+      const previousLinks = snapshotLinksQueries(queryClient);
+      const previousSummary = queryClient.getQueryData<LinksSummary>(["links-summary"]);
+      const nextStatus: LinkStatus = status === "active" ? "paused" : "active";
+
+      updateLinkInCache(queryClient, id, (link) => ({ ...link, status: nextStatus }));
+      applySummaryToggle(queryClient, status, nextStatus);
+
+      return { previousLinks, previousSummary, id };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousLinks) restoreLinksQueries(queryClient, context.previousLinks);
+      if (context?.previousSummary) {
+        queryClient.setQueryData(["links-summary"], context.previousSummary);
+      }
+      toast.error("Failed to update link");
+    },
+    onSettled: (_data, _error, variables) => {
+      clearLinkMutating(variables.id);
+    },
   });
 
   const editMutation = useMutation({
     mutationFn: updateLink,
-    onSuccess: () => {
-      invalidateLinksData(queryClient);
+    onMutate: async (variables) => {
+      markLinkMutating(variables.id);
+      await cancelLinksQueries(queryClient);
+
+      const previousLinks = snapshotLinksQueries(queryClient);
+
+      updateLinkInCache(queryClient, variables.id, (link) => ({
+        ...link,
+        destinationUrl: variables.destinationUrl,
+        title: variables.title,
+        expiresAt: variables.expiresAt,
+        clickLimit: variables.clickLimit,
+        hasPassword:
+          variables.password !== undefined
+            ? Boolean(variables.password)
+            : link.hasPassword,
+      }));
+
+      return { previousLinks, id: variables.id };
+    },
+    onSuccess: (updatedLink) => {
+      updateLinkInCache(queryClient, updatedLink.id, () => updatedLink);
       toast.success("Link updated");
       setEditLink(null);
+    },
+    onError: (_error, variables, context) => {
+      if (context?.previousLinks) restoreLinksQueries(queryClient, context.previousLinks);
+      toast.error("Failed to update link");
+    },
+    onSettled: (_data, _error, variables) => {
+      clearLinkMutating(variables.id);
     },
   });
 
@@ -328,11 +393,17 @@ export default function DashboardPage() {
     },
   ];
 
-  const handleCreated = useCallback(() => {
-    invalidateLinksData(queryClient);
-  }, [queryClient]);
+  const handleCreated = useCallback((link: DashboardLink) => {
+    addLinkToCache(queryClient, link, {
+      q: debouncedSearch,
+      status: statusFilter,
+      sort: sortBy,
+    });
+    applySummaryCreate(queryClient);
+    toast.success("Link created");
+  }, [queryClient, debouncedSearch, statusFilter, sortBy]);
 
-  const showTableLoading = isLoading || isSearchPending || (isFetching && !isFetchingNextPage);
+  const showTableLoading = isLoading || isSearchPending;
 
   return (
     <div className="space-y-6">
@@ -494,7 +565,13 @@ export default function DashboardPage() {
                 </TableRow>
               ) : (
                 loadedLinks.map((link) => (
-                  <TableRow key={link.id} className="border-white/6 hover:bg-white/2 group">
+                  <TableRow
+                    key={link.id}
+                    className={cn(
+                      "border-white/6 hover:bg-white/2 group transition-opacity",
+                      mutatingLinkIds.has(link.id) && "opacity-60",
+                    )}
+                  >
                     <TableCell className="pl-6">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-foreground text-sm">
@@ -557,11 +634,10 @@ export default function DashboardPage() {
         open={editLink !== null}
         onOpenChange={(open) => { if (!open) setEditLink(null); }}
         isSaving={editMutation.isPending}
-        onSave={(values) =>
-          editLink
-            ? editMutation.mutateAsync({ id: editLink.id, ...values })
-            : Promise.reject(new Error("No link selected"))
-        }
+        onSave={async (values) => {
+          if (!editLink) throw new Error("No link selected");
+          await editMutation.mutateAsync({ id: editLink.id, ...values });
+        }}
       />
       {qrLink && (
         <LinkQrDialog

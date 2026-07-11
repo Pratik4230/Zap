@@ -1,0 +1,213 @@
+/* Landing page micro-interactions */
+
+@keyframes logo-shake {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-3px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes badge-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes divider-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 6px oklch(0.769 0.188 70.08 / 60%)); }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 30px oklch(0.769 0.188 70.08 / 8%); }
+  50% { box-shadow: 0 0 60px oklch(0.769 0.188 70.08 / 18%); }
+}
+
+@keyframes price-glint {
+  0% { background-position: -120% center; }
+  100% { background-position: 220% center; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pill-slide-in {
+  from { transform: translateX(-6px); opacity: 0.5; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes reveal-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.landing-nav-link {
+  position: relative;
+}
+
+.landing-nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: oklch(0.769 0.188 70.08);
+  transition: width 250ms ease;
+}
+
+.landing-nav-link:hover::after {
+  width: 100%;
+}
+
+.landing-logo-badge {
+  transition: box-shadow 250ms ease;
+}
+
+.group:hover .landing-logo-icon {
+  animation: logo-shake 300ms ease;
+}
+
+.group:hover .landing-logo-badge {
+  box-shadow: 0 0 16px oklch(0.769 0.188 70.08 / 35%);
+}
+
+.landing-hero-badge {
+  background-image: linear-gradient(
+    90deg,
+    transparent 30%,
+    oklch(0.769 0.188 70.08 / 25%) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: badge-shimmer 4s ease infinite;
+}
+
+.landing-divider-icon {
+  animation: divider-pulse 2s ease-in-out infinite;
+}
+
+.landing-cta-arrow {
+  transition: transform 200ms ease;
+}
+
+.group:hover .landing-cta-arrow {
+  transform: translateX(4px);
+}
+
+.landing-highlight-accent {
+  opacity: 0.3;
+  transition: opacity 250ms ease;
+}
+
+.group:hover .landing-highlight-accent {
+  opacity: 1;
+}
+
+.landing-highlight-icon {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .landing-highlight-icon {
+  transform: rotate(8deg) scale(1.12);
+}
+
+.group:hover .landing-highlight-check:nth-child(1) svg {
+  animation: check-pop 300ms ease 0ms;
+}
+
+.group:hover .landing-highlight-check:nth-child(2) svg {
+  animation: check-pop 300ms ease 80ms;
+}
+
+.group:hover .landing-highlight-check:nth-child(3) svg {
+  animation: check-pop 300ms ease 160ms;
+}
+
+.landing-feature-icon {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .landing-feature-icon {
+  transform: rotate(8deg) scale(1.12);
+}
+
+.group:hover .landing-feature-pill:nth-child(1) {
+  animation: pill-slide-in 300ms ease 0ms;
+}
+
+.group:hover .landing-feature-pill:nth-child(2) {
+  animation: pill-slide-in 300ms ease 50ms;
+}
+
+.group:hover .landing-feature-pill:nth-child(3) {
+  animation: pill-slide-in 300ms ease 100ms;
+}
+
+.landing-pricing-card {
+  animation: glow-breathe 3s ease-in-out infinite;
+}
+
+.landing-price-glint-overlay {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    oklch(0.85 0.15 75 / 0.85) 50%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: price-glint 600ms ease forwards;
+  mix-blend-mode: screen;
+}
+
+.landing-pricing-item.is-visible {
+  animation: reveal-up 400ms ease forwards;
+}
+
+.landing-cta-pulse-ring {
+  animation: pulse-ring 2.5s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-badge,
+  .landing-divider-icon,
+  .landing-pricing-card,
+  .landing-cta-pulse-ring {
+    animation: none;
+  }
+
+  .group:hover .landing-logo-icon,
+  .group:hover .landing-highlight-check:nth-child(1) svg,
+  .group:hover .landing-highlight-check:nth-child(2) svg,
+  .group:hover .landing-highlight-check:nth-child(3) svg,
+  .group:hover .landing-feature-pill:nth-child(1),
+  .group:hover .landing-feature-pill:nth-child(2),
+  .group:hover .landing-feature-pill:nth-child(3) {
+    animation: none;
+  }
+
+  .group:hover .landing-highlight-icon,
+  .group:hover .landing-feature-icon,
+  .group:hover .landing-cta-arrow {
+    transform: none;
+  }
+
+  .landing-price-glint-overlay {
+    animation: none;
+    display: none;
+  }
+
+  .landing-pricing-item.is-visible {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

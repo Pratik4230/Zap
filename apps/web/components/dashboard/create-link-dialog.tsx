@@ -23,6 +23,7 @@ import {
   validateSlugField,
   validateTitleField,
 } from "@/lib/validation";
+import type { DashboardLink } from "@/lib/links-query-cache";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -34,7 +35,7 @@ function generateSlug() {
 interface CreateLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated?: () => void;
+  onCreated?: (link: DashboardLink) => void;
 }
 
 export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDialogProps) {
@@ -81,9 +82,12 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
         );
         return;
       }
+
+      const data = await res.json() as { link: DashboardLink };
+
       onOpenChange(false);
       form.reset();
-      onCreated?.();
+      onCreated?.(data.link);
     },
   });
 
