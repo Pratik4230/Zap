@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { siteConfig } from "@/lib/site";
 
 const FROM = "Xaply <noreply@aixpense.in>";
 
@@ -40,7 +41,7 @@ export async function sendOtpEmail({ to, otp, apiKey, type }: SendOtpEmailOption
               <!-- Logo -->
               <tr>
                 <td style="padding-bottom:32px;text-align:center;">
-                  <span style="font-size:28px;">⚡</span>
+                  <img src="${siteConfig.url}${siteConfig.appIcon}" alt="${siteConfig.name}" width="28" height="28" style="vertical-align:middle;" />
                   <span style="font-size:20px;font-weight:600;color:#fafafa;margin-left:8px;vertical-align:middle;">Xaply</span>
                 </td>
               </tr>

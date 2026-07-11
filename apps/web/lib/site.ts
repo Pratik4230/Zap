@@ -3,6 +3,7 @@ import { APP_DOMAIN, APP_URL, SHORT_LINK_DOMAIN } from "@xaply/db";
 
 export const siteConfig = {
   name: "Xaply",
+  appIcon: "/icon-192.png",
   title: "Xaply | Fast URL Shortener with Analytics",
   tagline: "Short links that move fast",
   description:
@@ -45,6 +46,17 @@ export const siteMetadata: Metadata = {
   alternates: {
     canonical: siteConfig.url,
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -52,13 +64,23 @@ export const siteMetadata: Metadata = {
     siteName: siteConfig.name,
     title: siteConfig.title,
     description: siteConfig.description,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${siteConfig.name} - Fast URL Shortener with Analytics`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.title,
     description: siteConfig.description,
     creator: siteConfig.owner.twitterHandle,
+    images: ["/og-image.png"],
   },
+  manifest: "/manifest.json",
   robots: {
     index: true,
     follow: true,

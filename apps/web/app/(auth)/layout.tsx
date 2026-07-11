@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppIcon } from "@/components/app-icon";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,9 +22,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       />
 
       <Link href="/" className="mb-8 flex items-center gap-2.5 group">
-        <span className="text-2xl leading-none" style={{ color: "oklch(0.769 0.188 70.08)" }}>
-          ⚡
-        </span>
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{
+            background: "oklch(0.769 0.188 70.08 / 12%)",
+            border: "1px solid oklch(0.769 0.188 70.08 / 25%)",
+          }}
+        >
+          <AppIcon size={24} />
+        </div>
         <span className="text-xl font-semibold tracking-tight text-foreground">
           Xaply
         </span>

@@ -5,7 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Providers } from "@/components/providers"
 import { cn } from "@/lib/utils";
-import { siteConfig } from "@/lib/site";
+import { siteMetadata } from "@/lib/site";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
 
@@ -14,10 +14,7 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
-export const metadata: Metadata = {
-  title: siteConfig.title,
-  description: siteConfig.description,
-}
+export const metadata: Metadata = siteMetadata
 
 export default function RootLayout({
   children,

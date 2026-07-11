@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
-import { Zap, ArrowRight, ChevronRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+import { AppIcon } from "@/components/app-icon";
 import { HeroDotBackground } from "@/components/landing/hero-dot-background";
 import { HeroHeadline } from "@/components/landing/hero-headline";
 import { DemoLink } from "@/components/landing/demo-link";
+import { HowItWorksSteps } from "@/components/landing/how-it-works-steps";
 import {
   AMBER,
   AMBER_BORDER,
@@ -12,7 +16,7 @@ import {
   FREE_TIER,
   HERO_STATS,
   HIGHLIGHTS,
-  STEPS,
+  
 } from "@/lib/landing";
 import { siteConfig } from "@/lib/site";
 
@@ -26,7 +30,7 @@ export function LandingPage() {
               className="flex h-8 w-8 items-center justify-center rounded-lg"
               style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}` }}
             >
-              <Zap size={16} style={{ color: AMBER }} strokeWidth={2.5} />
+              <AppIcon size={20} />
             </div>
             <span className="text-base font-bold tracking-tight text-foreground">Xaply</span>
           </Link>
@@ -69,7 +73,7 @@ export function LandingPage() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
             style={{ borderColor: AMBER_BORDER, color: AMBER, background: AMBER_DIM }}
           >
-            <Zap size={11} strokeWidth={2.5} />
+            <AppIcon size={14} />
             Runs on Cloudflare Edge. Sub-10ms redirects worldwide.
           </div>
 
@@ -124,7 +128,7 @@ export function LandingPage() {
               </div>
               <div className="flex items-center gap-2 px-1">
                 <div className="h-px flex-1 bg-white/6" />
-                <Zap size={11} style={{ color: AMBER }} />
+                <AppIcon size={14} />
                 <div className="h-px flex-1 bg-white/6" />
               </div>
               <DemoLink />
@@ -223,36 +227,43 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-neutral-950 px-6 py-20">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">How it works</h2>
-            <p className="mt-3 text-muted-foreground">Live in under a minute. No setup guide required.</p>
+      <section className="relative overflow-hidden bg-neutral-950 px-6 py-24">
+        {/* ambient glow */}
+        <div
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          aria-hidden
+        >
+          <div
+            className="h-125 w-175 rounded-full opacity-10 blur-3xl"
+            style={{ background: `radial-gradient(ellipse, ${AMBER} 0%, transparent 70%)` }}
+          />
+        </div>
+
+        <div className="relative mx-auto max-w-5xl">
+          {/* heading */}
+          <div className="mb-16 text-center">
+            <span
+              className="mb-3 inline-block rounded-full px-3 py-1 text-xs font-semibold tracking-widest uppercase"
+              style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}`, color: AMBER }}
+            >
+              Getting started
+            </span>
+            <h2
+              className="text-4xl font-bold tracking-tight md:text-5xl"
+              style={{
+                background: `linear-gradient(135deg, oklch(0.97 0 0) 0%, oklch(0.75 0.10 75) 100%)`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Live in under a minute
+            </h2>
+            <p className="mt-3 text-muted-foreground">No setup guide. No config files. Just paste, share, and watch.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {STEPS.map(({ number, title, description }, i) => (
-              <div
-                key={number}
-                className="relative rounded-2xl border border-white/8 bg-black p-6 md:text-left"
-              >
-                {i < STEPS.length - 1 && (
-                  <ChevronRight
-                    size={20}
-                    className="absolute top-8 -right-3 hidden text-muted-foreground/30 md:block"
-                  />
-                )}
-                <div
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl font-mono text-sm font-bold"
-                  style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}`, color: AMBER }}
-                >
-                  {number}
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-              </div>
-            ))}
-          </div>
+          {/* steps */}
+          <HowItWorksSteps />
         </div>
       </section>
 
@@ -336,7 +347,7 @@ export function LandingPage() {
               className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
               style={{ background: AMBER_DIM, border: `1px solid ${AMBER_BORDER}` }}
             >
-              <Zap size={24} style={{ color: AMBER }} strokeWidth={2.5} />
+              <AppIcon size={40} />
             </div>
             <h2 className="mb-3 text-3xl font-bold tracking-tight text-foreground">
               Ready to shorten your links?
@@ -357,7 +368,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Zap size={14} style={{ color: AMBER }} strokeWidth={2.5} />
+              <AppIcon size={16} />
               <span className="text-sm font-semibold text-foreground">Xaply</span>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LinkIcon, Settings, Zap } from "lucide-react";
+import { BarChart3, LinkIcon, Settings } from "lucide-react";
+import { AppIcon } from "@/components/app-icon";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -26,7 +27,7 @@ export function Sidebar() {
           className="flex h-8 w-8 items-center justify-center rounded-lg"
           style={{ background: `${AMBER}20`, border: `1px solid ${AMBER}40` }}
         >
-          <Zap size={16} style={{ color: AMBER }} strokeWidth={2.5} />
+          <AppIcon size={20} />
         </div>
         <span className="text-base font-bold tracking-tight text-foreground">Xaply</span>
       </div>
