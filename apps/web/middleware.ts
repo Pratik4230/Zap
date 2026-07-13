@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const PROTECTED = ["/dashboard", "/analytics", "/settings"];
+const PROTECTED = ["/dashboard", "/analytics", "/settings", "/admin"];
 const AUTH_ROUTES = ["/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"];
 
 const SESSION_COOKIE_NAMES = new Set([
@@ -52,5 +52,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/analytics/:path*", "/settings/:path*", "/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"],
+  matcher: ["/", "/dashboard/:path*", "/analytics/:path*", "/settings/:path*", "/admin/:path*", "/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"],
 };

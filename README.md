@@ -98,6 +98,7 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
+ADMIN_EMAIL=you@example.com
 ```
 
 First-time database:
@@ -195,6 +196,7 @@ npx wrangler secret put BETTER_AUTH_SECRET
 npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put GITHUB_CLIENT_SECRET
+npx wrangler secret put ADMIN_EMAIL
 ```
 
 ### OAuth callbacks
