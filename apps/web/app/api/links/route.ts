@@ -12,6 +12,7 @@ import {
   validateLinkPassword,
   validateSlug,
   validateTitle,
+  assertCanAddActiveLink,
 } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { nanoid } from "nanoid";
@@ -116,6 +117,11 @@ export async function POST(request: NextRequest) {
   }
 
   const db = createDb(env.DB);
+
+  const activeLinkLimit = await assertCanAddActiveLink(env.DB, session.user.id);
+  if (!activeLinkLimit.ok) {
+    return NextResponse.json({ error: activeLinkLimit.error }, { status: 403 });
+  }
 
   try {
     const [link] = await db

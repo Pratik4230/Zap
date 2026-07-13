@@ -16,6 +16,7 @@ export const users = sqliteTable("user", {
     .notNull()
     .default(false),
   image: text("image"),
+  dodoCustomerId: text("dodo_customer_id"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),

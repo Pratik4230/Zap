@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { dodopaymentsClient } from "@dodopayments/better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { APP_URL } from "@xaply/db";
 
@@ -18,7 +19,7 @@ export function formatAuthRateLimitMessage(message: string, retryAfter?: string 
 
 export const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
-  plugins: [emailOTPClient()],
+  plugins: [emailOTPClient(), dodopaymentsClient()],
   fetchOptions: {
     onError: (ctx) => {
       if (ctx.response.status !== 429) return;

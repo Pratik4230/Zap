@@ -1,46 +1,45 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
-	"name": "xaply",
-	"compatibility_date": "2026-06-10",
-	"compatibility_flags": [
-		"nodejs_compat",
-		"global_fetch_strictly_public"
-	],
-	"routes": [
-		{ "pattern": "xaply.in/*", "zone_name": "xaply.in" },
-		{ "pattern": "www.xaply.in/*", "zone_name": "xaply.in" }
-	],
-	"assets": {
-		"directory": ".open-next/assets",
-		"binding": "ASSETS"
-	},
-	"services": [
-		{
-			"binding": "WORKER_SELF_REFERENCE",
-			"service": "xaply"
-		}
-	],
-	"images": {
-		"binding": "IMAGES"
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "zap-db",
-			"database_id": "d57b5010-ed1c-4fc5-8e58-ac86fa021b6a"
-		}
-	],
-	"kv_namespaces": [
-		{
-			"binding": "ZAP_CACHE",
-			"id": "4c9da6442f2d46669bcdf5c48e1035fa"
-		}
-	],
-	"vars": {
-		"BETTER_AUTH_URL": "https://xaply.in",
-		"NEXT_PUBLIC_APP_URL": "https://xaply.in",
-		"GOOGLE_CLIENT_ID": "704988536404-6n3pk1ulm5u9k0id39p7mb81r9o5prmf.apps.googleusercontent.com",
-		"GITHUB_CLIENT_ID": "Ov23liuuTAUYkePHCDTn"
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "xaply",
+  "compatibility_date": "2026-06-10",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "routes": [
+    { "pattern": "xaply.in/*", "zone_name": "xaply.in" },
+    { "pattern": "www.xaply.in/*", "zone_name": "xaply.in" },
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "xaply",
+    },
+  ],
+  "images": {
+    "binding": "IMAGES",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zap-db",
+      "database_id": "d57b5010-ed1c-4fc5-8e58-ac86fa021b6a",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "ZAP_CACHE",
+      "id": "4c9da6442f2d46669bcdf5c48e1035fa",
+    },
+  ],
+  "vars": {
+    "BETTER_AUTH_URL": "https://xaply.in",
+    "NEXT_PUBLIC_APP_URL": "https://xaply.in",
+    "DODO_PAYMENTS_ENVIRONMENT": "live_mode",
+    "DODO_PRO_PRODUCT_ID": "pdt_0Nj5ZNYfYMgino04QF73N",
+    "GOOGLE_CLIENT_ID": "704988536404-6n3pk1ulm5u9k0id39p7mb81r9o5prmf.apps.googleusercontent.com",
+    "GITHUB_CLIENT_ID": "Ov23liuuTAUYkePHCDTn",
+  },
 }

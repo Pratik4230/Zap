@@ -1,15 +1,13 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb } from "@xaply/db";
-import { links, clicks } from "@xaply/db/schema";
-import { and, eq, gte, isNotNull, ne, sql } from "drizzle-orm";
+import { createDb, getUserPlan } from "@xaply/db";
+import { links } from "@xaply/db/schema";
+import { and, eq } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
 import {
-  buildLast7DaysDaily,
-  formatCityRows,
-  formatCountRows,
-  formatDeviceBreakdown,
-} from "@/lib/analytics-helpers";
+  getAnalyticsRangeFromRequest,
+  queryLinkAnalytics,
+} from "@/lib/analytics-query";
 import { API_READ_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(
@@ -33,6 +31,8 @@ export async function GET(
   }
 
   const db = createDb(env.DB);
+  const plan = await getUserPlan(env.DB, session.user.id);
+  const range = getAnalyticsRangeFromRequest(plan, request.nextUrl.searchParams);
 
   const [link] = await db
     .select()
@@ -44,92 +44,13 @@ export async function GET(
     return NextResponse.json({ error: "Link not found" }, { status: 404 });
   }
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  const linkFilter = and(eq(clicks.linkId, link.id), gte(clicks.timestamp, sevenDaysAgo));
-  const cityFilter = and(linkFilter, isNotNull(clicks.city), ne(clicks.city, ""));
-
-  const [dailyRaw, countriesRaw, citiesRaw, devicesRaw, browsersRaw, osRaw, referrersRaw] =
-    await Promise.all([
-      db
-        .select({
-          date: sql<string>`date(${clicks.timestamp}, 'unixepoch')`,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(linkFilter)
-        .groupBy(sql`date(${clicks.timestamp}, 'unixepoch')`)
-        .orderBy(sql`date(${clicks.timestamp}, 'unixepoch')`),
-
-      db
-        .select({
-          value: clicks.country,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(linkFilter)
-        .groupBy(clicks.country)
-        .orderBy(sql`count(*) desc`)
-        .limit(5),
-
-      db
-        .select({
-          city: clicks.city,
-          country: clicks.country,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(cityFilter)
-        .groupBy(clicks.city, clicks.country)
-        .orderBy(sql`count(*) desc`)
-        .limit(7),
-
-      db
-        .select({
-          device: clicks.device,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(linkFilter)
-        .groupBy(clicks.device)
-        .orderBy(sql`count(*) desc`),
-
-      db
-        .select({
-          value: clicks.browser,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(linkFilter)
-        .groupBy(clicks.browser)
-        .orderBy(sql`count(*) desc`)
-        .limit(5),
-
-      db
-        .select({
-          value: clicks.os,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(linkFilter)
-        .groupBy(clicks.os)
-        .orderBy(sql`count(*) desc`)
-        .limit(5),
-
-      db
-        .select({
-          value: clicks.referrer,
-          count: sql<number>`count(*)`,
-        })
-        .from(clicks)
-        .where(linkFilter)
-        .groupBy(clicks.referrer)
-        .orderBy(sql`count(*) desc`)
-        .limit(5),
-    ]);
-
-  const { daily, totalClicks } = buildLast7DaysDaily(dailyRaw);
+  const analytics = await queryLinkAnalytics(
+    env.DB,
+    link.id,
+    range.rangeDays,
+    range.rangeStart,
+    range.chartBucket
+  );
 
   return NextResponse.json({
     link: {
@@ -144,13 +65,10 @@ export async function GET(
       expiresAt: link.expiresAt,
       createdAt: link.createdAt,
     },
-    daily,
-    totalClicks,
-    countries: formatCountRows(countriesRaw, "Unknown"),
-    cities: formatCityRows(citiesRaw),
-    devices: formatDeviceBreakdown(devicesRaw),
-    browsers: formatCountRows(browsersRaw, "Unknown"),
-    os: formatCountRows(osRaw, "Unknown"),
-    referrers: formatCountRows(referrersRaw, "Direct"),
+    ...analytics,
+    plan: range.plan,
+    rangeDays: range.rangeDays,
+    maxRangeDays: range.maxRangeDays,
+    rangeLabel: range.rangeLabel,
   });
 }

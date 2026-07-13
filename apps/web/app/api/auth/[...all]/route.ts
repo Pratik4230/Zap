@@ -1,9 +1,9 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { createAuth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 
 const handler = async (request: Request) => {
   const { env } = getCloudflareContext();
-  return createAuth(env.DB, env).handler(request);
+  return getAuth(env).handler(request);
 };
 
 export { handler as GET, handler as POST };

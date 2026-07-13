@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { BarChart3, Globe, MapPin, Monitor, Smartphone, Tablet, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { AnalyticsRangePicker } from "@/components/analytics/analytics-range-picker";
+import { cn } from "@/lib/utils";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -28,22 +31,24 @@ interface AnalyticsData {
   countries: { country: string; count: number }[];
   cities: { label: string; count: number }[];
   devices: { device: string; count: number; pct: number }[];
+  plan: "free" | "pro";
+  rangeDays: number;
+  rangeLabel: string;
 }
 
-async function fetchAnalytics(): Promise<AnalyticsData> {
-  const res = await fetch("/api/analytics");
+async function fetchAnalytics(rangeDays?: number): Promise<AnalyticsData> {
+  const query = rangeDays ? `?range=${rangeDays}` : "";
+  const res = await fetch(`/api/analytics${query}`);
   if (!res.ok) throw new Error("Failed to fetch analytics");
   return res.json() as Promise<AnalyticsData>;
 }
 
-const SKELETON_HEIGHTS = [45, 70, 55, 90, 75, 40, 60];
-
-function BarSkeleton() {
+function BarSkeleton({ bars = 7 }: { bars?: number }) {
   return (
-    <div className="flex items-end gap-3 h-40">
-      {SKELETON_HEIGHTS.map((h, i) => (
-        <div key={i} className="flex flex-1 flex-col items-center gap-2">
-          <Skeleton className="w-full" style={{ height: `${h}%` }} />
+    <div className="flex items-end gap-2 h-40 overflow-hidden">
+      {Array.from({ length: bars }).map((_, i) => (
+        <div key={i} className="flex min-w-5 flex-1 flex-col items-center gap-2">
+          <Skeleton className="w-full" style={{ height: `${35 + (i % 5) * 12}%` }} />
           <Skeleton className="h-3 w-6" />
         </div>
       ))}
@@ -52,33 +57,50 @@ function BarSkeleton() {
 }
 
 export default function AnalyticsPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["analytics"],
-    queryFn: fetchAnalytics,
+  const [rangeDays, setRangeDays] = useState<number | undefined>(undefined);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["analytics", rangeDays ?? "auto"],
+    queryFn: () => fetchAnalytics(rangeDays),
+    placeholderData: keepPreviousData,
   });
+
+  const plan = data?.plan ?? "free";
+  const activeRange = data?.rangeDays ?? rangeDays ?? 7;
 
   const maxDaily = data ? Math.max(...data.daily.map((d) => d.clicks), 1) : 1;
   const maxCountry = data?.countries[0]?.count ?? 1;
   const maxCity = data?.cities[0]?.count ?? 1;
   const maxLink = data?.topLinks[0]?.clicks ?? 1;
+  const denseChart = (data?.daily.length ?? 0) > 14;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Analytics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Insights across all your links
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Analytics</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isLoading
+              ? "Insights across all your links"
+              : `Showing ${data?.rangeLabel?.toLowerCase() ?? "recent activity"} across all links.`}
+          </p>
+        </div>
+        <AnalyticsRangePicker
+          value={activeRange}
+          plan={plan}
+          onChange={setRangeDays}
+        />
       </div>
 
+      <div className={cn("space-y-6 transition-opacity", isFetching && !isLoading && "opacity-70")}>
       <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
         <CardHeader className="px-6 pt-5 pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <BarChart3 size={16} style={{ color: AMBER }} />
-              Clicks, Last 7 Days
+              Clicks, {data?.rangeLabel ?? "Last 7 days"}
             </CardTitle>
-            {isLoading ? (
+            {isLoading || isFetching ? (
               <Skeleton className="h-5 w-24" />
             ) : (
               <Badge variant="outline" className="text-xs border-white/10 text-muted-foreground">
@@ -89,24 +111,41 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent className="px-6 pb-6">
           {isLoading ? (
-            <BarSkeleton />
+            <BarSkeleton bars={activeRange > 14 ? 12 : 7} />
           ) : (
-            <div className="flex items-end gap-3 h-40">
-              {data?.daily.map(({ label, clicks: count }) => {
+            <div
+              className={cn(
+                "flex h-40 items-end gap-2",
+                denseChart && "overflow-x-auto pb-1"
+              )}
+            >
+              {data?.daily.map(({ date, label, clicks: count }) => {
                 const height = Math.max(4, (count / maxDaily) * 100);
                 return (
-                  <div key={label} className="flex flex-1 flex-col items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{count > 0 ? count.toLocaleString() : ""}</span>
+                  <div
+                    key={date}
+                    className={cn(
+                      "flex flex-col items-center gap-2",
+                      denseChart ? "min-w-7 shrink-0" : "min-w-0 flex-1"
+                    )}
+                  >
+                    <span className="text-xs text-muted-foreground">
+                      {count > 0 ? count.toLocaleString() : ""}
+                    </span>
                     <div
                       className="w-full rounded-t-md transition-all duration-500 relative group"
-                      style={{ height: `${height}%`, background: `${AMBER}30`, border: `1px solid ${AMBER}40` }}
+                      style={{
+                        height: `${height}%`,
+                        background: `${AMBER}30`,
+                        border: `1px solid ${AMBER}40`,
+                      }}
                     >
                       <div
                         className="absolute inset-0 rounded-t-md opacity-0 group-hover:opacity-100 transition-opacity"
                         style={{ background: `${AMBER}50` }}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground">{label}</span>
+                    <span className="text-[10px] text-muted-foreground sm:text-xs">{label}</span>
                   </div>
                 );
               })}
@@ -132,7 +171,7 @@ export default function AnalyticsPage() {
                 </div>
               ))
             ) : data?.topLinks.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No link data yet</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">No clicks in this period</p>
             ) : (
               data?.topLinks.map(({ slug, domain, clicks: count }, i) => (
                 <div key={slug} className="space-y-1">
@@ -282,6 +321,7 @@ export default function AnalyticsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

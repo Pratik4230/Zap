@@ -11,6 +11,7 @@ import {
 import { getLinkFromCache, cacheLinkInKV } from "./kv";
 import { getLinkBySlug, markLinkExpired, shouldExpireForClickLimit } from "./db";
 import { buildClickEvent } from "./analytics";
+import { enforceMonthlyClickLimit, recordTrackedClick } from "./click-limit";
 import {
   createUnlockCookie,
   isUnlockCookieValid,
@@ -23,6 +24,7 @@ interface WorkerEnv {
   DB: D1Database;
   ANALYTICS_QUEUE: Queue;
   LINK_PASSWORD_SECRET: string;
+  RESEND_API_KEY?: string;
 }
 
 function getClientIp(request: Request): string {
@@ -47,11 +49,17 @@ async function issueRedirect(
     return new Response("Invalid destination", { status: 410 });
   }
 
+  const limitResponse = await enforceMonthlyClickLimit(env, link);
+  if (limitResponse) return limitResponse;
+
+  await recordTrackedClick(env, link);
+
   ctx.waitUntil(
     env.ANALYTICS_QUEUE.send(
       buildClickEvent(link.id, request as Request<unknown, IncomingRequestCfProperties>)
     )
   );
+
   return Response.redirect(link.destinationUrl, 302);
 }
 

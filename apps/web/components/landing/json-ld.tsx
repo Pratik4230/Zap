@@ -1,4 +1,5 @@
 import { siteConfig } from "@/lib/site";
+import { PRICING_PLANS } from "@/lib/landing";
 
 export function JsonLd() {
   const softwareApplication = {
@@ -9,12 +10,13 @@ export function JsonLd() {
     operatingSystem: "Web",
     url: siteConfig.url,
     description: siteConfig.description,
-    offers: {
+    offers: PRICING_PLANS.filter((plan) => !plan.comingSoon).map((plan) => ({
       "@type": "Offer",
-      price: "0",
+      name: plan.name,
+      price: String(plan.price),
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
-    },
+    })),
     author: {
       "@type": "Person",
       name: siteConfig.owner.name,
@@ -45,7 +47,7 @@ export function JsonLd() {
         name: "Is Xaply free to use?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes. Xaply offers a generous free tier with unlimited short links, analytics, QR codes, password protection, and link expiry controls. No credit card required.",
+          text: "Yes. Xaply offers a generous free plan with up to 50 active links, 5,000 tracked clicks per month across all links, 7-day click history, QR codes, password protection, and link expiry controls. No credit card required.",
         },
       },
       {

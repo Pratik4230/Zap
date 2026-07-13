@@ -120,10 +120,10 @@ export function HowItWorksSteps() {
         }
       `}</style>
 
-      {/* grid wrapper — pt-6 reserves space for the badge that overhangs the top of each card */}
+      {/* grid wrapper: pt-6 reserves space for the badge that overhangs the top of each card */}
       <div className="relative grid grid-cols-1 gap-6 pt-6 md:grid-cols-3">
 
-        {/* connector line + traveling beam — desktop only */}
+        {/* connector line + traveling beam (desktop only) */}
         {/* spans from center of col-1 to center of col-3 */}
         <div
           className="pointer-events-none absolute hidden md:block"
@@ -172,7 +172,7 @@ export function HowItWorksSteps() {
                 }}
               />
 
-              {/* number badge — centered at the very top of the card, half outside */}
+              {/* number badge: centered at the very top of the card, half outside */}
               <div
                 className="absolute left-1/2 top-0 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 font-mono text-base font-bold"
                 style={{

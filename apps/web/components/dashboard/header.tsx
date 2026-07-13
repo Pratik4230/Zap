@@ -48,7 +48,7 @@ export function DashboardHeader() {
         </SheetContent>
       </Sheet>
 
-      {/* Page title placeholder — filled by individual pages */}
+      {/* Page title placeholder: filled by individual pages */}
       <div className="hidden md:block" />
 
       {/* User menu */}

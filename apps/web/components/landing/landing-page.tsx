@@ -260,17 +260,21 @@ export function LandingPage() {
       </section>
 
       <section id="pricing" className="bg-black px-6 py-20">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-6xl">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tight text-foreground">
               Simple, generous pricing
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Start free. Upgrade only when we ship paid plans.
+              Start free. Upgrade to Pro when you need more, billed via Dodo Payments.
             </p>
           </div>
 
           <PricingCard />
+
+          <p className="mt-8 text-center text-xs text-muted-foreground">
+            All plans include edge-fast redirects, HTTPS, and real-time analytics. Prices in USD.
+          </p>
         </div>
       </section>
 

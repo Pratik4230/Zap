@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAuth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import type { Session } from "@/lib/auth";
 
 export async function requireSession(
   request: NextRequest,
   env: CloudflareEnv
 ): Promise<Session | NextResponse> {
-  const auth = createAuth(env.DB, env);
+  const auth = getAuth(env);
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

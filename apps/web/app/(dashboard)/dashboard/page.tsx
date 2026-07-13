@@ -106,7 +106,10 @@ async function toggleLink(id: string, status: LinkStatus) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status: status === "active" ? "paused" : "active" }),
   });
-  if (!res.ok) throw new Error("Failed to update link");
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Failed to update link");
+  }
 }
 
 async function updateLink({
@@ -334,12 +337,18 @@ export default function DashboardPage() {
 
       return { previousLinks, previousSummary, id };
     },
-    onError: (_error, _variables, context) => {
+    onError: (error, _variables, context) => {
       if (context?.previousLinks) restoreLinksQueries(queryClient, context.previousLinks);
       if (context?.previousSummary) {
         queryClient.setQueryData(["links-summary"], context.previousSummary);
       }
-      toast.error("Failed to update link");
+      const message = error instanceof Error ? error.message : "Failed to update link";
+      toast.error(message, {
+        duration: message.includes("Upgrade to Pro") ? 6000 : 4000,
+        action: message.includes("Upgrade to Pro")
+          ? { label: "View plans", onClick: () => { window.location.href = "/settings"; } }
+          : undefined,
+      });
     },
     onSettled: (_data, _error, variables) => {
       clearLinkMutating(variables.id);

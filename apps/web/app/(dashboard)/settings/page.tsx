@@ -11,6 +11,7 @@ import { authClient } from "@/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { validateProfileNameField } from "@/lib/validation";
+import { BillingSettingsCard } from "@/components/billing/billing-settings-card";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -106,6 +107,8 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage your account and preferences</p>
       </div>
+
+      <BillingSettingsCard />
 
       <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
         <CardHeader className="px-6 pt-5 pb-4">

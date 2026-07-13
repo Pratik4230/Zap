@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, hashLinkPassword, toPublicLink, validateClickLimit, validateDestinationUrl, validateExpiresAt, validateLinkPassword, validateLinkStatus, validateTitle } from "@xaply/db";
+import { createDb, hashLinkPassword, toPublicLink, validateClickLimit, validateDestinationUrl, validateExpiresAt, validateLinkPassword, validateLinkStatus, validateTitle, assertCanAddActiveLink } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
@@ -121,6 +121,13 @@ export async function PATCH(
     .limit(1);
 
   if (!existing) return NextResponse.json({ error: "Link not found" }, { status: 404 });
+
+  if (updates.status === "active" && existing.status !== "active") {
+    const activeLinkLimit = await assertCanAddActiveLink(env.DB, session.user.id);
+    if (!activeLinkLimit.ok) {
+      return NextResponse.json({ error: activeLinkLimit.error }, { status: 403 });
+    }
+  }
 
   if (
     updates.clickLimit != null &&

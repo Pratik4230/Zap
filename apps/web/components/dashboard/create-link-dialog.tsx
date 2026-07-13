@@ -24,6 +24,7 @@ import {
   validateTitleField,
 } from "@/lib/validation";
 import type { DashboardLink } from "@/lib/links-query-cache";
+import { toast } from "sonner";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -73,13 +74,23 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
       });
       if (!res.ok) {
         const data = await res.json() as { error?: string };
-        setServerError(
+        const message =
           res.status === 409
             ? "That slug is already taken. Try another."
             : res.status === 429
               ? "Too many requests. Please wait and try again."
-              : (data.error ?? "Something went wrong")
-        );
+              : (data.error ?? "Something went wrong");
+
+        if (res.status === 403) {
+          toast.error(message, {
+            duration: 6000,
+            action: message.includes("Upgrade to Pro")
+              ? { label: "View plans", onClick: () => { window.location.href = "/settings"; } }
+              : undefined,
+          });
+        }
+
+        setServerError(message);
         return;
       }
 

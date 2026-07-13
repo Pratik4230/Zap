@@ -3,35 +3,38 @@ import { type NextRequest, NextResponse } from "next/server";
 const PROTECTED = ["/dashboard", "/analytics", "/settings"];
 const AUTH_ROUTES = ["/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"];
 
-async function hasValidSession(request: NextRequest): Promise<boolean> {
-  try {
-    const res = await fetch(new URL("/api/auth/get-session", request.url), {
-      headers: { cookie: request.headers.get("cookie") ?? "" },
-    });
-    if (!res.ok) return false;
-    const data = (await res.json()) as { user?: unknown };
-    return Boolean(data?.user);
-  } catch {
-    return false;
+const SESSION_COOKIE_NAMES = new Set([
+  "__Secure-better-auth.session_token",
+  "better-auth.session_token",
+]);
+
+/** Fast cookie presence check. Avoids a worker self-fetch on every navigation/RSC request. */
+function hasSessionCookie(request: NextRequest): boolean {
+  const raw = request.headers.get("cookie");
+  if (!raw) return false;
+
+  for (const part of raw.split(";")) {
+    const name = part.trim().split("=")[0]?.trim();
+    if (name && SESSION_COOKIE_NAMES.has(name)) return true;
   }
+
+  return false;
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtected = PROTECTED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const isAuthRoute = AUTH_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (pathname === "/") {
-    const valid = await hasValidSession(request);
-    if (valid) {
+    if (hasSessionCookie(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
 
   if (isProtected) {
-    const valid = await hasValidSession(request);
-    if (!valid) {
+    if (!hasSessionCookie(request)) {
       const url = request.nextUrl.clone();
       url.pathname = "/sign-in";
       url.searchParams.set("next", pathname);
@@ -40,8 +43,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthRoute) {
-    const valid = await hasValidSession(request);
-    if (valid) {
+    if (hasSessionCookie(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
