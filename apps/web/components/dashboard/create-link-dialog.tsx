@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
-import { Shuffle } from "lucide-react";
+import { ChevronDown, ChevronUp, Shuffle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Separator } from "@/components/ui/separator";
 import { SHORT_LINK_DOMAIN } from "@xaply/db";
 import {
   validateClickLimitField,
@@ -41,6 +40,7 @@ interface CreateLinkDialogProps {
 
 export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDialogProps) {
   const [serverError, setServerError] = useState("");
+  const [showAdditional, setShowAdditional] = useState(false);
 
   const form = useForm({
     defaultValues: { destination: "", slug: "", title: "", expiresAt: "", clickLimit: "", password: "" },
@@ -54,6 +54,9 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
       const clickLimitError = validateClickLimitField(value.clickLimit);
       const passwordError = validateLinkPasswordField(value.password);
       if (destinationError || slugError || titleError || expiresAtError || clickLimitError || passwordError) {
+        if (expiresAtError || clickLimitError || passwordError) {
+          setShowAdditional(true);
+        }
         setServerError(
           destinationError ?? slugError ?? titleError ?? expiresAtError ?? clickLimitError ?? passwordError ?? "Invalid input"
         );
@@ -98,14 +101,22 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
 
       onOpenChange(false);
       form.reset();
+      setShowAdditional(false);
       onCreated?.(data.link);
     },
   });
 
+  useEffect(() => {
+    if (!open) {
+      setShowAdditional(false);
+      setServerError("");
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md border-white/8"
+        className="max-w-lg border-white/8"
         style={{ background: "oklch(0.12 0 0)" }}
       >
         <DialogHeader>
@@ -147,8 +158,6 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
               </Field>
             )}
           </form.Field>
-
-          <Separator className="bg-white/6" />
 
           <form.Field
             name="slug"
@@ -218,83 +227,94 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
             )}
           </form.Field>
 
-          <Separator className="bg-white/6" />
-
-          <form.Field
-            name="expiresAt"
-            validators={{ onChange: ({ value }) => validateExpiresAtField(value) }}
+          <button
+            type="button"
+            onClick={() => setShowAdditional((prev) => !prev)}
+            className="flex w-full items-center justify-between rounded-lg border border-white/8 bg-white/2 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/4 hover:text-foreground"
           >
-            {(field) => (
-              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                <FieldLabel htmlFor={field.name}>
-                  Expires at{" "}
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <Input
-                  id={field.name}
-                  type="datetime-local"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                />
-                {field.state.meta.isTouched && (
-                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                )}
-              </Field>
-            )}
-          </form.Field>
+            <span>Additional options</span>
+            {showAdditional ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
 
-          <form.Field
-            name="clickLimit"
-            validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
-          >
-            {(field) => (
-              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                <FieldLabel htmlFor={field.name}>
-                  Max clicks{" "}
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <Input
-                  id={field.name}
-                  type="number"
-                  min={1}
-                  placeholder="e.g. 100"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                />
-                {field.state.meta.isTouched && (
-                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                )}
-              </Field>
-            )}
-          </form.Field>
+          {showAdditional && (
+          <div className="flex flex-col gap-4">
+            <form.Field
+              name="expiresAt"
+              validators={{ onChange: ({ value }) => validateExpiresAtField(value) }}
+            >
+              {(field) => (
+                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>
+                    Expires at{" "}
+                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="datetime-local"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                  {field.state.meta.isTouched && (
+                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                  )}
+                </Field>
+              )}
+            </form.Field>
 
-          <form.Field
-            name="password"
-            validators={{ onChange: ({ value }) => validateLinkPasswordField(value) }}
-          >
-            {(field) => (
-              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                <FieldLabel htmlFor={field.name}>
-                  Password{" "}
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                </FieldLabel>
-                <Input
-                  id={field.name}
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="Require a password to open this link"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                />
-                {field.state.meta.isTouched && (
-                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                )}
-              </Field>
-            )}
-          </form.Field>
+            <form.Field
+              name="clickLimit"
+              validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
+            >
+              {(field) => (
+                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>
+                    Max clicks{" "}
+                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="number"
+                    min={1}
+                    placeholder="e.g. 100"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                  {field.state.meta.isTouched && (
+                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                  )}
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field
+              name="password"
+              validators={{ onChange: ({ value }) => validateLinkPasswordField(value) }}
+            >
+              {(field) => (
+                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>
+                    Password{" "}
+                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Require a password to open this link"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                  />
+                  {field.state.meta.isTouched && (
+                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                  )}
+                </Field>
+              )}
+            </form.Field>
+          </div>
+          )}
 
           {serverError && (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">

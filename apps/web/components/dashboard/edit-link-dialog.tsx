@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -58,8 +59,13 @@ interface EditLinkFormProps {
   isSaving: boolean;
 }
 
+function hasAdditionalOptions(link: EditableLink) {
+  return Boolean(link.clickLimit != null || link.hasPassword);
+}
+
 function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
   const [serverError, setServerError] = useState("");
+  const [showAdditional, setShowAdditional] = useState(() => hasAdditionalOptions(link));
 
   const form = useForm({
     defaultValues: {
@@ -79,6 +85,9 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
       const clickLimitError = validateClickLimitField(value.clickLimit);
       const passwordError = value.removePassword ? undefined : validateLinkPasswordField(value.password);
       if (destinationError || titleError || expiresAtError || clickLimitError || passwordError) {
+        if (expiresAtError || clickLimitError || passwordError) {
+          setShowAdditional(true);
+        }
         setServerError(
           destinationError ?? titleError ?? expiresAtError ?? clickLimitError ?? passwordError ?? "Invalid input"
         );
@@ -87,6 +96,7 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
 
       const clickLimit = value.clickLimit ? Number(value.clickLimit) : null;
       if (clickLimit != null && link.clickCount >= clickLimit) {
+        setShowAdditional(true);
         setServerError("Click limit must be greater than current click count");
         return;
       }
@@ -214,84 +224,97 @@ function EditLinkForm({ link, onClose, onSave, isSaving }: EditLinkFormProps) {
           )}
         </form.Field>
 
-        <form.Field
-          name="clickLimit"
-          validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
+        <button
+          type="button"
+          onClick={() => setShowAdditional((prev) => !prev)}
+          className="flex w-full items-center justify-between rounded-lg border border-white/8 bg-white/2 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/4 hover:text-foreground"
         >
-          {(field) => (
-            <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-              <FieldLabel htmlFor={field.name}>
-                Max clicks{" "}
-                <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-              </FieldLabel>
-              <Input
-                id={field.name}
-                type="number"
-                min={link.clickCount + 1}
-                placeholder="e.g. 100"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-              />
-              {field.state.meta.isTouched && (
-                <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-              )}
-            </Field>
-          )}
-        </form.Field>
+          <span>Additional options</span>
+          {showAdditional ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
 
-        <form.Field
-          name="password"
-          validators={{
-            onChange: ({ value, fieldApi }) =>
-              fieldApi.form.getFieldValue("removePassword") ? undefined : validateLinkPasswordField(value),
-          }}
-        >
-          {(field) => (
-            <form.Subscribe selector={(s) => s.values.removePassword}>
-              {(removePassword) => (
-                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>
-                    {link.hasPassword ? "New password" : "Password"}{" "}
-                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={field.name}
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder={
-                      link.hasPassword
-                        ? "Leave blank to keep current password"
-                        : "Require a password to open this link"
-                    }
-                    value={field.state.value}
-                    disabled={removePassword}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                  {field.state.meta.isTouched && !removePassword && (
-                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                  )}
-                </Field>
-              )}
-            </form.Subscribe>
-          )}
-        </form.Field>
-
-        {link.hasPassword && (
-          <form.Field name="removePassword">
+        {showAdditional && (
+        <div className="flex flex-col gap-4">
+          <form.Field
+            name="clickLimit"
+            validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
+          >
             {(field) => (
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.checked)}
-                  className="rounded border-input"
+              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                <FieldLabel htmlFor={field.name}>
+                  Max clicks{" "}
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </FieldLabel>
+                <Input
+                  id={field.name}
+                  type="number"
+                  min={link.clickCount + 1}
+                  placeholder="e.g. 100"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
                 />
-                Remove password protection
-              </label>
+                {field.state.meta.isTouched && (
+                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                )}
+              </Field>
             )}
           </form.Field>
+
+          <form.Field
+            name="password"
+            validators={{
+              onChange: ({ value, fieldApi }) =>
+                fieldApi.form.getFieldValue("removePassword") ? undefined : validateLinkPasswordField(value),
+            }}
+          >
+            {(field) => (
+              <form.Subscribe selector={(s) => s.values.removePassword}>
+                {(removePassword) => (
+                  <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+                    <FieldLabel htmlFor={field.name}>
+                      {link.hasPassword ? "New password" : "Password"}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder={
+                        link.hasPassword
+                          ? "Leave blank to keep current password"
+                          : "Require a password to open this link"
+                      }
+                      value={field.state.value}
+                      disabled={removePassword}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    {field.state.meta.isTouched && !removePassword && (
+                      <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                    )}
+                  </Field>
+                )}
+              </form.Subscribe>
+            )}
+          </form.Field>
+
+          {link.hasPassword && (
+            <form.Field name="removePassword">
+              {(field) => (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.checked)}
+                    className="rounded border-input"
+                  />
+                  Remove password protection
+                </label>
+              )}
+            </form.Field>
+          )}
+        </div>
         )}
 
         {serverError && (
@@ -322,7 +345,7 @@ export function EditLinkDialog({ link, open, onOpenChange, onSave, isSaving }: E
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md border-white/8"
+        className="max-w-lg border-white/8"
         style={{ background: "oklch(0.12 0 0)" }}
       >
         {link ? (
