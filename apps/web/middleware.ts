@@ -8,6 +8,16 @@ const SESSION_COOKIE_NAMES = new Set([
   "better-auth.session_token",
 ]);
 
+/** Redirect www to apex for a single canonical host */
+function redirectWwwToApex(request: NextRequest): NextResponse | null {
+  const host = request.headers.get("host") ?? "";
+  if (host !== "www.xaply.in") return null;
+
+  const url = request.nextUrl.clone();
+  url.hostname = "xaply.in";
+  return NextResponse.redirect(url, 301);
+}
+
 /** Fast cookie presence check. Avoids a worker self-fetch on every navigation/RSC request. */
 function hasSessionCookie(request: NextRequest): boolean {
   const raw = request.headers.get("cookie");
@@ -22,6 +32,9 @@ function hasSessionCookie(request: NextRequest): boolean {
 }
 
 export function middleware(request: NextRequest) {
+  const wwwRedirect = redirectWwwToApex(request);
+  if (wwwRedirect) return wwwRedirect;
+
   const { pathname } = request.nextUrl;
 
   const isProtected = PROTECTED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -52,5 +65,17 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/analytics/:path*", "/settings/:path*", "/admin/:path*", "/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/verify-email"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/analytics/:path*",
+    "/settings/:path*",
+    "/admin/:path*",
+    "/sign-in",
+    "/sign-up",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|json)$).*)",
+  ],
 };

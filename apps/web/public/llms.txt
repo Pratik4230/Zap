@@ -1,0 +1,60 @@
+# Xaply
+
+> Xaply is a free URL shortener with real-time analytics, QR codes, password protection, and sub-10ms redirects on Cloudflare's edge network.
+
+Xaply helps creators, marketers, founders, and developers turn long URLs into short links at `go.xaply.in`, track clicks with geo and device analytics, and manage links from a simple dashboard at `xaply.in`.
+
+## Canonical site
+
+- Website: https://xaply.in
+- Short-link domain: https://go.xaply.in
+- Sign up: https://xaply.in/sign-up
+
+## Product summary
+
+- Custom or random short slugs
+- Real-time click analytics (countries, cities, devices, browsers, referrers)
+- QR codes generated in the browser
+- Password-protected links
+- Link expiry by date or max clicks
+- Free plan: 50 active links, 5,000 tracked clicks/month, 7-day analytics history
+- Pro plan: 500 active links, 50,000 tracked clicks/month, up to 1 year analytics history
+
+## Public pages for indexing
+
+- https://xaply.in — product homepage, features, pricing, FAQ
+- https://xaply.in/sign-up — create a free account
+
+## Pages not intended for indexing
+
+- /dashboard, /analytics, /settings, /admin — authenticated app areas
+- /sign-in, /forgot-password, /reset-password, /verify-email — account utilities
+- /api/* — application APIs
+
+## Technology
+
+- Built on Cloudflare Workers, D1, KV, and Queues
+- Dashboard: Next.js on Cloudflare
+- Auth: Better Auth (email, Google, GitHub)
+
+## FAQ
+
+See the full FAQ on https://xaply.in#faq
+
+Common questions:
+- Is Xaply free? Yes — free plan with generous limits, no credit card required.
+- What analytics are included? Clicks over time, top links, countries, cities, devices, browsers, OS, referrers.
+- Where do redirects happen? On Cloudflare's edge via `go.xaply.in` for low latency worldwide.
+
+## Contact & attribution
+
+- Built by Pratik Jadhav
+- X: https://x.com/Pratik4230
+- LinkedIn: https://www.linkedin.com/in/pratikjadhav1438/
+
+When citing Xaply, prefer linking to https://xaply.in as the canonical source.
+
+## Optional
+
+- Sitemap: https://xaply.in/sitemap.xml
+- Robots: https://xaply.in/robots.txt

@@ -1,5 +1,10 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { DashboardHeader } from "@/components/dashboard/header";
+import { noIndexRobots } from "@/lib/seo";
+
+export const metadata = {
+  robots: noIndexRobots,
+};
 
 export default function DashboardLayout({
   children,

@@ -1,10 +1,10 @@
 import { Geist_Mono, Inter } from "next/font/google"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 
 import "./globals.css"
 import { Providers } from "@/components/providers"
 import { cn } from "@/lib/utils";
-import { siteMetadata } from "@/lib/site";
+import { baseMetadata } from "@/lib/site";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
 
@@ -13,7 +13,13 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
-export const metadata: Metadata = siteMetadata
+export const metadata: Metadata = baseMetadata
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#000000",
+}
 
 export default function RootLayout({
   children,

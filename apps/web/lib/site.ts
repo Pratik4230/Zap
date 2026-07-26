@@ -30,7 +30,7 @@ export const siteConfig = {
   },
 } as const;
 
-export const siteMetadata: Metadata = {
+const sharedMetadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.title,
@@ -43,24 +43,18 @@ export const siteMetadata: Metadata = {
   publisher: siteConfig.owner.name,
   applicationName: siteConfig.name,
   category: "technology",
-  alternates: {
-    canonical: siteConfig.url,
-  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    type: "website",
+    type: "website" as const,
     locale: "en_US",
-    url: siteConfig.url,
     siteName: siteConfig.name,
     title: siteConfig.title,
     description: siteConfig.description,
@@ -74,13 +68,32 @@ export const siteMetadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary_large_image" as const,
     title: siteConfig.title,
     description: siteConfig.description,
+    site: siteConfig.owner.twitterHandle,
     creator: siteConfig.owner.twitterHandle,
     images: ["/og-image.png"],
   },
   manifest: "/manifest.json",
+};
+
+/** Root layout defaults — no canonical; child routes set their own */
+export const baseMetadata: Metadata = sharedMetadata;
+
+/** Homepage — indexable with canonical */
+export const homeMetadata: Metadata = {
+  ...sharedMetadata,
+  alternates: {
+    canonical: siteConfig.url,
+    types: {
+      "text/plain": [{ url: "/llms.txt", title: "LLM site summary" }],
+    },
+  },
+  openGraph: {
+    ...sharedMetadata.openGraph,
+    url: siteConfig.url,
+  },
   robots: {
     index: true,
     follow: true,
@@ -92,3 +105,6 @@ export const siteMetadata: Metadata = {
     },
   },
 };
+
+/** @deprecated Use homeMetadata or createPageMetadata */
+export const siteMetadata = homeMetadata;

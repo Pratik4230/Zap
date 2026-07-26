@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft, Users } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
+import { noIndexRobots } from "@/lib/seo";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
+
+export const metadata = {
+  robots: noIndexRobots,
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
