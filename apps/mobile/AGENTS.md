@@ -34,7 +34,8 @@ Expo CLI still works under pnpm (`expo start`, `expo run:android`).
 | Icons (Compose) | **`@expo/material-symbols`** — import icons as `@expo/material-symbols/home.xml` (no hand-written XML). Do not use `@expo/vector-icons` for new code. |
 | Styling (secondary) | **Uniwind** — RN shells, safe areas, non-Compose wrappers ([docs](https://docs.uniwind.dev/llms.txt)) |
 | Data | TanStack Query v5 → `https://xaply.in/api/*` |
-| Auth | Better Auth + `@better-auth/expo` + SecureStore; server already has `bearer()` |
+| Auth | Better Auth + `@better-auth/expo` + SecureStore; server has `bearer()` + `expo()` |
+| Network (auth) | **`expo-network`** — Better Auth uses it to pause session refresh when offline (install only; no app calls) |
 | Out of scope v1 | HeroUI Native, Google OAuth, in-app billing checkout, admin |
 
 ## Important docs (keep current)
@@ -47,7 +48,6 @@ Expo CLI still works under pnpm (`expo start`, `expo run:android`).
 - [AlertDialog](https://docs.expo.dev/versions/v57.0.0/sdk/ui/jetpack-compose/alertdialog/) · [Badge](https://docs.expo.dev/versions/v57.0.0/sdk/ui/jetpack-compose/badge/) · [BadgedBox](https://docs.expo.dev/versions/v57.0.0/sdk/ui/jetpack-compose/badgedbox/)
 - [Compose Icon + Material Symbols](https://docs.expo.dev/versions/v57.0.0/sdk/ui/jetpack-compose/icon/)
 - [Jetpack Compose (latest mirror)](https://docs.expo.dev/versions/latest/sdk/ui/jetpack-compose/#available-components) — cross-check only; implement against **v57**
-- Mobile gallery route: `/expo-ui` (demos follow official examples)
 - [Expo Router](https://docs.expo.dev/router/introduction/)
 - [llms.txt (Expo)](https://docs.expo.dev/llms.txt)
 
@@ -82,7 +82,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 0.5 | Add `EXPO_PUBLIC_API_URL=https://xaply.in` (or equivalent) and document it | `done` |
 | 0.6 | Install `@expo/ui` via `expo install` (`@expo/ui@57.0.7`). Android `Host` runtime check deferred with 0.8 | `done` |
 | 0.7 | Confirm Uniwind + Metro monorepo config per Uniwind monorepo docs | `done` |
-| 0.8 | Replace scaffold welcome screen with a minimal Compose smoke screen | `done` (gallery `/expo-ui` + `@expo/material-symbols`) |
+| 0.8 | Replace scaffold welcome screen with a minimal Compose smoke screen | `done` (`@expo/material-symbols`) |
 
 **Phase 0 complete.**
 
@@ -90,13 +90,13 @@ Update the **Status** column as you work. Do not skip prerequisites.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| 1.1 | Server: add Better Auth `expo()` plugin + `trustedOrigins` for `xaply://` (and dev `exp://` if needed) in `apps/web` | `pending` |
-| 1.2 | Mobile: `@better-auth/expo` client + `expo-secure-store` + `expo-network` | `pending` |
-| 1.3 | Auth screens: sign-in, sign-up (Compose `TextField` / `Button`) | `pending` |
-| 1.4 | Email OTP verify flow | `pending` |
-| 1.5 | Forgot / reset password | `pending` |
-| 1.6 | Session gate: unauthenticated → auth stack; authenticated → app tabs | `pending` |
-| 1.7 | Authenticated `fetch` helper: attach session cookie via `authClient.getCookie()` to production API | `pending` |
+| 1.1 | Server: add Better Auth `expo()` plugin + `trustedOrigins` for `xaply://` (and dev `exp://` if needed) in `apps/web` | `done` |
+| 1.2 | Mobile: `@better-auth/expo` client + `expo-secure-store` + `expo-network` | `done` |
+| 1.3 | Auth screens: sign-in, sign-up (Compose `TextField` / `Button`) | `done` |
+| 1.4 | Email OTP verify flow | `done` |
+| 1.5 | Forgot / reset password | `done` |
+| 1.6 | Session gate: unauthenticated → auth stack; authenticated → app tabs | `done` (`Stack.Protected` + `authClient.useSession`; tabs in 2.2) |
+| 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()` | `done` (`src/lib/api.ts`) |
 | 1.8 | _(Later)_ Google OAuth deep links — **blocked until post-MVP** | `pending` |
 
 ### Phase 2 — App shell & links
@@ -128,7 +128,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 4.3 | Sign out | `pending` |
 | 4.4 | QR code for a link (optional; match web if cheap) | `pending` |
 | 4.5 | Empty / loading / error states consistently | `pending` |
-| 4.6 | App icons, splash, Android package id | `pending` |
+| 4.6 | App icons, splash, Android package id | `done` (icons + splash from web `public/`; package id in 4.7 / EAS) |
 | 4.7 | EAS build profile for Android (preview + production) | `pending` |
 
 ### Phase 5 — Hardening (post-MVP)
@@ -145,17 +145,22 @@ Update the **Status** column as you work. Do not skip prerequisites.
 ## Screen map (target)
 
 ```
-(auth)
-  sign-in | sign-up | verify-otp | forgot-password | reset-password
+(auth)                         Stack.Protected when logged out
+  sign-in | sign-up | verify-email | forgot-password | reset-password
 
-(app)
-  tabs
+(app)                          Stack.Protected when logged in
+  index/                       → home (→ tabs in Phase 2)
+  tabs (Phase 2+)
     links/           → list + FAB create
     links/[id]       → detail + actions
     links/[id]/analytics
     analytics/       → account analytics
     settings/        → profile, plan, sign out
 ```
+
+Root `_layout.tsx`: single `StatusBar` + splash until `authClient.useSession` settles.
+[`Authentication`](https://docs.expo.dev/router/advanced/authentication/) · [`Protected routes`](https://docs.expo.dev/router/advanced/protected/)
+
 
 ## Definition of done (MVP)
 

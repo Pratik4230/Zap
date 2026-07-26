@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { expo } from "@better-auth/expo";
 import { bearer, emailOTP } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { createDb } from "@xaply/db";
@@ -49,6 +50,19 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
         },
       },
     },
+    // Mobile deep-link origins (scheme matches apps/mobile app.json).
+    // See https://better-auth.com/docs/integrations/expo#scheme-and-trusted-origins
+    trustedOrigins: [
+      "xaply://",
+      "xaply://*",
+      ...(process.env.NODE_ENV === "development"
+        ? [
+            "exp://",
+            "exp://**",
+            "exp://192.168.*.*:*/**",
+          ]
+        : []),
+    ],
     advanced: {
       ipAddress: {
         ipAddressHeaders: ["cf-connecting-ip"],
@@ -83,6 +97,7 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
       },
     },
     plugins: [
+      expo(),
       bearer(),
       emailOTP({
         otpLength: 6,
