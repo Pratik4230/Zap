@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Xaply",
+    "slug": "xaply",
+    "scheme": "xaply",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ]
+  }
+}

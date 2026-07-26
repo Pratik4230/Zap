@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "uniwind";
+
+/* Add @source '../…' here only if Uniwind classes live outside src/ (monorepo packages). */
