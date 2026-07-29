@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { LINK_SEARCH_DEBOUNCE_MS } from "@/lib/filter-links";
+import { apiFetch } from "@/lib/api-fetch";
 import { cn } from "@/lib/utils";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
@@ -61,7 +62,7 @@ async function fetchAdminUsers(params: {
   if (params.q) search.set("q", params.q);
   if (params.page > 1) search.set("page", String(params.page));
 
-  const res = await fetch(`/api/admin/users?${search.toString()}`);
+  const res = await apiFetch(`/api/admin/users?${search.toString()}`);
   if (res.status === 403) {
     throw new Error("FORBIDDEN");
   }

@@ -11,5 +11,8 @@ export * from "./plan-limits";
 export * from "./plan";
 export * from "./workspace-billing";
 export * from "./resend";
+export * from "./alert-email";
+export * from "./health-monitor";
+export * from "./observability";
 export * from "./click-limit-email";
 export * from "./plan-enforcement";

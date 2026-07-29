@@ -35,4 +35,14 @@ export const authClient = createAuthClient({
   },
 });
 
+/** Clears the session and hard-navigates so middleware sees fresh cookies. */
+export async function signOutAndRedirect(redirectTo = "/sign-in"): Promise<void> {
+  const { error } = await authClient.signOut();
+  if (error) {
+    throw new Error(error.message ?? "Failed to sign out");
+  }
+
+  window.location.assign(redirectTo);
+}
+
 export type { Session } from "./auth";

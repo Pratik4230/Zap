@@ -5,6 +5,15 @@
 	"compatibility_date": "2026-06-19",
 	"observability": {
 		"enabled": true,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+		},
+		"traces": {
+			"enabled": true,
+			"head_sampling_rate": 0.2,
+		},
 	},
 	"upload_source_maps": true,
 	"compatibility_flags": ["nodejs_compat"],
@@ -32,6 +41,6 @@
 	},
 
 	"triggers": {
-		"crons": ["0 3 * * *"],
+		"crons": ["0 3 * * *", "0 */2 * * *"],
 	},
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { AnalyticsRangePicker } from "@/components/analytics/analytics-range-picker";
+import { apiFetch } from "@/lib/api-fetch";
 import { cn } from "@/lib/utils";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
@@ -60,7 +61,7 @@ interface LinkAnalyticsData {
 
 async function fetchLinkAnalytics(id: string, rangeDays?: number): Promise<LinkAnalyticsData> {
   const query = rangeDays ? `?range=${rangeDays}` : "";
-  const res = await fetch(`/api/links/${id}/analytics${query}`);
+  const res = await apiFetch(`/api/links/${id}/analytics${query}`);
   if (res.status === 404) throw new Error("Link not found");
   if (!res.ok) throw new Error("Failed to fetch analytics");
   return res.json() as Promise<LinkAnalyticsData>;

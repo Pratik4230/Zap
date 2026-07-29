@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { User, Lock, Trash2, LogOut, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { authClient } from "@/lib/auth-client";
+import { authClient, signOutAndRedirect } from "@/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { validateProfileNameField } from "@/lib/validation";
+import { apiFetch } from "@/lib/api-fetch";
 import { BillingSettingsCard } from "@/components/billing/billing-settings-card";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
@@ -30,7 +30,6 @@ async function fetchSession(): Promise<UserData> {
 }
 
 export default function SettingsPage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({ queryKey: ["session"], queryFn: fetchSession });
@@ -44,7 +43,7 @@ export default function SettingsPage() {
 
   const profileMutation = useMutation({
     mutationFn: async (newName: string) => {
-      const res = await fetch("/api/profile", {
+      const res = await apiFetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName }),
@@ -84,10 +83,7 @@ export default function SettingsPage() {
   });
 
   const signOutMutation = useMutation({
-    mutationFn: async () => {
-      await authClient.signOut();
-    },
-    onSuccess: () => router.push("/sign-in"),
+    mutationFn: () => signOutAndRedirect(),
     onError: () => toast.error("Failed to sign out"),
   });
 
@@ -97,7 +93,9 @@ export default function SettingsPage() {
       const res = await authClient.deleteUser();
       if (res.error) throw new Error(res.error.message ?? "Failed to delete account");
     },
-    onSuccess: () => router.push("/sign-up"),
+    onSuccess: () => {
+      window.location.assign("/sign-up");
+    },
     onError: (e) => toast.error(e.message),
   });
 

@@ -62,6 +62,8 @@ import {
   type LinkStatus,
 } from "@/lib/links-query-cache";
 import { cn } from "@/lib/utils";
+import { apiFetch, apiJson } from "@/lib/api-fetch";
+import { QueryErrorState } from "@/components/query-error-state";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -84,24 +86,20 @@ async function fetchLinksPage({
   });
   if (q) params.set("q", q);
 
-  const res = await fetch(`/api/links?${params}`);
-  if (!res.ok) throw new Error("Failed to fetch links");
-  return res.json() as Promise<LinksPageResponse>;
+  return apiJson<LinksPageResponse>(`/api/links?${params}`);
 }
 
 async function fetchLinksSummary(): Promise<LinksSummary> {
-  const res = await fetch("/api/links/summary");
-  if (!res.ok) throw new Error("Failed to fetch summary");
-  return res.json() as Promise<LinksSummary>;
+  return apiJson<LinksSummary>("/api/links/summary");
 }
 
 async function deleteLink(id: string) {
-  const res = await fetch(`/api/links/${id}`, { method: "DELETE" });
+  const res = await apiFetch(`/api/links/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete link");
 }
 
 async function toggleLink(id: string, status: LinkStatus) {
-  const res = await fetch(`/api/links/${id}`, {
+  const res = await apiFetch(`/api/links/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status: status === "active" ? "paused" : "active" }),
@@ -135,7 +133,7 @@ async function updateLink({
   };
   if (password !== undefined) body.password = password;
 
-  const res = await fetch(`/api/links/${id}`, {
+  const res = await apiFetch(`/api/links/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -248,7 +246,7 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const { data: summary, isLoading: isSummaryLoading } = useQuery({
+  const { data: summary, isLoading: isSummaryLoading, error: summaryError, refetch: refetchSummary } = useQuery({
     queryKey: ["links-summary"],
     queryFn: fetchLinksSummary,
   });
@@ -259,6 +257,8 @@ export default function DashboardPage() {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
+    error: linksError,
+    refetch: refetchLinks,
   } = useInfiniteQuery({
     queryKey: ["links", debouncedSearch, statusFilter, sortBy],
     queryFn: ({ pageParam }) =>
@@ -413,6 +413,20 @@ export default function DashboardPage() {
   }, [queryClient, debouncedSearch, statusFilter, sortBy]);
 
   const showTableLoading = isLoading || isSearchPending;
+  const loadError = linksError ?? summaryError;
+
+  if (loadError && !data && !summary) {
+    return (
+      <QueryErrorState
+        title="Unable to load dashboard"
+        error={loadError}
+        onRetry={() => {
+          void refetchLinks();
+          void refetchSummary();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

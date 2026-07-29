@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export function OAuthButtons() {
@@ -15,7 +15,7 @@ export function OAuthButtons() {
     setLoadingProvider(null);
   };
 
-  const buttonBase = {
+  const buttonBase: CSSProperties = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -30,7 +30,7 @@ export function OAuthButtons() {
     border: "1px solid rgba(255,255,255,0.1)",
     background: "oklch(1 0 0 / 5%)",
     color: "inherit",
-  } as React.CSSProperties;
+  };
 
   return (
     <div className="flex flex-col gap-3">

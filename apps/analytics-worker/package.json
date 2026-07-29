@@ -1,23 +1,24 @@
 {
-	"name": "analytics-worker",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev --inspector-port 9230 --port 8788",
-		"start": "wrangler dev --inspector-port 9230 --port 8788",
-		"test": "vitest",
-		"cf-typegen": "wrangler types"
-	},
-	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.12.4",
-		"@types/node": "^25.9.3",
-		"typescript": "^5.5.2",
-		"vitest": "~3.2.0",
-		"wrangler": "^4.101.0"
-	},
-	"dependencies": {
-		"@xaply/db": "workspace:^",
-		"drizzle-orm": "^0.45.2"
-	}
+  "name": "analytics-worker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "logs": "wrangler tail",
+    "dev": "wrangler dev --inspector-port 9230 --port 8788",
+    "start": "wrangler dev --inspector-port 9230 --port 8788",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.12.4",
+    "@types/node": "^25.9.3",
+    "typescript": "^5.5.2",
+    "vitest": "~3.2.0",
+    "wrangler": "^4.101.0"
+  },
+  "dependencies": {
+    "@xaply/db": "workspace:^",
+    "drizzle-orm": "^0.45.2"
+  }
 }

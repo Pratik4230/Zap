@@ -15,6 +15,7 @@ Xaply is an open-source URL shortener built on Cloudflare. Turn long URLs into s
 ## Features
 
 **Links**
+
 - Custom or random slugs
 - Edit destination, title, pause/resume, delete
 - Expiry by date or max clicks
@@ -22,22 +23,26 @@ Xaply is an open-source URL shortener built on Cloudflare. Turn long URLs into s
 - QR codes (generated in the browser, nothing stored)
 
 **Analytics**
+
 - Global dashboard: clicks over last 7 days, top links, countries, cities, devices
 - Per-link analytics: referrers, browsers, OS, device breakdown
 - Geo from Cloudflare (country + city), device/OS from User-Agent
 
 **Dashboard**
+
 - Server-side search and filters
 - Infinite scroll for large link lists
 - Stats cards: total links, clicks, active rate
 
 **Auth & security**
+
 - Email sign-up, Google and GitHub OAuth
 - Rate limits on API and redirects
 - Input validation on every link field
 - Session-protected dashboard
 
 **Redirect engine**
+
 - Sub-10ms redirects at the edge
 - KV cache for hot slugs
 - Password prompt page before redirect
@@ -48,16 +53,16 @@ Xaply is an open-source URL shortener built on Cloudflare. Turn long URLs into s
 
 Monorepo (pnpm + Turborepo). Everything runs on Cloudflare.
 
-| Piece | Tech | Role |
-| --- | --- | --- |
-| Web app | Next.js on Cloudflare Pages | UI, API, auth |
-| Redirect worker | Cloudflare Worker | `go.xaply.in` redirects |
-| Analytics worker | Cloudflare Worker + Queue | Saves clicks, updates counts |
-| Database | D1 (SQLite) | Users, links, clicks |
-| Cache | KV | Slug to link cache for fast redirects |
-| Queue | Cloudflare Queue | Async click processing |
-| Auth | Better Auth | Sessions, OAuth, email |
-| ORM | Drizzle | Shared schema in `packages/db` |
+| Piece            | Tech                        | Role                                  |
+| ---------------- | --------------------------- | ------------------------------------- |
+| Web app          | Next.js on Cloudflare Pages | UI, API, auth                         |
+| Redirect worker  | Cloudflare Worker           | `go.xaply.in` redirects               |
+| Analytics worker | Cloudflare Worker + Queue   | Saves clicks, updates counts          |
+| Database         | D1 (SQLite)                 | Users, links, clicks                  |
+| Cache            | KV                          | Slug to link cache for fast redirects |
+| Queue            | Cloudflare Queue            | Async click processing                |
+| Auth             | Better Auth                 | Sessions, OAuth, email                |
+| ORM              | Drizzle                     | Shared schema in `packages/db`        |
 
 One D1 database (`zap-db`) is shared by all three apps.
 
@@ -73,12 +78,12 @@ You -> xaply.in (Next.js) -> API -> D1
 
 ## Project layout
 
-| Path | App |
-| --- | --- |
-| `apps/web` | Dashboard + API |
-| `apps/redirect-worker` | Redirects + expire cron |
-| `apps/analytics-worker` | Click ingestion |
-| `packages/db` | Schema + migrations |
+| Path                    | App                     |
+| ----------------------- | ----------------------- |
+| `apps/web`              | Dashboard + API         |
+| `apps/redirect-worker`  | Redirects + expire cron |
+| `apps/analytics-worker` | Click ingestion         |
+| `packages/db`           | Schema + migrations     |
 
 ## Install
 
@@ -114,10 +119,10 @@ npx wrangler d1 execute zap-db --local --file=../../packages/db/drizzle/0000_sil
 pnpm dev
 ```
 
-| Service | URL |
-| --- | --- |
-| Web | http://localhost:3000 |
-| Redirect worker | http://localhost:8789 |
+| Service          | URL                   |
+| ---------------- | --------------------- |
+| Web              | http://localhost:3000 |
+| Redirect worker  | http://localhost:8789 |
 | Analytics worker | http://localhost:8788 |
 
 Optional mock data for local testing:
@@ -175,18 +180,20 @@ NEXT_PUBLIC_APP_URL=https://xaply.in pnpm run deploy
 # Redirect worker
 cd apps/redirect-worker
 npx wrangler secret put LINK_PASSWORD_SECRET   # first time only
+npx wrangler secret put RESEND_API_KEY         # for click-limit + downtime alerts
+npx wrangler secret put ADMIN_EMAIL            # receives downtime alerts
 pnpm run deploy
 
 # Analytics worker
 cd apps/analytics-worker && pnpm run deploy
 ```
 
-| Changed | Redeploy |
-| --- | --- |
-| `apps/web/` | web |
-| `apps/redirect-worker/` | redirect-worker |
-| `apps/analytics-worker/` | analytics-worker |
-| `packages/db/` | migrate remote D1, then all three |
+| Changed                  | Redeploy                          |
+| ------------------------ | --------------------------------- |
+| `apps/web/`              | web                               |
+| `apps/redirect-worker/`  | redirect-worker                   |
+| `apps/analytics-worker/` | analytics-worker                  |
+| `packages/db/`           | migrate remote D1, then all three |
 
 ### Production secrets (web, one-time)
 
@@ -198,6 +205,30 @@ npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put GITHUB_CLIENT_SECRET
 npx wrangler secret put ADMIN_EMAIL
 ```
+
+### Observability (logs & traces)
+
+All three workers have Cloudflare observability enabled in `wrangler.jsonc`:
+
+| Worker            | Logs sampling | Traces sampling |
+| ----------------- | ------------- | --------------- |
+| `xaply` (web)     | 50%           | 10%             |
+| `xaply-redirect`  | 100%          | 20%             |
+| `xaply-analytics` | 100%          | 20%             |
+
+**Dashboard:** [Cloudflare Workers](https://dash.cloudflare.com/) → Workers & Pages → select worker → **Observability** (Logs + Traces tabs).
+
+**Live tail from terminal:**
+
+```bash
+cd apps/web && pnpm logs              # web worker
+cd apps/redirect-worker && pnpm logs  # redirect worker
+cd apps/analytics-worker && pnpm logs # analytics worker
+```
+
+Errors and health alerts emit structured JSON logs (search for `event: "api.unhandled_error"` or `event: "health.unhealthy"`).
+
+**Optional:** Export logs/traces to Datadog, Grafana, Axiom, etc. via Cloudflare dashboard → Observability → **Add destination** (OpenTelemetry). Then add destination names to each worker's `wrangler.jsonc` under `observability.logs.destinations` / `observability.traces.destinations`.
 
 ### OAuth callbacks
 

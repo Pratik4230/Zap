@@ -4,6 +4,7 @@ import { createDb, hashLinkPassword, toPublicLink, validateClickLimit, validateD
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
+import { withApiHandler } from "@/lib/api-handler";
 import { LINK_MUTATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function PATCH(
@@ -11,10 +12,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { env } = getCloudflareContext();
-  const session = await requireSession(request, env);
-  if (!isSession(session)) return session;
+  return withApiHandler(env, "/api/links/[id]", async () => {
+    const session = await requireSession(request, env);
+    if (!isSession(session)) return session;
 
-  const rl = await rateLimit({
+    const rl = await rateLimit({
     kv: env.ZAP_CACHE,
     key: `mutate:${session.user.id}`,
     ...LINK_MUTATE_LIMIT,
@@ -150,6 +152,7 @@ export async function PATCH(
   void env.ZAP_CACHE.delete(updated.slug);
 
   return NextResponse.json({ link: toPublicLink(updated) });
+  });
 }
 
 export async function DELETE(
@@ -157,10 +160,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { env } = getCloudflareContext();
-  const session = await requireSession(request, env);
-  if (!isSession(session)) return session;
+  return withApiHandler(env, "/api/links/[id]", async () => {
+    const session = await requireSession(request, env);
+    if (!isSession(session)) return session;
 
-  const rl = await rateLimit({
+    const rl = await rateLimit({
     kv: env.ZAP_CACHE,
     key: `mutate:${session.user.id}`,
     ...LINK_MUTATE_LIMIT,
@@ -183,4 +187,5 @@ export async function DELETE(
   void env.ZAP_CACHE.delete(deleted.slug);
 
   return NextResponse.json({ success: true });
+  });
 }

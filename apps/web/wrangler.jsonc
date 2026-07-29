@@ -4,6 +4,19 @@
   "name": "xaply",
   "compatibility_date": "2026-06-10",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 0.5,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+    },
+  },
+  "upload_source_maps": true,
   "routes": [
     { "pattern": "xaply.in/*", "zone_name": "xaply.in" },
     { "pattern": "www.xaply.in/*", "zone_name": "xaply.in" },

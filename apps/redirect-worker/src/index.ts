@@ -18,6 +18,7 @@ import {
   renderPasswordPage,
 } from "./password-page";
 import { runExpireLinksCron } from "./expire-cron";
+import { runHealthMonitorCron } from "./health-cron";
 
 interface WorkerEnv {
   ZAP_CACHE: KVNamespace;
@@ -25,6 +26,7 @@ interface WorkerEnv {
   ANALYTICS_QUEUE: Queue;
   LINK_PASSWORD_SECRET: string;
   RESEND_API_KEY?: string;
+  ADMIN_EMAIL?: string;
 }
 
 function getClientIp(request: Request): string {
@@ -181,7 +183,14 @@ export default {
     return issueRedirect(request, env, ctx, link);
   },
 
-  async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(runExpireLinksCron(env));
+  async scheduled(controller, env, ctx) {
+    if (controller.cron === "0 3 * * *") {
+      ctx.waitUntil(runExpireLinksCron(env));
+      return;
+    }
+
+    if (controller.cron === "0 */2 * * *") {
+      ctx.waitUntil(runHealthMonitorCron(env));
+    }
   },
 } satisfies ExportedHandler<WorkerEnv>;

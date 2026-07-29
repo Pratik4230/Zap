@@ -23,6 +23,7 @@ import {
   validateTitleField,
 } from "@/lib/validation";
 import type { DashboardLink } from "@/lib/links-query-cache";
+import { apiFetch } from "@/lib/api-fetch";
 import { toast } from "sonner";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
@@ -63,7 +64,7 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
         return;
       }
 
-      const res = await fetch("/api/links", {
+      const res = await apiFetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

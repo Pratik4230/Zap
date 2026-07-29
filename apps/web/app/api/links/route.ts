@@ -17,38 +17,42 @@ import {
 import { links } from "@xaply/db/schema";
 import { nanoid } from "nanoid";
 import { isSession, requireSession } from "@/lib/api-auth";
+import { withApiHandler } from "@/lib/api-handler";
 import { parseLinksListParams } from "@/lib/filter-links";
 import { queryLinksPage } from "@/lib/links-list-query";
 import { API_READ_LIMIT, LINK_CREATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
-  const session = await requireSession(request, env);
-  if (!isSession(session)) return session;
+  return withApiHandler(env, "/api/links", async () => {
+    const session = await requireSession(request, env);
+    if (!isSession(session)) return session;
 
-  const rl = await rateLimit({
-    kv: env.ZAP_CACHE,
-    key: `read:${session.user.id}`,
-    ...API_READ_LIMIT,
-  });
-  if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
+    const rl = await rateLimit({
+      kv: env.ZAP_CACHE,
+      key: `read:${session.user.id}`,
+      ...API_READ_LIMIT,
+    });
+    if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
-  const params = parseLinksListParams(request.nextUrl.searchParams);
-  const db = createDb(env.DB);
-  const result = await queryLinksPage(db, session.user.id, params);
+    const params = parseLinksListParams(request.nextUrl.searchParams);
+    const db = createDb(env.DB);
+    const result = await queryLinksPage(db, session.user.id, params);
 
-  return NextResponse.json({
-    ...result,
-    links: toPublicLinks(result.links),
+    return NextResponse.json({
+      ...result,
+      links: toPublicLinks(result.links),
+    });
   });
 }
 
 export async function POST(request: NextRequest) {
   const { env } = getCloudflareContext();
-  const session = await requireSession(request, env);
-  if (!isSession(session)) return session;
+  return withApiHandler(env, "/api/links", async () => {
+    const session = await requireSession(request, env);
+    if (!isSession(session)) return session;
 
-  const rl = await rateLimit({
+    const rl = await rateLimit({
     kv: env.ZAP_CACHE,
     key: `create:${session.user.id}`,
     ...LINK_CREATE_LIMIT,
@@ -146,4 +150,5 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
   }
+  });
 }

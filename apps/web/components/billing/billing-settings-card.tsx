@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpgradeProButton } from "@/components/billing/upgrade-pro-button";
 import { authClient } from "@/lib/auth-client";
+import { apiJson } from "@/lib/api-fetch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +15,7 @@ const AMBER = "oklch(0.769 0.188 70.08)";
 type BillingPlan = "free" | "pro";
 
 async function fetchBillingPlan(): Promise<BillingPlan> {
-  const res = await fetch("/api/billing");
-  if (!res.ok) throw new Error("Could not load billing plan");
-  const data = (await res.json()) as { plan: BillingPlan };
+  const data = await apiJson<{ plan: BillingPlan }>("/api/billing");
   return data.plan;
 }
 

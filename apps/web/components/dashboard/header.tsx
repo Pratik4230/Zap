@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut,  Settings } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { Menu, LogOut, Settings } from "lucide-react";
+import { authClient, signOutAndRedirect } from "@/lib/auth-client";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,10 +16,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export function DashboardHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const [signingOut, setSigningOut] = useState(false);
 
   const user = session?.user;
   const initials = user?.name
@@ -26,8 +29,15 @@ export function DashboardHeader() {
     : "?";
 
   const handleSignOut = async () => {
-    await authClient.signOut();
-    router.push("/sign-in");
+    if (signingOut) return;
+
+    try {
+      setSigningOut(true);
+      await signOutAndRedirect();
+    } catch {
+      toast.error("Failed to sign out");
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -83,11 +93,15 @@ export function DashboardHeader() {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={handleSignOut}
+            disabled={signingOut}
+            onSelect={(event) => {
+              event.preventDefault();
+              void handleSignOut();
+            }}
             className="text-destructive focus:text-destructive"
           >
             <LogOut size={14} className="mr-2" />
-            Sign out
+            {signingOut ? "Signing out…" : "Sign out"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

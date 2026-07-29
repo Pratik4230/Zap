@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
+		"logs": "wrangler tail",
 		"dev": "wrangler dev --inspector-port 9231 --port 8789",
 		"start": "wrangler dev --inspector-port 9231 --port 8789",
 		"test": "vitest",

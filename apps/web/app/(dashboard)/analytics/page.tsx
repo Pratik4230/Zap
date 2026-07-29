@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { AnalyticsRangePicker } from "@/components/analytics/analytics-range-picker";
 import { cn } from "@/lib/utils";
+import { apiJson } from "@/lib/api-fetch";
+import { QueryErrorState } from "@/components/query-error-state";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
@@ -38,9 +40,7 @@ interface AnalyticsData {
 
 async function fetchAnalytics(rangeDays?: number): Promise<AnalyticsData> {
   const query = rangeDays ? `?range=${rangeDays}` : "";
-  const res = await fetch(`/api/analytics${query}`);
-  if (!res.ok) throw new Error("Failed to fetch analytics");
-  return res.json() as Promise<AnalyticsData>;
+  return apiJson<AnalyticsData>(`/api/analytics${query}`);
 }
 
 function BarSkeleton({ bars = 7 }: { bars?: number }) {
@@ -59,11 +59,21 @@ function BarSkeleton({ bars = 7 }: { bars?: number }) {
 export default function AnalyticsPage() {
   const [rangeDays, setRangeDays] = useState<number | undefined>(undefined);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ["analytics", rangeDays ?? "auto"],
     queryFn: () => fetchAnalytics(rangeDays),
     placeholderData: keepPreviousData,
   });
+
+  if (error && !data) {
+    return (
+      <QueryErrorState
+        title="Unable to load analytics"
+        error={error}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   const plan = data?.plan ?? "free";
   const activeRange = data?.rangeDays ?? rangeDays ?? 7;

@@ -1,4 +1,10 @@
-import { createDb, clicks, links, isLinkWithinClickLimit } from "@xaply/db";
+import {
+  createDb,
+  clicks,
+  links,
+  isLinkWithinClickLimit,
+  logError,
+} from "@xaply/db";
 import type { ClickEvent } from "@xaply/db";
 import { eq, sql } from "drizzle-orm";
 
@@ -26,7 +32,8 @@ export default {
             browser: event.browser ?? null,
             referrer: event.referrer ?? null,
           }),
-          db.update(links)
+          db
+            .update(links)
             .set({
               clickCount: sql`${links.clickCount} + 1`,
               updatedAt: new Date(),
@@ -48,7 +55,12 @@ export default {
         }
 
         message.ack();
-      } catch {
+      } catch (error) {
+        logError("analytics.click_ingest_failed", error, {
+          worker: "xaply-analytics",
+          linkId: event.linkId,
+          messageId: message.id,
+        });
         message.retry();
       }
     }
