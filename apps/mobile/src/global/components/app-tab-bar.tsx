@@ -4,7 +4,7 @@ import { Host, Icon } from "@expo/ui/jetpack-compose";
 import LinkIcon from "@expo/material-symbols/link.xml";
 import AnalyticsIcon from "@expo/material-symbols/analytics.xml";
 import SettingsIcon from "@expo/material-symbols/settings.xml";
-import { colors } from "@/theme";
+import { colors } from "@/global/theme";
 
 const TAB_ITEMS = {
   index: { label: "Links", icon: LinkIcon },

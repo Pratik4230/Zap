@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { colors } from "@/theme";
+import { colors } from "@/global/theme";
 
 export const unstable_settings = {
   initialRouteName: "sign-in",

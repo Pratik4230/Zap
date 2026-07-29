@@ -2,7 +2,7 @@ import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import * as SecureStore from "expo-secure-store";
-import { API_URL } from "@/config/env";
+import { API_URL } from "@/global/config/env";
 
 /**
  * Better Auth client for Expo.

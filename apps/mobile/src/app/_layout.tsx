@@ -7,9 +7,9 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { authClient } from "@/auth/client";
-import { QueryProvider } from "@/query/provider";
-import { colors } from "@/theme";
+import { authClient } from "@/features/auth/utils/client";
+import { QueryProvider } from "@/global/query/provider";
+import { colors } from "@/global/theme";
 
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({

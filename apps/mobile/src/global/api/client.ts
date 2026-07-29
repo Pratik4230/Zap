@@ -1,4 +1,4 @@
-import { api } from "@/api/http";
+import { api } from "@/global/api/http";
 import {
   LINKS_PAGE_SIZE,
   type AccountAnalytics,
@@ -11,7 +11,7 @@ import {
   type ProfileUser,
   type UpdateLinkInput,
   type WorkspacePlan,
-} from "@/api/types";
+} from "@/global/api/types";
 
 /** Typed wrappers around production `/api/*` routes. */
 export const apiClient = {

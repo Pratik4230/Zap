@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
-import { AppTabBar } from "@/components/app/app-tab-bar";
-import { colors } from "@/theme";
+import { AppTabBar } from "@/global/components/app-tab-bar";
+import { colors } from "@/global/theme";
 
 export default function TabsLayout() {
   return (

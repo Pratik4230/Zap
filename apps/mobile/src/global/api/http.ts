@@ -1,7 +1,7 @@
 import axios from "axios";
-import { authClient } from "@/auth/client";
-import { API_URL } from "@/config/env";
-import { ApiError } from "@/api/errors";
+import { authClient } from "@/features/auth/utils/client";
+import { API_URL } from "@/global/config/env";
+import { ApiError } from "@/global/api/errors";
 
 /**
  * Axios instance for the production API.

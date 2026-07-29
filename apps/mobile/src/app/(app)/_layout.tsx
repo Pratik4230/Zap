@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { colors } from "@/theme";
+import { colors } from "@/global/theme";
 
 /**
  * Authenticated stack — tabs live under (tabs); detail routes stack later.

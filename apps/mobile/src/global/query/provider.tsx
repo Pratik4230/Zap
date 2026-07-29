@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { isRetryableApiError } from "@/api/errors";
+import { isRetryableApiError } from "@/global/api/errors";
 
 function createQueryClient() {
   return new QueryClient({

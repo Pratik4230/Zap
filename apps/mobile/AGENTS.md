@@ -96,7 +96,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 1.4 | Email OTP verify flow | `done` |
 | 1.5 | Forgot / reset password | `done` |
 | 1.6 | Session gate: unauthenticated → auth stack; authenticated → app tabs | `done` (`Stack.Protected` + `authClient.useSession`; tabs in 2.2) |
-| 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()` | `done` (`src/api/http.ts`) |
+| 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()` | `done` (`src/global/api/http.ts`) |
 | 1.8 | _(Later)_ Google OAuth deep links — **blocked until post-MVP** | `pending` |
 
 ### Phase 2 — App shell & links
@@ -145,27 +145,36 @@ Update the **Status** column as you work. Do not skip prerequisites.
 ## Screen map (target)
 
 ```
-src/app/                       routes only (Expo Router)
-  _layout.tsx                  StatusBar + splash + Stack.Protected
-  (auth)/                      logged out
-    sign-in | sign-up | verify-email | forgot-password | reset-password
-  (app)/                       logged in
-    (tabs)/
-      index          → links home (+ list in 2.3)
-      analytics      → account analytics (Phase 3)
-      settings       → profile, plan, sign out
-    links/[id]       → detail (2.6, stack above tabs later)
-    links/[id]/analytics
+src/
+  app/                         Expo Router only (thin re-exports + layouts)
+    _layout.tsx                StatusBar + splash + Stack.Protected
+    (auth)/                    → features/auth/screens/*
+    (app)/
+      (tabs)/
+        index                  → features/links
+        analytics              → features/analytics
+        settings               → features/settings
+      links/[id]               detail (2.6, later)
+      links/[id]/analytics
 
-src/components/                UI (auth/, app/)
-src/config/                    env (EXPO_PUBLIC_*)
-src/theme/                     brand tokens, colors
-src/auth/                      Better Auth client, navigation, schemas
-src/api/                       http, client, types, errors, query-keys
-src/query/                     TanStack Query provider
+  features/
+    auth/
+      screens/                 sign-in, sign-up, verify, forgot, reset
+      components/              AuthScreen chrome
+      utils/                   client, navigation, schemas
+    links/screens/             Links tab (+ list/create later)
+    analytics/screens/         Account analytics
+    settings/screens/          Profile, plan, sign out
+
+  global/
+    api/                       http, client, types, errors, query-keys
+    components/                AppScreen, AppTabBar
+    config/                    env
+    query/                     TanStack Query provider
+    theme/                     brand tokens, colors
 ```
 
-Import via `@/` path alias (e.g. `@/auth/client`, `@/api/client`).
+Import via `@/` (e.g. `@/features/auth/utils/client`, `@/global/api/client`).
 
 Root `_layout.tsx`: single `StatusBar` + splash until `authClient.useSession` settles.
 [`Authentication`](https://docs.expo.dev/router/advanced/authentication/) · [`Protected routes`](https://docs.expo.dev/router/advanced/protected/)

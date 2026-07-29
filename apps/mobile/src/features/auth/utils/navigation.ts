@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { authClient } from "@/auth/client";
+import { authClient } from "@/features/auth/utils/client";
 
 /** Authenticated home — Links tab ( (tabs)/index ). */
 export const APP_HOME_HREF = "/" as const;
