@@ -15,13 +15,14 @@ import {
   fillMaxWidth,
   padding,
 } from "@expo/ui/jetpack-compose/modifiers";
-import { authClient } from "../../lib/auth-client";
+import { authClient } from "@/auth/client";
+import { enterApp } from "@/auth/navigation";
 import {
   signInSchema,
   type SignInValues,
-} from "../../lib/auth-schemas";
-import { colors } from "../../lib/theme";
-import { AuthScreen } from "../../components/auth/auth-screen";
+} from "@/auth/schemas";
+import { colors } from "@/theme";
+import { AuthScreen } from "@/components/auth/auth-screen";
 
 function SignInForm() {
   const email = useNativeState("");
@@ -64,7 +65,8 @@ function SignInForm() {
       return;
     }
 
-    router.replace("/");
+    // Session → Stack.Protected opens (app); "/" = Links tab
+    await enterApp();
   });
 
   async function onSubmit() {

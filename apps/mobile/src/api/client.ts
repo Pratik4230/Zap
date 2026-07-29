@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api } from "@/api/http";
 import {
   LINKS_PAGE_SIZE,
   type AccountAnalytics,
@@ -11,12 +11,9 @@ import {
   type ProfileUser,
   type UpdateLinkInput,
   type WorkspacePlan,
-} from "./api-types";
+} from "@/api/types";
 
-/**
- * Typed wrappers around production `/api/*` routes.
- * Use with TanStack Query `queryFn` / `mutationFn`.
- */
+/** Typed wrappers around production `/api/*` routes. */
 export const apiClient = {
   links: {
     list(params: LinksListParams = {}): Promise<LinksPageResponse> {

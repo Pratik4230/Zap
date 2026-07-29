@@ -10,7 +10,7 @@ import {
   fillMaxWidth,
   paddingAll,
 } from "@expo/ui/jetpack-compose/modifiers";
-import { brand, colors } from "../../lib/theme";
+import { brand, colors } from "@/theme";
 
 type AuthScreenProps = {
   title: string;

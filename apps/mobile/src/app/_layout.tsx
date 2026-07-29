@@ -6,9 +6,10 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { authClient } from "../lib/auth-client";
-import { QueryProvider } from "../lib/query-provider";
-import { colors } from "../lib/theme";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { authClient } from "@/auth/client";
+import { QueryProvider } from "@/query/provider";
+import { colors } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({
@@ -16,15 +17,11 @@ SplashScreen.setOptions({
   fade: true,
 });
 
-// Root / transition background — kills white flash between screens
 void SystemUI.setBackgroundColorAsync(colors.background);
 
 /**
- * Root layout — Expo Router protected routes (SDK 57+).
+ * Root layout — Stack.Protected auth gate (same pattern as Phase 1).
  * @see https://docs.expo.dev/router/advanced/authentication/
- * @see https://docs.expo.dev/router/advanced/protected/
- * @see https://docs.expo.dev/versions/v57.0.0/sdk/system-ui/
- * @see https://docs.expo.dev/versions/v57.0.0/sdk/keyboard-controller/
  */
 export default function RootLayout() {
   const { data: session, isPending } = authClient.useSession();
@@ -37,25 +34,27 @@ export default function RootLayout() {
   }, [isPending]);
 
   return (
-    <QueryProvider>
-      <KeyboardProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            animation: "fade",
-          }}
-        >
-          <Stack.Protected guard={!isPending && isLoggedIn}>
-            <Stack.Screen name="(app)" />
-          </Stack.Protected>
+    <SafeAreaProvider>
+      <QueryProvider>
+        <KeyboardProvider>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              animation: "fade",
+            }}
+          >
+            <Stack.Protected guard={!isPending && isLoggedIn}>
+              <Stack.Screen name="(app)" />
+            </Stack.Protected>
 
-          <Stack.Protected guard={!isPending && !isLoggedIn}>
-            <Stack.Screen name="(auth)" />
-          </Stack.Protected>
-        </Stack>
-      </KeyboardProvider>
-    </QueryProvider>
+            <Stack.Protected guard={!isPending && !isLoggedIn}>
+              <Stack.Screen name="(auth)" />
+            </Stack.Protected>
+          </Stack>
+        </KeyboardProvider>
+      </QueryProvider>
+    </SafeAreaProvider>
   );
 }

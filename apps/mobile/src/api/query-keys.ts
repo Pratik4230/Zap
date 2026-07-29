@@ -1,8 +1,6 @@
-import type { LinkSortOption, LinkStatusFilter } from "./api-types";
+import type { LinkSortOption, LinkStatusFilter } from "@/api/types";
 
-/**
- * Stable TanStack Query keys for mobile API data.
- */
+/** Stable TanStack Query keys for mobile API data. */
 export const queryKeys = {
   links: {
     all: ["links"] as const,

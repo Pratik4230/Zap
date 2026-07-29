@@ -62,7 +62,6 @@ export interface UpdateLinkInput {
   destinationUrl?: string;
   expiresAt?: string | null;
   clickLimit?: number | null;
-  /** Pass `null` or `""` to clear; omit to leave unchanged. */
   password?: string | null;
 }
 

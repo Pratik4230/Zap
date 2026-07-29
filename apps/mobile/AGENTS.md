@@ -96,7 +96,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 1.4 | Email OTP verify flow | `done` |
 | 1.5 | Forgot / reset password | `done` |
 | 1.6 | Session gate: unauthenticated → auth stack; authenticated → app tabs | `done` (`Stack.Protected` + `authClient.useSession`; tabs in 2.2) |
-| 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()` | `done` (`src/lib/api.ts`) |
+| 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()` | `done` (`src/api/http.ts`) |
 | 1.8 | _(Later)_ Google OAuth deep links — **blocked until post-MVP** | `pending` |
 
 ### Phase 2 — App shell & links
@@ -104,7 +104,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | ID | Task | Status |
 | --- | --- | --- |
 | 2.1 | TanStack Query provider + API client typed against web routes | `done` |
-| 2.2 | Tab / nav shell (Compose `NavigationBar` or Expo Router tabs) | `pending` |
+| 2.2 | Tab / nav shell (Compose `NavigationBar` or Expo Router tabs) | `done` |
 | 2.3 | Links list: search/filter + infinite scroll (`LazyColumn` / pull-to-refresh) | `pending` |
 | 2.4 | Create link (destination, optional slug/title) + plan-limit errors | `pending` |
 | 2.5 | Copy short URL + system share sheet | `pending` |
@@ -145,18 +145,27 @@ Update the **Status** column as you work. Do not skip prerequisites.
 ## Screen map (target)
 
 ```
-(auth)                         Stack.Protected when logged out
-  sign-in | sign-up | verify-email | forgot-password | reset-password
-
-(app)                          Stack.Protected when logged in
-  index/                       → home (→ tabs in Phase 2)
-  tabs (Phase 2+)
-    links/           → list + FAB create
-    links/[id]       → detail + actions
+src/app/                       routes only (Expo Router)
+  _layout.tsx                  StatusBar + splash + Stack.Protected
+  (auth)/                      logged out
+    sign-in | sign-up | verify-email | forgot-password | reset-password
+  (app)/                       logged in
+    (tabs)/
+      index          → links home (+ list in 2.3)
+      analytics      → account analytics (Phase 3)
+      settings       → profile, plan, sign out
+    links/[id]       → detail (2.6, stack above tabs later)
     links/[id]/analytics
-    analytics/       → account analytics
-    settings/        → profile, plan, sign out
+
+src/components/                UI (auth/, app/)
+src/config/                    env (EXPO_PUBLIC_*)
+src/theme/                     brand tokens, colors
+src/auth/                      Better Auth client, navigation, schemas
+src/api/                       http, client, types, errors, query-keys
+src/query/                     TanStack Query provider
 ```
+
+Import via `@/` path alias (e.g. `@/auth/client`, `@/api/client`).
 
 Root `_layout.tsx`: single `StatusBar` + splash until `authClient.useSession` settles.
 [`Authentication`](https://docs.expo.dev/router/advanced/authentication/) · [`Protected routes`](https://docs.expo.dev/router/advanced/protected/)

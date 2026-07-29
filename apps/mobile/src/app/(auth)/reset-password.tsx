@@ -10,13 +10,13 @@ import {
   useNativeState,
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
-import { authClient } from "../../lib/auth-client";
+import { authClient } from "@/auth/client";
 import {
   resetPasswordSchema,
   type ResetPasswordValues,
-} from "../../lib/auth-schemas";
-import { colors } from "../../lib/theme";
-import { AuthScreen } from "../../components/auth/auth-screen";
+} from "@/auth/schemas";
+import { colors } from "@/theme";
+import { AuthScreen } from "@/components/auth/auth-screen";
 
 function ResetPasswordForm() {
   const { email: emailParam } = useLocalSearchParams<{ email?: string }>();

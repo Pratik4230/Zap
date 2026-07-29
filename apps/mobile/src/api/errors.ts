@@ -1,6 +1,5 @@
 /**
  * Normalized API errors for TanStack Query retries and UI messages.
- * Mirrors apps/web/lib/api-fetch.ts behavior for axios.
  */
 export class ApiError extends Error {
   readonly status?: number;

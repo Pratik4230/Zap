@@ -1,17 +1,14 @@
 import axios from "axios";
-import { authClient } from "./auth-client";
-import { ApiError } from "./api-error";
-import { API_URL } from "./env";
+import { authClient } from "@/auth/client";
+import { API_URL } from "@/config/env";
+import { ApiError } from "@/api/errors";
 
 /**
- * Axios client for the production API.
+ * Axios instance for the production API.
  * Attaches Better Auth session cookies from SecureStore on every request.
- *
- * @see https://better-auth.com/docs/integrations/expo#making-authenticated-requests-to-your-server
  */
 export const api = axios.create({
   baseURL: API_URL,
-  // Manual Cookie header — credentials would fight SecureStore cookies
   withCredentials: false,
   timeout: 15_000,
   headers: {

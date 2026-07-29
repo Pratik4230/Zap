@@ -11,10 +11,11 @@ import {
   useNativeState,
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
-import { authClient } from "../../lib/auth-client";
-import { otpSchema, type OtpValues } from "../../lib/auth-schemas";
-import { colors } from "../../lib/theme";
-import { AuthScreen } from "../../components/auth/auth-screen";
+import { authClient } from "@/auth/client";
+import { enterApp } from "@/auth/navigation";
+import { otpSchema, type OtpValues } from "@/auth/schemas";
+import { colors } from "@/theme";
+import { AuthScreen } from "@/components/auth/auth-screen";
 
 const RESEND_COOLDOWN = 60;
 
@@ -91,7 +92,7 @@ function VerifyEmailForm() {
       setServerError(error.message ?? "Invalid or expired code");
       return;
     }
-    router.replace("/");
+    await enterApp();
   });
 
   async function onSubmit() {
