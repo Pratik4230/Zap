@@ -103,7 +103,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| 2.1 | TanStack Query provider + API client typed against web routes | `pending` |
+| 2.1 | TanStack Query provider + API client typed against web routes | `done` |
 | 2.2 | Tab / nav shell (Compose `NavigationBar` or Expo Router tabs) | `pending` |
 | 2.3 | Links list: search/filter + infinite scroll (`LazyColumn` / pull-to-refresh) | `pending` |
 | 2.4 | Create link (destination, optional slug/title) + plan-limit errors | `pending` |

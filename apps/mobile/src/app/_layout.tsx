@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { authClient } from "../lib/auth-client";
+import { QueryProvider } from "../lib/query-provider";
 import { colors } from "../lib/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -36,23 +37,25 @@ export default function RootLayout() {
   }, [isPending]);
 
   return (
-    <KeyboardProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-          animation: "fade",
-        }}
-      >
-        <Stack.Protected guard={!isPending && isLoggedIn}>
-          <Stack.Screen name="(app)" />
-        </Stack.Protected>
+    <QueryProvider>
+      <KeyboardProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+            animation: "fade",
+          }}
+        >
+          <Stack.Protected guard={!isPending && isLoggedIn}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
 
-        <Stack.Protected guard={!isPending && !isLoggedIn}>
-          <Stack.Screen name="(auth)" />
-        </Stack.Protected>
-      </Stack>
-    </KeyboardProvider>
+          <Stack.Protected guard={!isPending && !isLoggedIn}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+        </Stack>
+      </KeyboardProvider>
+    </QueryProvider>
   );
 }

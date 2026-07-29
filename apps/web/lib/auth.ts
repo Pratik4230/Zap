@@ -51,17 +51,14 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
       },
     },
     // Mobile deep-link origins (scheme matches apps/mobile app.json).
+    // Include exp:// always: mobile hits production (xaply.in) from Expo Go.
     // See https://better-auth.com/docs/integrations/expo#scheme-and-trusted-origins
     trustedOrigins: [
       "xaply://",
       "xaply://*",
-      ...(process.env.NODE_ENV === "development"
-        ? [
-            "exp://",
-            "exp://**",
-            "exp://192.168.*.*:*/**",
-          ]
-        : []),
+      "exp://",
+      "exp://**",
+      "exp://192.168.*.*:*/**",
     ],
     advanced: {
       ipAddress: {
