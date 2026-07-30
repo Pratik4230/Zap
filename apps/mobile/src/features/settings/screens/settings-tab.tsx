@@ -17,6 +17,7 @@ import { apiClient } from "@/global/api/client";
 import { AppScreen } from "@/global/components/app-screen";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { colors } from "@/global/theme";
+import { useIsOnline } from "@/global/utils/network";
 
 /**
  * Settings — profile name + sign out.
@@ -24,6 +25,7 @@ import { colors } from "@/global/theme";
  */
 export default function SettingsTabScreen() {
   const queryClient = useQueryClient();
+  const online = useIsOnline();
   const { data: session, isPending: isSessionPending, error: sessionError } =
     authClient.useSession();
 
@@ -59,6 +61,11 @@ export default function SettingsTabScreen() {
   });
 
   function saveProfile() {
+    if (!online) {
+      setServerError("You’re offline. Reconnect to save your profile.");
+      setSuccessMessage("");
+      return;
+    }
     const nextName = nameState.get().trim();
     const validationError = validateProfileName(nextName);
     if (validationError) {
@@ -74,6 +81,11 @@ export default function SettingsTabScreen() {
   }
 
   async function signOut() {
+    if (!online) {
+      setServerError("You’re offline. Reconnect to sign out.");
+      setSuccessMessage("");
+      return;
+    }
     setSigningOut(true);
     setServerError("");
     setSuccessMessage("");

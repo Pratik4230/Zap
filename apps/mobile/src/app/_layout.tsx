@@ -1,13 +1,14 @@
 import "../global.css";
 
 import { useEffect } from "react";
-import { StatusBar as RNStatusBar } from "react-native";
+import { StatusBar as RNStatusBar, View } from "react-native";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { authClient } from "@/features/auth/utils/client";
+import { OfflineBanner } from "@/global/components/offline-banner";
 import { QueryProvider } from "@/global/query/provider";
 import { colors } from "@/global/theme";
 
@@ -37,22 +38,25 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryProvider>
         <KeyboardProvider>
-          <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
-              animation: "fade",
-            }}
-          >
-            <Stack.Protected guard={!isPending && isLoggedIn}>
-              <Stack.Screen name="(app)" />
-            </Stack.Protected>
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <OfflineBanner />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+                animation: "fade",
+              }}
+            >
+              <Stack.Protected guard={!isPending && isLoggedIn}>
+                <Stack.Screen name="(app)" />
+              </Stack.Protected>
 
-            <Stack.Protected guard={!isPending && !isLoggedIn}>
-              <Stack.Screen name="(auth)" />
-            </Stack.Protected>
-          </Stack>
+              <Stack.Protected guard={!isPending && !isLoggedIn}>
+                <Stack.Screen name="(auth)" />
+              </Stack.Protected>
+            </Stack>
+          </View>
         </KeyboardProvider>
       </QueryProvider>
     </SafeAreaProvider>

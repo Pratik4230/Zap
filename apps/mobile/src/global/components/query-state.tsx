@@ -1,5 +1,6 @@
 import { Button, Column, ListItem, Text } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth, padding } from "@expo/ui/jetpack-compose/modifiers";
+import { useIsOnline } from "@/global/utils/network";
 import { colors } from "@/global/theme";
 
 type LoadingStateProps = {
@@ -40,18 +41,24 @@ export function LoadingState({ message = "Loading...", padded }: LoadingStatePro
   );
 }
 
-/** Shared error + optional retry. */
+/** Shared error + optional retry (disabled while offline). */
 export function ErrorState({ message, onRetry, padded }: ErrorStateProps) {
+  const online = useIsOnline();
+  const displayMessage = online
+    ? message
+    : "You’re offline. Reconnect and try again.";
+
   return (
     <Column
       verticalArrangement={{ spacedBy: 8 }}
       modifiers={padModifiers(padded)}
     >
       <Text color={colors.destructive} style={{ fontSize: 13 }}>
-        {message}
+        {displayMessage}
       </Text>
       {onRetry ? (
         <Button
+          enabled={online}
           onClick={onRetry}
           colors={{
             containerColor: colors.primary,
@@ -59,7 +66,9 @@ export function ErrorState({ message, onRetry, padded }: ErrorStateProps) {
           }}
           modifiers={[fillMaxWidth()]}
         >
-          <Text style={{ fontWeight: "600" }}>Try again</Text>
+          <Text style={{ fontWeight: "600" }}>
+            {online ? "Try again" : "Waiting for connection…"}
+          </Text>
         </Button>
       ) : null}
     </Column>

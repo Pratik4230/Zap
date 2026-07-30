@@ -49,6 +49,7 @@ import type { CreateLinkInput, LinkSortOption, LinkStatusFilter } from "@/global
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { colors } from "@/global/theme";
 import { useDebouncedValue } from "@/global/utils/use-debounced-value";
+import { useIsOnline } from "@/global/utils/network";
 
 function StatCard({
   label,
@@ -84,6 +85,7 @@ function StatCard({
 export default function LinksTabScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const online = useIsOnline();
   const searchField = useNativeState("");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, LINK_SEARCH_DEBOUNCE_MS);
@@ -222,6 +224,10 @@ export default function LinksTabScreen() {
 
   async function onCreateLink() {
     setServerError("");
+    if (!online) {
+      setServerError("You’re offline. Reconnect to create a link.");
+      return;
+    }
     const destinationUrl = destinationState.get().trim();
     if (!destinationUrl) {
       setServerError("Destination URL is required");
@@ -247,6 +253,10 @@ export default function LinksTabScreen() {
 
   async function saveEdit() {
     if (!editingLink) return;
+    if (!online) {
+      setServerError("You’re offline. Reconnect to save changes.");
+      return;
+    }
     const nextUrl = editDestinationState.get().trim();
     if (!nextUrl) {
       setServerError("Destination URL is required");
@@ -261,6 +271,10 @@ export default function LinksTabScreen() {
 
   async function toggleStatus() {
     if (!editingLink) return;
+    if (!online) {
+      setServerError("You’re offline. Reconnect to update status.");
+      return;
+    }
     await updateMutation.mutateAsync({
       id: editingLink.id,
       title: editTitleState.get().trim(),
@@ -271,6 +285,10 @@ export default function LinksTabScreen() {
 
   async function removeLink() {
     if (!editingLink) return;
+    if (!online) {
+      setServerError("You’re offline. Reconnect to delete this link.");
+      return;
+    }
     await deleteMutation.mutateAsync(editingLink.id);
   }
 
