@@ -4,7 +4,6 @@ import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { PieChart } from "react-native-gifted-charts";
 import {
-  Button,
   Column,
   FilterChip,
   FlowRow,
@@ -24,6 +23,7 @@ import { apiClient } from "@/global/api/client";
 import { getApiErrorMessage } from "@/global/api/errors";
 import { queryKeys } from "@/global/api/query-keys";
 import type { CountRow, DeviceBreakdown } from "@/global/api/types";
+import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { colors } from "@/global/theme";
 
 const RANGE_OPTIONS = [7, 30, 90] as const;
@@ -293,43 +293,34 @@ export default function LinkAnalyticsScreen() {
               ) : null}
 
               {analyticsQuery.error ? (
-                <Column verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth(), padding(14, 0, 14, 0)]}>
-                  <Text color={colors.destructive}>{getApiErrorMessage(analyticsQuery.error)}</Text>
-                  <Button
-                    onClick={() => void analyticsQuery.refetch()}
-                    colors={{
-                      containerColor: colors.primary,
-                      contentColor: colors.primaryForeground,
-                    }}
-                  >
-                    <Text>Retry</Text>
-                  </Button>
-                </Column>
+                <ErrorState
+                  padded
+                  message={getApiErrorMessage(analyticsQuery.error)}
+                  onRetry={() => void analyticsQuery.refetch()}
+                />
               ) : null}
 
               {!analyticsQuery.isLoading && !analyticsQuery.error && analytics ? (
-                <>
-                  <PieSection title="Countries" items={countryPieItems} />
-                  <BreakdownSection title="Cities" rows={cities} />
-                  <PieSection title="Devices" items={devicePieItems} />
-                  <BreakdownSection title="Browsers" rows={browsers} />
-                  <BreakdownSection title="Operating systems" rows={os} />
-                  <BreakdownSection title="Referrers" rows={referrers} />
-                </>
+                analytics.totalClicks === 0 ? (
+                  <EmptyState
+                    padded
+                    title="No clicks yet"
+                    description="Share this short link to start collecting analytics."
+                  />
+                ) : (
+                  <>
+                    <PieSection title="Countries" items={countryPieItems} />
+                    <BreakdownSection title="Cities" rows={cities} />
+                    <PieSection title="Devices" items={devicePieItems} />
+                    <BreakdownSection title="Browsers" rows={browsers} />
+                    <BreakdownSection title="Operating systems" rows={os} />
+                    <BreakdownSection title="Referrers" rows={referrers} />
+                  </>
+                )
               ) : null}
 
               {analyticsQuery.isLoading ? (
-                <ListItem
-                  colors={{
-                    containerColor: colors.surface,
-                    contentColor: colors.muted,
-                  }}
-                  modifiers={[fillMaxWidth(), padding(14, 0, 14, 0)]}
-                >
-                  <ListItem.HeadlineContent>
-                    <Text>Loading analytics...</Text>
-                  </ListItem.HeadlineContent>
-                </ListItem>
+                <LoadingState padded message="Loading analytics..." />
               ) : null}
             </LazyColumn>
           </PullToRefreshBox>

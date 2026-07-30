@@ -45,6 +45,7 @@ import { getApiErrorMessage } from "@/global/api/errors";
 import { apiClient } from "@/global/api/client";
 import { queryKeys } from "@/global/api/query-keys";
 import type { CreateLinkInput, LinkSortOption, LinkStatusFilter } from "@/global/api/types";
+import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { colors } from "@/global/theme";
 import { useDebouncedValue } from "@/global/utils/use-debounced-value";
 
@@ -415,24 +416,11 @@ export default function LinksTabScreen() {
           ) : null}
 
           {error ? (
-            <Column
-              verticalArrangement={{ spacedBy: 8 }}
-              modifiers={[paddingAll(12), fillMaxWidth(), padding(14, 0, 14, 0)]}
-            >
-              <Text color={colors.destructive} style={{ fontSize: 13 }}>
-                {getApiErrorMessage(error)}
-              </Text>
-              <Button
-                onClick={() => void refetch()}
-                colors={{
-                  containerColor: colors.primary,
-                  contentColor: colors.primaryForeground,
-                }}
-                modifiers={[fillMaxWidth()]}
-              >
-                <Text style={{ fontWeight: "600" }}>Try again</Text>
-              </Button>
-            </Column>
+            <ErrorState
+              padded
+              message={getApiErrorMessage(error)}
+              onRetry={() => void refetch()}
+            />
           ) : null}
 
           <PullToRefreshBox
@@ -451,39 +439,18 @@ export default function LinksTabScreen() {
               modifiers={[fillMaxSize()]}
             >
               {showInitialLoading ? (
-                <ListItem
-                  colors={{
-                    containerColor: colors.surface,
-                    contentColor: colors.muted,
-                  }}
-                >
-                  <ListItem.HeadlineContent>
-                    <Text>Loading...</Text>
-                  </ListItem.HeadlineContent>
-                </ListItem>
+                <LoadingState message="Loading..." />
               ) : null}
 
               {!showInitialLoading && links.length === 0 && !error ? (
-                <ListItem
-                  colors={{
-                    containerColor: colors.surface,
-                    contentColor: colors.muted,
-                    supportingContentColor: colors.muted,
-                  }}
-                >
-                  <ListItem.HeadlineContent>
-                    <Text>
-                      {hasActiveFilters ? "No matches" : "No links yet"}
-                    </Text>
-                  </ListItem.HeadlineContent>
-                  <ListItem.SupportingContent>
-                    <Text>
-                      {hasActiveFilters
-                        ? "Try a different search or status filter."
-                        : "Create your first short link above."}
-                    </Text>
-                  </ListItem.SupportingContent>
-                </ListItem>
+                <EmptyState
+                  title={hasActiveFilters ? "No matches" : "No links yet"}
+                  description={
+                    hasActiveFilters
+                      ? "Try a different search or status filter."
+                      : "Create your first short link above."
+                  }
+                />
               ) : null}
 
               {links.map((link) => (
