@@ -33,6 +33,7 @@ import {
 import LinkIcon from "@expo/material-symbols/link.xml";
 import SettingsIcon from "@expo/material-symbols/settings.xml";
 import { LinkRow } from "@/features/links/components/link-row";
+import { LinkQrModal } from "@/features/links/components/link-qr-modal";
 import { useLinksInfinite } from "@/features/links/hooks/use-links-infinite";
 import {
   LINK_SEARCH_DEBOUNCE_MS,
@@ -91,6 +92,7 @@ export default function LinksTabScreen() {
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [showQr, setShowQr] = useState(false);
   const [serverError, setServerError] = useState("");
 
   const destinationState = useNativeState("");
@@ -239,6 +241,7 @@ export default function LinksTabScreen() {
     editTitleState.set(link.title ?? "");
     editDestinationState.set(link.destinationUrl);
     setServerError("");
+    setShowQr(false);
     setEditingLinkId(link.id);
   }
 
@@ -646,7 +649,10 @@ export default function LinksTabScreen() {
 
         {editingLink ? (
           <ModalBottomSheet
-            onDismissRequest={() => setEditingLinkId(null)}
+            onDismissRequest={() => {
+              setShowQr(false);
+              setEditingLinkId(null);
+            }}
             containerColor={colors.surface}
             contentColor={colors.foreground}
             showDragHandle
@@ -700,6 +706,17 @@ export default function LinksTabScreen() {
                 >
                   <Text>Share</Text>
                 </Button>
+                <Button
+                  onClick={() => setShowQr(true)}
+                  enabled={!updateMutation.isPending && !deleteMutation.isPending}
+                  colors={{
+                    containerColor: colors.background,
+                    contentColor: colors.foreground,
+                  }}
+                  modifiers={[weight(1)]}
+                >
+                  <Text>QR</Text>
+                </Button>
               </Row>
 
               <Row horizontalArrangement={{ spacedBy: 10 }}>
@@ -742,6 +759,16 @@ export default function LinksTabScreen() {
           </ModalBottomSheet>
         ) : null}
       </Host>
+
+      {editingLink && showQr ? (
+        <LinkQrModal
+          visible
+          domain={editingLink.domain}
+          slug={editingLink.slug}
+          title={editingLink.title}
+          onClose={() => setShowQr(false)}
+        />
+      ) : null}
     </View>
   );
 }

@@ -126,7 +126,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 4.1 | Profile settings (`PATCH /api/profile`) | `done` |
 | 4.2 | Show plan / billing status (read-only); deep-link to web for Pro upgrade | `pending` _(deferred — use in-app purchases later)_ |
 | 4.3 | Sign out | `done` |
-| 4.4 | QR code for a link (optional; match web if cheap) | `pending` |
+| 4.4 | QR code for a link (optional; match web if cheap) | `done` |
 | 4.5 | Empty / loading / error states consistently | `done` |
 | 4.6 | App icons, splash, Android package id | `done` (icons + splash from web `public/`; package id in 4.7 / EAS) |
 | 4.7 | EAS build profile for Android (preview + production) | `pending` _(not now)_ |
