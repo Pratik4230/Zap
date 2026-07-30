@@ -6,9 +6,10 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <AppTabBar {...props} />}
+      safeAreaInsets={{ top: 0 }}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: colors.background },
+        sceneStyle: { backgroundColor: colors.background, paddingTop: 0 },
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Links" }} />

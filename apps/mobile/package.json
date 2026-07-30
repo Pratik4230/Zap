@@ -11,6 +11,7 @@
     "axios": "^1.18.1",
     "better-auth": "^1.6.20",
     "expo": "^57.0.1",
+    "expo-clipboard": "~57.0.1",
     "expo-network": "~57.0.1",
     "expo-router": "~57.0.2",
     "expo-secure-store": "~57.0.1",

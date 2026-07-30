@@ -14,6 +14,7 @@ export default function AppLayout() {
       }}
     >
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="links/[id]" />
     </Stack>
   );
 }

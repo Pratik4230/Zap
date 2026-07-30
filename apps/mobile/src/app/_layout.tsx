@@ -1,8 +1,8 @@
 import "../global.css";
 
 import { useEffect } from "react";
+import { StatusBar as RNStatusBar } from "react-native";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -37,7 +37,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryProvider>
         <KeyboardProvider>
-          <StatusBar style="light" />
+          <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
           <Stack
             screenOptions={{
               headerShown: false,

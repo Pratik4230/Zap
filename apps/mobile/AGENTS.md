@@ -105,11 +105,11 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | --- | --- | --- |
 | 2.1 | TanStack Query provider + API client typed against web routes | `done` |
 | 2.2 | Tab / nav shell (Compose `NavigationBar` or Expo Router tabs) | `done` |
-| 2.3 | Links list: search/filter + infinite scroll (`LazyColumn` / pull-to-refresh) | `pending` |
-| 2.4 | Create link (destination, optional slug/title) + plan-limit errors | `pending` |
-| 2.5 | Copy short URL + system share sheet | `pending` |
-| 2.6 | Link detail: edit destination/title, pause/resume, delete, expiry / click limit / password fields | `pending` |
-| 2.7 | Dashboard summary stats (links, clicks, active rate) | `pending` |
+| 2.3 | Links list: search/filter + infinite scroll (`LazyColumn` / pull-to-refresh) | `done` |
+| 2.4 | Create link (destination, optional slug/title) + plan-limit errors | `done` |
+| 2.5 | Copy short URL + system share sheet | `done` |
+| 2.6 | Link detail: edit destination/title, pause/resume, delete, expiry / click limit / password fields | `done` |
+| 2.7 | Dashboard summary stats (links, clicks, active rate) | `done` |
 
 ### Phase 3 — Analytics
 

@@ -4,7 +4,7 @@ import { Column, Host, Text } from "@expo/ui/jetpack-compose";
 import {
   fillMaxSize,
   fillMaxWidth,
-  paddingAll,
+  padding,
 } from "@expo/ui/jetpack-compose/modifiers";
 import { brand, colors } from "@/global/theme";
 
@@ -27,25 +27,29 @@ export function AppScreen({ title, subtitle, children }: AppScreenProps) {
         style={{ flex: 1, width: "100%" }}
       >
         <Column
-          modifiers={[fillMaxSize(), fillMaxWidth(), paddingAll(24)]}
-          verticalArrangement={{ spacedBy: 12 }}
+          modifiers={[
+            fillMaxSize(),
+            fillMaxWidth(),
+            padding(16, 4, 16, 12),
+          ]}
+          verticalArrangement={{ spacedBy: 10 }}
         >
           <Text
             color={colors.primary}
-            style={{ fontSize: 14, fontWeight: "700", letterSpacing: 0.4 }}
+            style={{ fontSize: 12, fontWeight: "700", letterSpacing: 0.3 }}
           >
             {brand.name}
           </Text>
 
-          <Column verticalArrangement={{ spacedBy: 6 }}>
+          <Column verticalArrangement={{ spacedBy: 4 }}>
             <Text
               color={colors.foreground}
-              style={{ fontSize: 28, fontWeight: "700" }}
+              style={{ fontSize: 24, fontWeight: "700" }}
             >
               {title}
             </Text>
             {subtitle ? (
-              <Text color={colors.muted} style={{ fontSize: 14 }}>
+              <Text color={colors.muted} style={{ fontSize: 13 }}>
                 {subtitle}
               </Text>
             ) : null}
