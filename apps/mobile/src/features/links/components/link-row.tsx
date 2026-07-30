@@ -1,5 +1,6 @@
-import { ListItem, Text } from "@expo/ui/jetpack-compose";
-import { clickable } from "@expo/ui/jetpack-compose/modifiers";
+import { Icon, IconButton, ListItem, Row, Text } from "@expo/ui/jetpack-compose";
+import { combinedClickable } from "@expo/ui/jetpack-compose/modifiers";
+import MoreVertIcon from "@expo/material-symbols/more_vert.xml";
 import type { DashboardLink } from "@/global/api/types";
 import { colors } from "@/global/theme";
 import { formatClickCount, statusLabel } from "@/features/links/utils/format";
@@ -7,6 +8,7 @@ import { formatClickCount, statusLabel } from "@/features/links/utils/format";
 type LinkRowProps = {
   link: DashboardLink;
   onPress?: (link: DashboardLink) => void;
+  onManage?: (link: DashboardLink) => void;
 };
 
 function statusColor(status: DashboardLink["status"]) {
@@ -20,9 +22,10 @@ function statusColor(status: DashboardLink["status"]) {
   }
 }
 
-export function LinkRow({ link, onPress }: LinkRowProps) {
+export function LinkRow({ link, onPress, onManage }: LinkRowProps) {
   const shortPath = `${link.domain}/${link.slug}`;
   const title = link.title?.trim() || shortPath;
+  const isInteractive = Boolean(onPress || onManage);
 
   return (
     <ListItem
@@ -33,7 +36,16 @@ export function LinkRow({ link, onPress }: LinkRowProps) {
         overlineContentColor: statusColor(link.status),
         trailingContentColor: colors.muted,
       }}
-      modifiers={onPress ? [clickable(() => onPress(link))] : undefined}
+      modifiers={
+        isInteractive
+          ? [
+              combinedClickable({
+                onClick: onPress ? () => onPress(link) : undefined,
+                onLongClick: onManage ? () => onManage(link) : undefined,
+              }),
+            ]
+          : undefined
+      }
     >
       <ListItem.OverlineContent>
         <Text style={{ fontSize: 11, fontWeight: "600" }}>
@@ -55,9 +67,22 @@ export function LinkRow({ link, onPress }: LinkRowProps) {
         </Text>
       </ListItem.SupportingContent>
       <ListItem.TrailingContent>
-        <Text style={{ fontSize: 13, fontWeight: "600" }}>
-          {formatClickCount(link.clickCount)}
-        </Text>
+        <Row verticalAlignment="center" horizontalArrangement={{ spacedBy: 2 }}>
+          <Text style={{ fontSize: 13, fontWeight: "600" }}>
+            {formatClickCount(link.clickCount)}
+          </Text>
+          {onManage ? (
+            <IconButton
+              onClick={() => onManage(link)}
+              colors={{
+                containerColor: "transparent",
+                contentColor: colors.muted,
+              }}
+            >
+              <Icon source={MoreVertIcon} size={20} tint={colors.muted} />
+            </IconButton>
+          ) : null}
+        </Row>
       </ListItem.TrailingContent>
     </ListItem>
   );

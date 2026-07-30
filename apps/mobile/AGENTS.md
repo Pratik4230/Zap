@@ -115,9 +115,9 @@ Update the **Status** column as you work. Do not skip prerequisites.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| 3.1 | Account-wide analytics screen (`GET /api/analytics`) | `pending` |
-| 3.2 | Per-link analytics (`GET /api/links/[id]/analytics`) | `pending` |
-| 3.3 | Charts / breakdowns: time series, countries, devices, browsers, referrers (keep UI simple; native feel over fancy charts) | `pending` |
+| 3.1 | Account-wide analytics screen (`GET /api/analytics`) | `done` |
+| 3.2 | Per-link analytics (`GET /api/links/[id]/analytics`) | `done` |
+| 3.3 | Charts / breakdowns: time series, countries, devices, browsers, referrers (keep UI simple; native feel over fancy charts) | `done` |
 
 ### Phase 4 — Settings & polish
 

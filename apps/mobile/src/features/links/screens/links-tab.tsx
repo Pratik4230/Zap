@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Share, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import {
@@ -79,6 +80,7 @@ function StatCard({
  * Links tab — search/filter + create + infinite scroll + pull-to-refresh.
  */
 export default function LinksTabScreen() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const searchField = useNativeState("");
   const [search, setSearch] = useState("");
@@ -283,7 +285,7 @@ export default function LinksTabScreen() {
     showInitialLoading
       ? "Loading your links..."
       : total > 0
-        ? `${total} links`
+        ? `${total} links · Tap for analytics · ⋯ to manage`
         : hasActiveFilters
           ? "No links match these filters"
           : "No links yet";
@@ -488,7 +490,8 @@ export default function LinksTabScreen() {
                 <LinkRow
                   key={link.id}
                   link={link}
-                  onPress={() => openEditSheet(link.id)}
+                  onPress={() => router.push(`/links/${link.id}/analytics`)}
+                  onManage={() => openEditSheet(link.id)}
                 />
               ))}
 
@@ -685,7 +688,7 @@ export default function LinksTabScreen() {
               verticalArrangement={{ spacedBy: 10 }}
               modifiers={[fillMaxWidth(), paddingAll(14)]}
             >
-              <Text style={{ fontSize: 20, fontWeight: "700" }}>Edit link</Text>
+              <Text style={{ fontSize: 20, fontWeight: "700" }}>Manage link</Text>
               <Text color={colors.muted}>{`${editingLink.domain}/${editingLink.slug}`}</Text>
 
               <OutlinedTextField value={editTitleState} singleLine modifiers={[fillMaxWidth()]}>

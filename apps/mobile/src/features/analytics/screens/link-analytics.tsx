@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { PieChart } from "react-native-gifted-charts";
 import {
@@ -11,7 +12,6 @@ import {
   LazyColumn,
   ListItem,
   PullToRefreshBox,
-  Row,
   Text,
 } from "@expo/ui/jetpack-compose";
 import {
@@ -38,26 +38,6 @@ const PIE_COLORS = [
   "#ec4899", // pink
 ] as const;
 
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <ListItem
-      colors={{
-        containerColor: colors.surface,
-        contentColor: colors.foreground,
-        supportingContentColor: colors.muted,
-      }}
-      modifiers={[weight(1)]}
-    >
-      <ListItem.HeadlineContent>
-        <Text style={{ fontSize: 18, fontWeight: "700" }}>{value}</Text>
-      </ListItem.HeadlineContent>
-      <ListItem.SupportingContent>
-        <Text style={{ fontSize: 12 }}>{label}</Text>
-      </ListItem.SupportingContent>
-    </ListItem>
-  );
-}
-
 function BreakdownSection({
   title,
   rows,
@@ -75,7 +55,7 @@ function BreakdownSection({
           No data yet.
         </Text>
       ) : (
-        rows.slice(0, 8).map((row) => (
+        rows.slice(0, 10).map((row) => (
           <ListItem
             key={`${title}-${row.label}`}
             colors={{
@@ -178,25 +158,27 @@ function PieSection({
   );
 }
 
-export default function AnalyticsTabScreen() {
+export default function LinkAnalyticsScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [rangeDays, setRangeDays] = useState<number>(30);
+
   const analyticsQuery = useQuery({
-    queryKey: queryKeys.analytics.account(rangeDays),
-    queryFn: () => apiClient.analytics.account(rangeDays),
+    enabled: !!id,
+    queryKey: queryKeys.links.analytics(id ?? "", rangeDays),
+    queryFn: () => apiClient.links.analytics(id as string, rangeDays),
   });
 
   const analytics = analyticsQuery.data;
 
-  const countryRows = useMemo(
+  const countries = useMemo(
     () =>
-      (analytics?.countries ?? []).map((row) => ({
-        label: row.country,
+      (analytics?.countries ?? []).map((row: CountRow) => ({
+        label: row.label,
         count: row.count,
       })),
     [analytics?.countries]
   );
-
-  const cityRows = useMemo(
+  const cities = useMemo(
     () =>
       (analytics?.cities ?? []).map((row: CountRow) => ({
         label: row.label,
@@ -204,8 +186,7 @@ export default function AnalyticsTabScreen() {
       })),
     [analytics?.cities]
   );
-
-  const deviceRows = useMemo(
+  const devices = useMemo(
     () =>
       (analytics?.devices ?? []).map((row: DeviceBreakdown) => ({
         label: row.device,
@@ -214,27 +195,51 @@ export default function AnalyticsTabScreen() {
       })),
     [analytics?.devices]
   );
-
+  const browsers = useMemo(
+    () =>
+      (analytics?.browsers ?? []).map((row: CountRow) => ({
+        label: row.label,
+        count: row.count,
+      })),
+    [analytics?.browsers]
+  );
+  const os = useMemo(
+    () =>
+      (analytics?.os ?? []).map((row: CountRow) => ({
+        label: row.label,
+        count: row.count,
+      })),
+    [analytics?.os]
+  );
+  const referrers = useMemo(
+    () =>
+      (analytics?.referrers ?? []).map((row: CountRow) => ({
+        label: row.label,
+        count: row.count,
+      })),
+    [analytics?.referrers]
+  );
   const countryPieItems = useMemo(
-    () => countryRows.map((row) => ({ label: row.label, value: row.count })),
-    [countryRows]
+    () => countries.map((row) => ({ label: row.label, value: row.count })),
+    [countries]
   );
   const devicePieItems = useMemo(
-    () => deviceRows.map((row) => ({ label: row.label, value: row.count })),
-    [deviceRows]
+    () => devices.map((row) => ({ label: row.label, value: row.count })),
+    [devices]
   );
 
+  const title = analytics?.link.title?.trim() || (analytics ? `${analytics.link.domain}/${analytics.link.slug}` : "Link analytics");
   const subtitle = analytics
-    ? `${analytics.rangeLabel} • ${analytics.totalClicks} total clicks`
-    : "Account-wide click stats";
+    ? `${analytics.rangeLabel} • ${analytics.totalClicks} clicks`
+    : "Per-link analytics";
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Host colorScheme="dark" seedColor={colors.primary} style={{ flex: 1, width: "100%" }}>
         <Column modifiers={[fillMaxSize(), fillMaxWidth(), padding(14, 4, 14, 8)]} verticalArrangement={{ spacedBy: 10 }}>
-          <Column verticalArrangement={{ spacedBy: 3 }} modifiers={[fillMaxWidth()]}>
+          <Column verticalArrangement={{ spacedBy: 3 }}>
             <Text color={colors.foreground} style={{ fontSize: 22, fontWeight: "700" }}>
-              Analytics
+              {title}
             </Text>
             <Text color={colors.muted} style={{ fontSize: 13 }}>
               {subtitle}
@@ -265,19 +270,26 @@ export default function AnalyticsTabScreen() {
             isRefreshing={analyticsQuery.isRefetching}
             onRefresh={() => void analyticsQuery.refetch()}
             contentAlignment="topCenter"
-            indicator={{
-              color: colors.primary,
-              containerColor: colors.background,
-            }}
+            indicator={{ color: colors.primary, containerColor: colors.background }}
             modifiers={[fillMaxWidth(), weight(1)]}
           >
             <LazyColumn verticalArrangement={{ spacedBy: 8 }} contentPadding={{ bottom: 18 }} modifiers={[fillMaxSize()]}>
               {analytics ? (
-                <Row horizontalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth(), padding(14, 0, 14, 0)]}>
-                  <MetricCard label="Total clicks" value={String(analytics.totalClicks)} />
-                  <MetricCard label="Plan" value={analytics.plan.toUpperCase()} />
-                  <MetricCard label="Top links" value={String(analytics.topLinks.length)} />
-                </Row>
+                <ListItem
+                  colors={{
+                    containerColor: colors.surface,
+                    contentColor: colors.foreground,
+                    supportingContentColor: colors.muted,
+                  }}
+                  modifiers={[fillMaxWidth(), padding(14, 0, 14, 0)]}
+                >
+                  <ListItem.HeadlineContent>
+                    <Text style={{ fontSize: 17, fontWeight: "700" }}>{analytics.totalClicks}</Text>
+                  </ListItem.HeadlineContent>
+                  <ListItem.SupportingContent>
+                    <Text>Total clicks • {analytics.link.status}</Text>
+                  </ListItem.SupportingContent>
+                </ListItem>
               ) : null}
 
               {analyticsQuery.error ? (
@@ -297,16 +309,12 @@ export default function AnalyticsTabScreen() {
 
               {!analyticsQuery.isLoading && !analyticsQuery.error && analytics ? (
                 <>
-                  <BreakdownSection
-                    title="Top links"
-                    rows={analytics.topLinks.map((link) => ({
-                      label: link.title?.trim() || `${link.domain}/${link.slug}`,
-                      count: link.clicks,
-                    }))}
-                  />
                   <PieSection title="Countries" items={countryPieItems} />
-                  <BreakdownSection title="Cities" rows={cityRows} />
+                  <BreakdownSection title="Cities" rows={cities} />
                   <PieSection title="Devices" items={devicePieItems} />
+                  <BreakdownSection title="Browsers" rows={browsers} />
+                  <BreakdownSection title="Operating systems" rows={os} />
+                  <BreakdownSection title="Referrers" rows={referrers} />
                 </>
               ) : null}
 

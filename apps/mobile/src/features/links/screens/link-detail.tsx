@@ -184,6 +184,18 @@ export default function LinkDetailScreen() {
             </Button>
           </Row>
 
+          <Button
+            enabled={!isBusy}
+            onClick={() => router.push(`/links/${link.id}/analytics`)}
+            colors={{
+              containerColor: colors.surface,
+              contentColor: colors.foreground,
+            }}
+            modifiers={[fillMaxWidth()]}
+          >
+            <Text>View analytics</Text>
+          </Button>
+
           <OutlinedTextField value={titleState} singleLine enabled={!isBusy} modifiers={[fillMaxWidth()]}>
             <OutlinedTextField.Label>
               <Text>Title</Text>
