@@ -364,7 +364,25 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Link
+              href={siteConfig.legal.privacy}
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Privacy
+            </Link>
+            <Link
+              href={siteConfig.legal.terms}
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Terms
+            </Link>
+            <Link
+              href={siteConfig.legal.contact}
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
             <a
               href={siteConfig.owner.linkedin}
               target="_blank"

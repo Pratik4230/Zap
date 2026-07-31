@@ -62,4 +62,4 @@ export function createPageMetadata(options: {
 }
 
 /** Stable sitemap timestamp — update when marketing pages change meaningfully */
-export const SITEMAP_LAST_MODIFIED = new Date("2026-07-13");
+export const SITEMAP_LAST_MODIFIED = new Date("2026-07-31");

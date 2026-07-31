@@ -16,5 +16,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${siteConfig.url}${siteConfig.legal.privacy}`,
+      lastModified: SITEMAP_LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: `${siteConfig.url}${siteConfig.legal.terms}`,
+      lastModified: SITEMAP_LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: `${siteConfig.url}${siteConfig.legal.contact}`,
+      lastModified: SITEMAP_LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
   ];
 }

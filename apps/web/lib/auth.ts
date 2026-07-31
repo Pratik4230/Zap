@@ -78,6 +78,11 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,
     },
+    user: {
+      deleteUser: {
+        enabled: true,
+      },
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 8,

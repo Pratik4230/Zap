@@ -28,6 +28,12 @@ export const siteConfig = {
     twitter: "https://x.com/Pratik4230",
     twitterHandle: "@Pratik4230",
   },
+  supportEmail: "pratikjadhav9534@gmail.com",
+  legal: {
+    privacy: "/privacy",
+    terms: "/terms",
+    contact: "/contact",
+  },
 } as const;
 
 const sharedMetadata = {

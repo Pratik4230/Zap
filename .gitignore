@@ -51,6 +51,9 @@ expo-env.d.ts
 *.p12
 *.mobileprovision
 .metro-health-check*
+# Continuous Native Generation — regenerate via prebuild / EAS
+apps/mobile/android/
+apps/mobile/ios/
 
 # Misc
 .DS_Store

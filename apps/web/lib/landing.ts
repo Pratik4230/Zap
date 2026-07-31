@@ -228,7 +228,7 @@ export const FAQ = [
   },
   {
     q: "How does billing work?",
-    a: "Free accounts never need a card. Pro is billed securely through Dodo Payments. Business is coming soon. You can upgrade, downgrade, or cancel anytime from your dashboard.",
+    a: "Free accounts never need a card. Pro is billed securely through Dodo Payments. Business is coming soon. You can upgrade, downgrade, or cancel anytime from your dashboard. Fees are non-refundable — see our Terms.",
   },
   {
     q: "What does runs on Cloudflare Edge mean?",
