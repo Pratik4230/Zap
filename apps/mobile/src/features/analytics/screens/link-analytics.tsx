@@ -24,6 +24,7 @@ import { getApiErrorMessage } from "@/global/api/errors";
 import { queryKeys } from "@/global/api/query-keys";
 import type { CountRow, DeviceBreakdown } from "@/global/api/types";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
+import { ScreenShell } from "@/global/components/screen-shell";
 import { colors } from "@/global/theme";
 
 const RANGE_OPTIONS = [7, 30, 90] as const;
@@ -234,7 +235,7 @@ export default function LinkAnalyticsScreen() {
     : "Per-link analytics";
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <ScreenShell edges={["top", "bottom"]}>
       <Host colorScheme="dark" seedColor={colors.primary} style={{ flex: 1, width: "100%" }}>
         <Column modifiers={[fillMaxSize(), fillMaxWidth(), padding(14, 4, 14, 8)]} verticalArrangement={{ spacedBy: 10 }}>
           <Column verticalArrangement={{ spacedBy: 3 }}>
@@ -326,6 +327,6 @@ export default function LinkAnalyticsScreen() {
           </PullToRefreshBox>
         </Column>
       </Host>
-    </View>
+    </ScreenShell>
   );
 }

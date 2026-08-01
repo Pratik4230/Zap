@@ -65,8 +65,13 @@ function SignInForm() {
       return;
     }
 
-    // Session → Stack.Protected opens (app); "/" = Links tab
-    await enterApp();
+    try {
+      await enterApp();
+    } catch (e) {
+      setServerError(
+        e instanceof Error ? e.message : "Signed in, but could not open the app."
+      );
+    }
   });
 
   async function onSubmit() {

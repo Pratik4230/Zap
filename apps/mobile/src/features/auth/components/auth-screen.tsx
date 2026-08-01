@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import {
   Column,
@@ -10,6 +9,7 @@ import {
   fillMaxWidth,
   paddingAll,
 } from "@expo/ui/jetpack-compose/modifiers";
+import { ScreenShell } from "@/global/components/screen-shell";
 import { brand, colors } from "@/global/theme";
 
 type AuthScreenProps = {
@@ -25,7 +25,7 @@ type AuthScreenProps = {
  */
 export function AuthScreen({ title, subtitle, children }: AuthScreenProps) {
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <ScreenShell edges={["top", "bottom"]}>
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -73,6 +73,6 @@ export function AuthScreen({ title, subtitle, children }: AuthScreenProps) {
           </Column>
         </Host>
       </KeyboardAwareScrollView>
-    </View>
+    </ScreenShell>
   );
 }

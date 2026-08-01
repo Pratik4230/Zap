@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Alert, Share, View } from "react-native";
+import { Alert, Share } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +18,8 @@ import { apiClient } from "@/global/api/client";
 import { queryKeys } from "@/global/api/query-keys";
 import type { LinkStatus } from "@/global/api/types";
 import { getApiErrorMessage } from "@/global/api/errors";
+import { ScreenShell } from "@/global/components/screen-shell";
+import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
 import {
   buildShortUrl,
@@ -90,6 +92,7 @@ export default function LinkDetailScreen() {
   async function onCopy() {
     if (!shortUrl) return;
     await Clipboard.setStringAsync(shortUrl);
+    toast("Link copied");
   }
 
   async function onShare() {
@@ -112,7 +115,7 @@ export default function LinkDetailScreen() {
 
   if (!link || !id) {
     return (
-      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <ScreenShell edges={["top", "bottom"]}>
         <Host colorScheme="dark" seedColor={colors.primary} style={{ flex: 1 }}>
           <Column
             verticalArrangement={{ spacedBy: 12 }}
@@ -135,14 +138,14 @@ export default function LinkDetailScreen() {
             </Button>
           </Column>
         </Host>
-      </View>
+      </ScreenShell>
     );
   }
 
   const isBusy = updateMutation.isPending || deleteMutation.isPending;
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <ScreenShell edges={["top", "bottom"]}>
       <Host colorScheme="dark" seedColor={colors.primary} style={{ flex: 1 }}>
         <Column
           verticalArrangement={{ spacedBy: 12 }}
@@ -290,6 +293,6 @@ export default function LinkDetailScreen() {
           </TextButton>
         </Column>
       </Host>
-    </View>
+    </ScreenShell>
   );
 }

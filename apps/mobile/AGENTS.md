@@ -1,6 +1,7 @@
 # Xaply Mobile — Agent Guide
 
 Android-first Expo app for Xaply (URL shortener). Mirror authenticated web flows: auth, links, analytics, settings.
+IMPORTANT follow official latest documentation https://docs.expo.dev/llms.txt
 
 ## Hard rules
 
@@ -97,7 +98,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 1.5 | Forgot / reset password                                                                                              | `done`                                                            |
 | 1.6 | Session gate: unauthenticated → auth stack; authenticated → app tabs                                                 | `done` (`Stack.Protected` + `authClient.useSession`; tabs in 2.2) |
 | 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()`                                        | `done` (`src/global/api/http.ts`)                                 |
-| 1.8 | _(Later)_ Google OAuth deep links — **blocked until post-MVP**                                                       | `pending`                                                         |
+| 1.8 | _(Later)_ Google OAuth — see **5.1**                                                                                 | `pending`                                                         |
 
 ### Phase 2 — App shell & links
 
@@ -121,23 +122,48 @@ Update the **Status** column as you work. Do not skip prerequisites.
 
 ### Phase 4 — Settings & polish
 
-| ID  | Task                                                                     | Status                                                              |
-| --- | ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| 4.1 | Profile settings (`PATCH /api/profile`)                                  | `done`                                                              |
-| 4.2 | Show plan / billing status (read-only); deep-link to web for Pro upgrade | `pending` _(deferred — use in-app purchases later)_                 |
-| 4.3 | Sign out                                                                 | `done`                                                              |
-| 4.4 | QR code for a link (optional; match web if cheap)                        | `done`                                                              |
-| 4.5 | Empty / loading / error states consistently                              | `done`                                                              |
-| 4.6 | App icons, splash, Android package id                                    | `done` (icons + splash from web `public/`; package id in 4.7 / EAS) |
-| 4.7 | EAS build profile for Android (preview + production)                     | `pending` _(not now)_                                               |
+| ID  | Task                                                                       | Status                                                              |
+| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 4.1 | Profile settings (`PATCH /api/profile`)                                    | `done`                                                              |
+| 4.2 | Show plan / billing status; upgrade via RevenueCat IAP (not web deep-link) | `pending` → see Phase 6                                             |
+| 4.3 | Sign out                                                                   | `done`                                                              |
+| 4.4 | QR code for a link (optional; match web if cheap)                          | `done`                                                              |
+| 4.5 | Empty / loading / error states consistently                                | `done`                                                              |
+| 4.6 | App icons, splash, Android package id                                      | `done` (icons + splash from web `public/`; package id in 4.7 / EAS) |
+| 4.7 | EAS build profile for Android (preview + production)                       | `pending` _(prereq for Google / IAP / push)_                        |
 
 ### Phase 5 — Hardening (post-MVP)
 
-| ID  | Task                                | Status    |
-| --- | ----------------------------------- | --------- |
-| 5.1 | Google sign-in (Expo + Better Auth) | `pending` |
-| 5.2 | Offline / retry UX                  | `done` |
-| 5.3 | Deep links into link detail         | `pending` |
+| ID  | Task                                                        | Status    |
+| --- | ----------------------------------------------------------- | --------- |
+| 5.1 | Google sign-in (Expo + Better Auth + EAS/dev build)         | `pending` |
+| 5.2 | Offline / retry UX                                          | `done`    |
+| 5.3 | Deep links / Android App Links into link detail + analytics | `pending` |
+
+### Phase 6 — Monetization & notifications (mobile-only)
+
+| ID  | Task                                                                           | Status    |
+| --- | ------------------------------------------------------------------------------ | --------- |
+| 6.1 | RevenueCat SDK + Play subscription product(s) for Pro                          | `pending` |
+| 6.2 | Backend: RevenueCat webhook → set workspace `plan` (coexist with Dodo on web)  | `pending` |
+| 6.3 | Settings: show plan + Upgrade / Restore purchases UI                           | `pending` |
+| 6.4 | In-app toasts/snackbars (create, copy, save, errors)                           | `pending` |
+| 6.5 | Push: `expo-notifications` + FCM + register Expo push token                    | `pending` |
+| 6.6 | Push triggers: link milestones, expiry / click-limit, optional digest (opt-in) | `pending` |
+
+**Build order:** `4.7 EAS` → internal Play track → `5.1` Google + `6.1–6.3` IAP + `6.4–6.6` notifications.
+
+### Phase 7 — Native depth (portfolio / platform)
+
+| ID  | Task                                                      | Status                    |
+| --- | --------------------------------------------------------- | ------------------------- |
+| 7.1 | Biometric app unlock (`expo-local-authentication`)        | `pending`                 |
+| 7.2 | Home-screen widgets (e.g. click stats / quick create)     | `pending`                 |
+| 7.3 | App icon long-press shortcuts (Create link, Analytics, …) | `pending`                 |
+| 7.4 | Material You / dynamic color (Android wallpaper seed)     | `pending`                 |
+| 7.5 | Store review prompt (`expo-store-review`)                 | `pending`                 |
+| 7.6 | EAS Update (OTA) for JS fixes without full Play review    | `pending` _(later)_       |
+| 7.7 | Import URLs from file → bulk create (mobile **and** web)  | `pending` _(long future)_ |
 
 ---
 

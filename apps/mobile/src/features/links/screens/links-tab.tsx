@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Share, View } from "react-native";
+import { Share } from "react-native";
 import { useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -45,8 +45,18 @@ import {
 import { getApiErrorMessage } from "@/global/api/errors";
 import { apiClient } from "@/global/api/client";
 import { queryKeys } from "@/global/api/query-keys";
-import type { CreateLinkInput, LinkSortOption, LinkStatusFilter } from "@/global/api/types";
-import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
+import type {
+  CreateLinkInput,
+  LinkSortOption,
+  LinkStatusFilter,
+} from "@/global/api/types";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/global/components/query-state";
+import { ScreenShell } from "@/global/components/screen-shell";
+import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
 import { useDebouncedValue } from "@/global/utils/use-debounced-value";
 import { useIsOnline } from "@/global/utils/network";
@@ -136,13 +146,16 @@ export default function LinksTabScreen() {
       titleState.set("");
       setServerError("");
       setShowCreateSheet(false);
+      toast("Link created");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.links.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
       ]);
     },
     onError: (createError) => {
-      setServerError(getApiErrorMessage(createError));
+      const message = getApiErrorMessage(createError);
+      setServerError(message);
+      toast(message, "error");
     },
   });
 
@@ -160,6 +173,7 @@ export default function LinksTabScreen() {
       }),
     onSuccess: async () => {
       setServerError("");
+      toast("Link updated");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.links.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
@@ -175,6 +189,7 @@ export default function LinksTabScreen() {
     mutationFn: (id: string) => apiClient.links.delete(id),
     onSuccess: async () => {
       setServerError("");
+      toast("Link deleted");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.links.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
@@ -188,15 +203,16 @@ export default function LinksTabScreen() {
 
   const links = useMemo(
     () => data?.pages.flatMap((page) => page.links) ?? [],
-    [data]
+    [data],
   );
   const total = data?.pages[0]?.total ?? 0;
   const isSearchPending = search !== debouncedSearch;
-  const showInitialLoading = (isLoading || isSearchPending) && links.length === 0;
+  const showInitialLoading =
+    (isLoading || isSearchPending) && links.length === 0;
   const hasActiveFilters = debouncedSearch.length > 0 || status !== "all";
   const editingLink = useMemo(
     () => links.find((link) => link.id === editingLinkId) ?? null,
-    [links, editingLinkId]
+    [links, editingLinkId],
   );
 
   const onRefresh = useCallback(() => {
@@ -212,7 +228,7 @@ export default function LinksTabScreen() {
         void fetchNextPage();
       }
     },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
+    [fetchNextPage, hasNextPage, isFetchingNextPage],
   );
 
   function clearFilters() {
@@ -294,7 +310,10 @@ export default function LinksTabScreen() {
 
   async function copyShortUrl() {
     if (!editingLink) return;
-    await Clipboard.setStringAsync(buildShortUrl(editingLink.domain, editingLink.slug));
+    await Clipboard.setStringAsync(
+      buildShortUrl(editingLink.domain, editingLink.slug),
+    );
+    toast("Link copied");
   }
 
   async function shareShortUrl() {
@@ -303,35 +322,33 @@ export default function LinksTabScreen() {
     await Share.share({ message: shortUrl, url: shortUrl });
   }
 
-  const subtitle =
-    showInitialLoading
-      ? "Loading your links..."
-      : total > 0
-        ? `${total} links · Tap for analytics · ⋯ to manage`
-        : hasActiveFilters
-          ? "No links match these filters"
-          : "No links yet";
+  const subtitle = showInitialLoading
+    ? "Loading your links..."
+    : total > 0
+      ? `${total} links · Tap for analytics to manage`
+      : hasActiveFilters
+        ? "No links match these filters"
+        : "No links yet";
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <ScreenShell>
       <Host
         colorScheme="dark"
         seedColor={colors.primary}
         style={{ flex: 1, width: "100%" }}
       >
         <Column
-          modifiers={[
-            fillMaxSize(),
-            fillMaxWidth(),
-            padding(0, 2, 0, 8),
-          ]}
+          modifiers={[fillMaxSize(), fillMaxWidth(), padding(0, 2, 0, 8)]}
           verticalArrangement={{ spacedBy: 10 }}
         >
           <Column
             verticalArrangement={{ spacedBy: 3 }}
             modifiers={[fillMaxWidth(), padding(14, 0, 14, 0)]}
           >
-            <Text color={colors.foreground} style={{ fontSize: 22, fontWeight: "700" }}>
+            <Text
+              color={colors.foreground}
+              style={{ fontSize: 22, fontWeight: "700" }}
+            >
               Links
             </Text>
             <Text color={colors.muted} style={{ fontSize: 13 }}>
@@ -384,8 +401,15 @@ export default function LinksTabScreen() {
               }}
               modifiers={[weight(1)]}
             >
-              <Row verticalAlignment="center" horizontalArrangement={{ spacedBy: 8 }}>
-                <Icon source={LinkIcon} size={18} tint={colors.primaryForeground} />
+              <Row
+                verticalAlignment="center"
+                horizontalArrangement={{ spacedBy: 8 }}
+              >
+                <Icon
+                  source={LinkIcon}
+                  size={18}
+                  tint={colors.primaryForeground}
+                />
                 <Text>Create</Text>
               </Row>
             </Button>
@@ -394,10 +418,16 @@ export default function LinksTabScreen() {
               onClick={() => setShowFilterSheet(true)}
               colors={{
                 containerColor: hasActiveFilters ? "#3d2a00" : colors.surface,
-                contentColor: hasActiveFilters ? colors.primary : colors.foreground,
+                contentColor: hasActiveFilters
+                  ? colors.primary
+                  : colors.foreground,
               }}
             >
-              <Icon source={SettingsIcon} size={18} tint={hasActiveFilters ? colors.primary : colors.foreground} />
+              <Icon
+                source={SettingsIcon}
+                size={18}
+                tint={hasActiveFilters ? colors.primary : colors.foreground}
+              />
             </FilledTonalIconButton>
           </Row>
 
@@ -498,7 +528,9 @@ export default function LinksTabScreen() {
                 >
                   <ListItem.HeadlineContent>
                     <Text>
-                      {isFetchingNextPage ? "Loading more..." : "Scroll for more"}
+                      {isFetchingNextPage
+                        ? "Loading more..."
+                        : "Scroll for more"}
                     </Text>
                   </ListItem.HeadlineContent>
                 </ListItem>
@@ -531,7 +563,9 @@ export default function LinksTabScreen() {
               verticalArrangement={{ spacedBy: 10 }}
               modifiers={[fillMaxWidth(), paddingAll(14)]}
             >
-              <Text style={{ fontSize: 20, fontWeight: "700" }}>Create link</Text>
+              <Text style={{ fontSize: 20, fontWeight: "700" }}>
+                Create link
+              </Text>
 
               <OutlinedTextField
                 value={destinationState}
@@ -547,19 +581,29 @@ export default function LinksTabScreen() {
                 </OutlinedTextField.Placeholder>
               </OutlinedTextField>
 
-              <OutlinedTextField value={slugState} singleLine modifiers={[fillMaxWidth()]}>
+              <OutlinedTextField
+                value={slugState}
+                singleLine
+                modifiers={[fillMaxWidth()]}
+              >
                 <OutlinedTextField.Label>
                   <Text>Custom slug (optional)</Text>
                 </OutlinedTextField.Label>
               </OutlinedTextField>
 
-              <OutlinedTextField value={titleState} singleLine modifiers={[fillMaxWidth()]}>
+              <OutlinedTextField
+                value={titleState}
+                singleLine
+                modifiers={[fillMaxWidth()]}
+              >
                 <OutlinedTextField.Label>
                   <Text>Title (optional)</Text>
                 </OutlinedTextField.Label>
               </OutlinedTextField>
 
-              {serverError ? <Text color={colors.destructive}>{serverError}</Text> : null}
+              {serverError ? (
+                <Text color={colors.destructive}>{serverError}</Text>
+              ) : null}
 
               <Button
                 enabled={!createMutation.isPending}
@@ -570,7 +614,9 @@ export default function LinksTabScreen() {
                 }}
                 modifiers={[fillMaxWidth()]}
               >
-                <Text>{createMutation.isPending ? "Creating..." : "Create"}</Text>
+                <Text>
+                  {createMutation.isPending ? "Creating..." : "Create"}
+                </Text>
               </Button>
             </Column>
           </ModalBottomSheet>
@@ -587,15 +633,26 @@ export default function LinksTabScreen() {
               verticalArrangement={{ spacedBy: 12 }}
               modifiers={[fillMaxWidth(), paddingAll(14)]}
             >
-              <Row horizontalArrangement="spaceBetween" verticalAlignment="center" modifiers={[fillMaxWidth()]}>
+              <Row
+                horizontalArrangement="spaceBetween"
+                verticalAlignment="center"
+                modifiers={[fillMaxWidth()]}
+              >
                 <Text style={{ fontSize: 20, fontWeight: "700" }}>Filters</Text>
                 <IconButton onClick={() => setShowFilterSheet(false)}>
-                  <Icon source={SettingsIcon} size={18} tint={colors.foreground} />
+                  <Icon
+                    source={SettingsIcon}
+                    size={18}
+                    tint={colors.foreground}
+                  />
                 </IconButton>
               </Row>
 
               <Text style={{ fontSize: 13, fontWeight: "600" }}>Status</Text>
-              <FlowRow horizontalArrangement={{ spacedBy: 8 }} verticalArrangement={{ spacedBy: 8 }}>
+              <FlowRow
+                horizontalArrangement={{ spacedBy: 8 }}
+                verticalArrangement={{ spacedBy: 8 }}
+              >
                 {STATUS_FILTERS.map((option) => (
                   <FilterChip
                     key={option.value}
@@ -616,7 +673,10 @@ export default function LinksTabScreen() {
               </FlowRow>
 
               <Text style={{ fontSize: 13, fontWeight: "600" }}>Sort</Text>
-              <FlowRow horizontalArrangement={{ spacedBy: 8 }} verticalArrangement={{ spacedBy: 8 }}>
+              <FlowRow
+                horizontalArrangement={{ spacedBy: 8 }}
+                verticalArrangement={{ spacedBy: 8 }}
+              >
                 {SORT_OPTIONS.map((option) => (
                   <FilterChip
                     key={option.value}
@@ -679,10 +739,18 @@ export default function LinksTabScreen() {
               verticalArrangement={{ spacedBy: 10 }}
               modifiers={[fillMaxWidth(), paddingAll(14)]}
             >
-              <Text style={{ fontSize: 20, fontWeight: "700" }}>Manage link</Text>
-              <Text color={colors.muted}>{`${editingLink.domain}/${editingLink.slug}`}</Text>
+              <Text style={{ fontSize: 20, fontWeight: "700" }}>
+                Manage link
+              </Text>
+              <Text
+                color={colors.muted}
+              >{`${editingLink.domain}/${editingLink.slug}`}</Text>
 
-              <OutlinedTextField value={editTitleState} singleLine modifiers={[fillMaxWidth()]}>
+              <OutlinedTextField
+                value={editTitleState}
+                singleLine
+                modifiers={[fillMaxWidth()]}
+              >
                 <OutlinedTextField.Label>
                   <Text>Title</Text>
                 </OutlinedTextField.Label>
@@ -699,12 +767,16 @@ export default function LinksTabScreen() {
                 </OutlinedTextField.Label>
               </OutlinedTextField>
 
-              {serverError ? <Text color={colors.destructive}>{serverError}</Text> : null}
+              {serverError ? (
+                <Text color={colors.destructive}>{serverError}</Text>
+              ) : null}
 
               <Row horizontalArrangement={{ spacedBy: 10 }}>
                 <Button
                   onClick={() => void copyShortUrl()}
-                  enabled={!updateMutation.isPending && !deleteMutation.isPending}
+                  enabled={
+                    !updateMutation.isPending && !deleteMutation.isPending
+                  }
                   colors={{
                     containerColor: colors.background,
                     contentColor: colors.foreground,
@@ -715,7 +787,9 @@ export default function LinksTabScreen() {
                 </Button>
                 <Button
                   onClick={() => void shareShortUrl()}
-                  enabled={!updateMutation.isPending && !deleteMutation.isPending}
+                  enabled={
+                    !updateMutation.isPending && !deleteMutation.isPending
+                  }
                   colors={{
                     containerColor: colors.background,
                     contentColor: colors.foreground,
@@ -726,7 +800,9 @@ export default function LinksTabScreen() {
                 </Button>
                 <Button
                   onClick={() => setShowQr(true)}
-                  enabled={!updateMutation.isPending && !deleteMutation.isPending}
+                  enabled={
+                    !updateMutation.isPending && !deleteMutation.isPending
+                  }
                   colors={{
                     containerColor: colors.background,
                     contentColor: colors.foreground,
@@ -740,7 +816,9 @@ export default function LinksTabScreen() {
               <Row horizontalArrangement={{ spacedBy: 10 }}>
                 <Button
                   onClick={() => void saveEdit()}
-                  enabled={!updateMutation.isPending && !deleteMutation.isPending}
+                  enabled={
+                    !updateMutation.isPending && !deleteMutation.isPending
+                  }
                   colors={{
                     containerColor: colors.primary,
                     contentColor: colors.primaryForeground,
@@ -751,14 +829,18 @@ export default function LinksTabScreen() {
                 </Button>
                 <Button
                   onClick={() => void toggleStatus()}
-                  enabled={!updateMutation.isPending && !deleteMutation.isPending}
+                  enabled={
+                    !updateMutation.isPending && !deleteMutation.isPending
+                  }
                   colors={{
                     containerColor: "#3d2a00",
                     contentColor: colors.primary,
                   }}
                   modifiers={[weight(1)]}
                 >
-                  <Text>{editingLink.status === "active" ? "Pause" : "Resume"}</Text>
+                  <Text>
+                    {editingLink.status === "active" ? "Pause" : "Resume"}
+                  </Text>
                 </Button>
               </Row>
 
@@ -771,7 +853,9 @@ export default function LinksTabScreen() {
                 }}
                 modifiers={[fillMaxWidth()]}
               >
-                <Text>{deleteMutation.isPending ? "Deleting..." : "Delete link"}</Text>
+                <Text>
+                  {deleteMutation.isPending ? "Deleting..." : "Delete link"}
+                </Text>
               </Button>
             </Column>
           </ModalBottomSheet>
@@ -787,6 +871,6 @@ export default function LinksTabScreen() {
           onClose={() => setShowQr(false)}
         />
       ) : null}
-    </View>
+    </ScreenShell>
   );
 }

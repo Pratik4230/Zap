@@ -56,6 +56,9 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
     trustedOrigins: [
       "xaply://",
       "xaply://*",
+      // Dev client generated scheme (expo-dev-client addGeneratedScheme)
+      "exp+xaply://",
+      "exp+xaply://*",
       "exp://",
       "exp://**",
       "exp://192.168.*.*:*/**",

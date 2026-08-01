@@ -5,7 +5,7 @@ import { colors } from "@/global/theme";
 
 /**
  * Global strip when the device has no usable network.
- * Sits above Expo Router so auth + app screens both see it.
+ * Overlay (not flow) so it doesn’t fight ScreenShell top insets.
  */
 export function OfflineBanner() {
   const online = useIsOnline();
@@ -15,7 +15,13 @@ export function OfflineBanner() {
 
   return (
     <View
+      pointerEvents="none"
       style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
         backgroundColor: "#3d2a00",
         paddingTop: Math.max(insets.top, 8),
         paddingBottom: 10,

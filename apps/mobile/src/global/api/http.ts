@@ -1,11 +1,12 @@
 import axios from "axios";
 import { authClient } from "@/features/auth/utils/client";
+import { getBearerTokenSync } from "@/features/auth/utils/bearer";
 import { API_URL } from "@/global/config/env";
 import { ApiError } from "@/global/api/errors";
 
 /**
  * Axios instance for the production API.
- * Attaches Better Auth session cookies from SecureStore on every request.
+ * Attaches Bearer token and/or Better Auth cookies from SecureStore.
  */
 export const api = axios.create({
   baseURL: API_URL,
@@ -17,6 +18,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  const token = getBearerTokenSync();
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
   const cookies = authClient.getCookie();
   if (cookies) {
     config.headers.set("Cookie", cookies);

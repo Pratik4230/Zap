@@ -92,7 +92,13 @@ function VerifyEmailForm() {
       setServerError(error.message ?? "Invalid or expired code");
       return;
     }
-    await enterApp();
+    try {
+      await enterApp();
+    } catch (e) {
+      setServerError(
+        e instanceof Error ? e.message : "Verified, but could not open the app."
+      );
+    }
   });
 
   async function onSubmit() {

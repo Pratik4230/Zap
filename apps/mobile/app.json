@@ -14,7 +14,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#050505"
-      }
+      },
+      "package": "com.pratik4230.xaply",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "output": "static",
@@ -43,6 +45,20 @@
         }
       ],
       "expo-sharing"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "abd39df3-9a1c-43d8-8dde-c11522a6b30d"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/abd39df3-9a1c-43d8-8dde-c11522a6b30d"
+    },
+    "ios": {
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
+    }
   }
 }

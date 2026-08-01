@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
 import { Column, Host, Text } from "@expo/ui/jetpack-compose";
 import {
   fillMaxSize,
   fillMaxWidth,
   padding,
 } from "@expo/ui/jetpack-compose/modifiers";
+import { ScreenShell } from "@/global/components/screen-shell";
 import { brand, colors } from "@/global/theme";
 
 type AppScreenProps = {
@@ -20,7 +20,7 @@ type AppScreenProps = {
  */
 export function AppScreen({ title, subtitle, children }: AppScreenProps) {
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <ScreenShell>
       <Host
         colorScheme="dark"
         seedColor={colors.primary}
@@ -58,6 +58,6 @@ export function AppScreen({ title, subtitle, children }: AppScreenProps) {
           {children}
         </Column>
       </Host>
-    </View>
+    </ScreenShell>
   );
 }

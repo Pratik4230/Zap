@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Alert } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -9,18 +10,19 @@ import {
   useNativeState,
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
-import { authClient } from "@/features/auth/utils/client";
+import { authClient, signOutFully } from "@/features/auth/utils/client";
 import { refreshAuthSession } from "@/features/auth/utils/navigation";
 import { validateProfileName } from "@/features/settings/utils/profile";
 import { getApiErrorMessage } from "@/global/api/errors";
 import { apiClient } from "@/global/api/client";
 import { AppScreen } from "@/global/components/app-screen";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
+import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
 import { useIsOnline } from "@/global/utils/network";
 
 /**
- * Settings — profile name + sign out.
+ * Settings — profile, sign out, delete account.
  * Plan / billing left for in-app purchases later.
  */
 export default function SettingsTabScreen() {
@@ -30,11 +32,14 @@ export default function SettingsTabScreen() {
     authClient.useSession();
 
   const nameState = useNativeState("");
+  const deleteConfirmState = useNativeState("");
   const [nameDraft, setNameDraft] = useState("");
   const [nameError, setNameError] = useState("");
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [signingOut, setSigningOut] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   useEffect(() => {
     const currentName = session?.user?.name?.trim() ?? "";
@@ -52,11 +57,13 @@ export default function SettingsTabScreen() {
       setNameError("");
       setServerError("");
       setSuccessMessage("Profile updated");
+      toast("Profile updated");
       await refreshAuthSession();
     },
     onError: (error) => {
       setSuccessMessage("");
       setServerError(getApiErrorMessage(error));
+      toast(getApiErrorMessage(error), "error");
     },
   });
 
@@ -90,17 +97,59 @@ export default function SettingsTabScreen() {
     setServerError("");
     setSuccessMessage("");
     try {
-      await authClient.signOut();
+      await signOutFully();
       queryClient.clear();
     } catch (error) {
       setServerError(getApiErrorMessage(error));
       setSigningOut(false);
+      toast(getApiErrorMessage(error), "error");
+    }
+  }
+
+  function confirmDeleteAccount() {
+    const email = session?.user?.email ?? "";
+    if (!email) return;
+    if (deleteConfirm.trim().toLowerCase() !== email.toLowerCase()) {
+      setServerError("Type your email exactly to confirm deletion.");
+      return;
+    }
+    Alert.alert(
+      "Delete account?",
+      "This permanently deletes your account, links, and analytics. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => void deleteAccount(),
+        },
+      ]
+    );
+  }
+
+  async function deleteAccount() {
+    if (!online) {
+      setServerError("You’re offline. Reconnect to delete your account.");
+      return;
+    }
+    setDeleting(true);
+    setServerError("");
+    try {
+      const { error } = await authClient.deleteUser();
+      if (error) throw new Error(error.message ?? "Failed to delete account");
+      await signOutFully();
+      queryClient.clear();
+      toast("Account deleted");
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+      toast(getApiErrorMessage(error), "error");
+      setDeleting(false);
     }
   }
 
   const email = session?.user?.email ?? "";
   const currentName = session?.user?.name?.trim() ?? "";
-  const isBusy = profileMutation.isPending || signingOut;
+  const isBusy = profileMutation.isPending || signingOut || deleting;
   const canSave =
     Boolean(nameDraft.trim()) &&
     nameDraft.trim() !== currentName &&
@@ -226,6 +275,50 @@ export default function SettingsTabScreen() {
                 {signingOut ? "Signing out..." : "Sign out"}
               </Text>
             </Button>
+
+            <Column verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
+              <Text color={colors.destructive} style={{ fontSize: 13, fontWeight: "700" }}>
+                Danger zone
+              </Text>
+              <Text color={colors.muted} style={{ fontSize: 12 }}>
+                Type {email} to confirm permanent account deletion.
+              </Text>
+              <OutlinedTextField
+                value={deleteConfirmState}
+                singleLine
+                enabled={!isBusy}
+                onValueChange={(value) => {
+                  setDeleteConfirm(value);
+                }}
+                keyboardOptions={{
+                  keyboardType: "email",
+                  capitalization: "none",
+                  autoCorrectEnabled: false,
+                  imeAction: "done",
+                }}
+                modifiers={[fillMaxWidth()]}
+              >
+                <OutlinedTextField.Label>
+                  <Text>Confirm email</Text>
+                </OutlinedTextField.Label>
+                <OutlinedTextField.Placeholder>
+                  <Text>{email}</Text>
+                </OutlinedTextField.Placeholder>
+              </OutlinedTextField>
+              <Button
+                enabled={!isBusy && deleteConfirm.trim().length > 0}
+                onClick={confirmDeleteAccount}
+                colors={{
+                  containerColor: colors.destructive,
+                  contentColor: "#ffffff",
+                }}
+                modifiers={[fillMaxWidth()]}
+              >
+                <Text style={{ fontWeight: "600" }}>
+                  {deleting ? "Deleting..." : "Delete account"}
+                </Text>
+              </Button>
+            </Column>
           </>
         ) : null}
       </Column>
