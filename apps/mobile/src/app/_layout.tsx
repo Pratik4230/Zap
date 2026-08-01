@@ -9,6 +9,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { authClient } from "@/features/auth/utils/client";
 import { hydrateBearerToken } from "@/features/auth/utils/bearer";
+import { PushBootstrap } from "@/features/push/push-bootstrap";
 import { OfflineBanner } from "@/global/components/offline-banner";
 import { ToastRoot } from "@/global/components/toast";
 import { QueryProvider } from "@/global/query/provider";
@@ -50,6 +51,8 @@ export default function RootLayout() {
           <View style={{ flex: 1, backgroundColor: colors.background }}>
             <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
             <OfflineBanner />
+            {/* Push after auth is known; registers only when logged in. */}
+            {authReady ? <PushBootstrap enabled={isLoggedIn} /> : null}
             {authReady ? (
               <Stack
                 screenOptions={{

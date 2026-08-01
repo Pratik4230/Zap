@@ -148,22 +148,22 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 6.2 | Backend: RevenueCat webhook → set workspace `plan` (coexist with Dodo on web)  | `pending` |
 | 6.3 | Settings: show plan + Upgrade / Restore purchases UI                           | `pending` |
 | 6.4 | In-app toasts/snackbars (create, copy, save, errors)                           | `pending` |
-| 6.5 | Push: `expo-notifications` + FCM + register Expo push token                    | `pending` |
-| 6.6 | Push triggers: link milestones, expiry / click-limit, optional digest (opt-in) | `pending` |
+| 6.5 | Push: `expo-notifications` + FCM + register Expo push token                    | `done` (client register + listeners; server store = 6.6) |
+| 6.6 | Push triggers: link milestones, expiry / click-limit, optional digest (opt-in) | `done` (click milestones 10…100k via analytics-worker) |
 
 **Build order:** `4.7 EAS` → internal Play track → `5.1` Google + `6.1–6.3` IAP + `6.4–6.6` notifications.
 
 ### Phase 7 — Native depth (portfolio / platform)
 
-| ID  | Task                                                      | Status                    |
-| --- | --------------------------------------------------------- | ------------------------- |
-| 7.1 | Biometric app unlock (`expo-local-authentication`)        | `pending`                 |
-| 7.2 | Home-screen widgets (e.g. click stats / quick create)     | `pending`                 |
-| 7.3 | App icon long-press shortcuts (Create link, Analytics, …) | `pending`                 |
-| 7.4 | Material You / dynamic color (Android wallpaper seed)     | `pending`                 |
-| 7.5 | Store review prompt (`expo-store-review`)                 | `pending`                 |
-| 7.6 | EAS Update (OTA) for JS fixes without full Play review    | `pending` _(later)_       |
-| 7.7 | Import URLs from file → bulk create (mobile **and** web)  | `pending` _(long future)_ |
+| ID  | Task                                                      | Status                                                       |
+| --- | --------------------------------------------------------- | ------------------------------------------------------------ |
+| 7.1 | Biometric app unlock (`expo-local-authentication`)        | `pending`                                                    |
+| 7.2 | Home-screen widgets (e.g. click stats / quick create)     | `pending`                                                    |
+| 7.3 | App icon long-press shortcuts (Create link, Analytics, …) | `cancelled` |
+| 7.4 | Material You / dynamic color (Android wallpaper seed)     | `pending`                                                    |
+| 7.5 | Store review prompt (`expo-store-review`)                 | `pending`                                                    |
+| 7.6 | EAS Update (OTA) for JS fixes without full Play review    | `pending` _(later)_                                          |
+| 7.7 | Import URLs from file → bulk create (mobile **and** web)  | `pending` _(long future)_                                    |
 
 ---
 

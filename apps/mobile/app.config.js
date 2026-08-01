@@ -1,12 +1,12 @@
 const IS_DEV = process.env.APP_VARIANT === "development";
 
-/** Store package — shared by preview (Play Internal) and production (live). */
+/** Android application id — same for development and store builds for now. */
 const STORE_PACKAGE = "com.pratik4230.xaply";
 
 /**
  * Dynamic Expo config.
- * - development → separate package so it can sit beside the store app
- * - preview + production → same package (Play Internal vs Production tracks)
+ * - development → display name "Xaply (Dev)" only (same package as store)
+ * - preview + production → "Xaply"
  * @see https://docs.expo.dev/build-reference/variants/
  */
 export default ({ config }) => ({
@@ -14,7 +14,7 @@ export default ({ config }) => ({
   name: IS_DEV ? "Xaply (Dev)" : "Xaply",
   android: {
     ...config.android,
-    package: IS_DEV ? `${STORE_PACKAGE}.dev` : STORE_PACKAGE,
+    package: STORE_PACKAGE,
   },
   plugins: [
     ...(config.plugins ?? []),

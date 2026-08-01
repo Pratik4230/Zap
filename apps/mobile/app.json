@@ -16,6 +16,7 @@
         "backgroundColor": "#050505"
       },
       "package": "com.pratik4230.xaply",
+      "googleServicesFile": "./google-services.json",
       "runtimeVersion": "1.0.0"
     },
     "web": {
@@ -25,6 +26,7 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
+      "expo-notifications",
       [
         "expo-secure-store",
         {
@@ -58,7 +60,8 @@
     "ios": {
       "runtimeVersion": {
         "policy": "appVersion"
-      }
+      },
+      "bundleIdentifier": "com.pratik4230.xaply"
     }
   }
 }

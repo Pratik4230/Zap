@@ -16,3 +16,5 @@ export * from "./health-monitor";
 export * from "./observability";
 export * from "./click-limit-email";
 export * from "./plan-enforcement";
+export * from "./click-milestones";
+export * from "./expo-push-http";

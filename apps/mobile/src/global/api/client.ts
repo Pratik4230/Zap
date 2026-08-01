@@ -83,4 +83,12 @@ export const apiClient = {
         .then((res) => res.data.user);
     },
   },
+
+  push: {
+    registerToken(token: string, platform: "android" | "ios" | "unknown") {
+      return api
+        .post<{ ok: true }>("/api/push/token", { token, platform })
+        .then((res) => res.data);
+    },
+  },
 };

@@ -164,3 +164,53 @@ export const clicks = sqliteTable(
     index("clicks_timestamp_idx").on(table.timestamp),
   ]
 );
+
+/** Expo push tokens registered by mobile clients (one row per device token). */
+export const pushTokens = sqliteTable(
+  "push_tokens",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    platform: text("platform", { enum: ["android", "ios", "unknown"] })
+      .notNull()
+      .default("unknown"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    uniqueIndex("push_tokens_token_idx").on(table.token),
+    index("push_tokens_user_id_idx").on(table.userId),
+  ]
+);
+
+/**
+ * Dedupes click-milestone push sends (10, 25, 100, …).
+ * Insert-before-send so concurrent queue consumers only notify once.
+ */
+export const linkClickMilestoneNotifications = sqliteTable(
+  "link_click_milestone_notifications",
+  {
+    id: text("id").primaryKey(),
+    linkId: text("link_id")
+      .notNull()
+      .references(() => links.id, { onDelete: "cascade" }),
+    milestone: integer("milestone").notNull(),
+    sentAt: integer("sent_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    uniqueIndex("link_click_milestone_unique_idx").on(
+      table.linkId,
+      table.milestone
+    ),
+    index("link_click_milestone_link_id_idx").on(table.linkId),
+  ]
+);
