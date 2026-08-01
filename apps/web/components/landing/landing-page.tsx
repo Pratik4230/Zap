@@ -383,6 +383,12 @@ export function LandingPage() {
             >
               Contact
             </Link>
+            <Link
+              href={siteConfig.legal.deleteAccount}
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Delete account
+            </Link>
             <a
               href={siteConfig.owner.linkedin}
               target="_blank"

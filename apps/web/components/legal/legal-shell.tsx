@@ -7,6 +7,7 @@ const LEGAL_NAV = [
   { href: siteConfig.legal.privacy, label: "Privacy" },
   { href: siteConfig.legal.terms, label: "Terms" },
   { href: siteConfig.legal.contact, label: "Contact" },
+  { href: siteConfig.legal.deleteAccount, label: "Delete account" },
 ] as const;
 
 export function LegalShell({

@@ -33,6 +33,7 @@ export const siteConfig = {
     privacy: "/privacy",
     terms: "/terms",
     contact: "/contact",
+    deleteAccount: "/delete-account",
   },
 } as const;
 

@@ -34,5 +34,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.4,
     },
+    {
+      url: `${siteConfig.url}${siteConfig.legal.deleteAccount}`,
+      lastModified: SITEMAP_LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
   ];
 }

@@ -154,8 +154,9 @@ export default function PrivacyPage() {
             <Link href="/settings">Settings</Link>
           </li>
           <li>
-            <strong>Delete account</strong> — permanently delete your account and
-            associated links from Settings (Danger Zone). You can also email us at{" "}
+            <strong>Delete account</strong> — see{" "}
+            <Link href={siteConfig.legal.deleteAccount}>Delete your account</Link>{" "}
+            for steps, or use Settings (Danger Zone). You can also email us at{" "}
             <a href={`mailto:${LEGAL_OPERATOR.email}`}>{LEGAL_OPERATOR.email}</a>
           </li>
           <li>
