@@ -77,7 +77,7 @@ function ForgotPasswordForm() {
           <Text>Email</Text>
         </OutlinedTextField.Label>
         <OutlinedTextField.Placeholder>
-          <Text>you@example.com</Text>
+          <Text>Enter Your Email</Text>
         </OutlinedTextField.Placeholder>
         {errors.email ? (
           <OutlinedTextField.SupportingText>

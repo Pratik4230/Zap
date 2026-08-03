@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert } from "react-native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Alert, Linking } from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
   Column,
@@ -15,21 +15,47 @@ import { refreshAuthSession } from "@/features/auth/utils/navigation";
 import { validateProfileName } from "@/features/settings/utils/profile";
 import { getApiErrorMessage } from "@/global/api/errors";
 import { apiClient } from "@/global/api/client";
+import { queryKeys } from "@/global/api/query-keys";
+import type { WorkspacePlan } from "@/global/api/types";
 import { AppScreen } from "@/global/components/app-screen";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { toast } from "@/global/components/toast";
+import { API_URL } from "@/global/config/env";
 import { colors } from "@/global/theme";
 import { useIsOnline } from "@/global/utils/network";
 
+const WEB_BILLING_URL = `${API_URL}/settings`;
+
+function planHeadline(plan: WorkspacePlan): string {
+  return plan === "pro" ? "Pro" : "Free";
+}
+
+function planSupporting(plan: WorkspacePlan): string {
+  return plan === "pro"
+    ? "500 active links · 50,000 visits/mo · 1-year analytics"
+    : "50 active links · 5,000 visits/mo · 7-day analytics";
+}
+
 /**
- * Settings — profile, sign out, delete account.
- * Plan / billing left for in-app purchases later.
+ * Settings — profile, plan (read-only), sign out, delete account.
+ * In-app Pro purchase comes later (RevenueCat); upgrade/manage via web for now.
  */
 export default function SettingsTabScreen() {
   const queryClient = useQueryClient();
   const online = useIsOnline();
   const { data: session, isPending: isSessionPending, error: sessionError } =
     authClient.useSession();
+
+  const {
+    data: plan,
+    isPending: isPlanPending,
+    isError: isPlanError,
+    refetch: refetchPlan,
+  } = useQuery({
+    queryKey: queryKeys.billing,
+    queryFn: () => apiClient.billing.plan(),
+    enabled: Boolean(session?.user),
+  });
 
   const nameState = useNativeState("");
   const deleteConfirmState = useNativeState("");
@@ -157,7 +183,7 @@ export default function SettingsTabScreen() {
     !isBusy;
 
   return (
-    <AppScreen title="Settings" subtitle="Profile and account controls.">
+    <AppScreen title="Settings" subtitle="Profile, plan, and account.">
       <Column verticalArrangement={{ spacedBy: 14 }} modifiers={[fillMaxWidth()]}>
         {isSessionPending ? <LoadingState message="Loading account..." /> : null}
 
@@ -198,6 +224,77 @@ export default function SettingsTabScreen() {
                 <Text>Email can’t be changed in the app.</Text>
               </ListItem.SupportingContent>
             </ListItem>
+
+            <ListItem
+              colors={{
+                containerColor: colors.surface,
+                contentColor: colors.foreground,
+                supportingContentColor: colors.muted,
+                overlineContentColor: colors.muted,
+              }}
+              modifiers={[fillMaxWidth()]}
+            >
+              <ListItem.OverlineContent>
+                <Text style={{ fontSize: 11, fontWeight: "600" }}>PLAN</Text>
+              </ListItem.OverlineContent>
+              <ListItem.HeadlineContent>
+                <Text style={{ fontSize: 15, fontWeight: "600" }}>
+                  {isPlanPending
+                    ? "Loading…"
+                    : isPlanError
+                      ? "Unavailable"
+                      : planHeadline(plan ?? "free")}
+                </Text>
+              </ListItem.HeadlineContent>
+              <ListItem.SupportingContent>
+                <Text>
+                  {isPlanPending
+                    ? "Fetching your workspace plan."
+                    : isPlanError
+                      ? "Couldn’t load plan. Tap Retry plan below."
+                      : planSupporting(plan ?? "free")}
+                </Text>
+              </ListItem.SupportingContent>
+            </ListItem>
+
+            {isPlanError ? (
+              <Button
+                enabled={online && !isBusy}
+                onClick={() => void refetchPlan()}
+                colors={{
+                  containerColor: colors.surface,
+                  contentColor: colors.foreground,
+                }}
+                modifiers={[fillMaxWidth()]}
+              >
+                <Text style={{ fontWeight: "600" }}>Retry plan</Text>
+              </Button>
+            ) : null}
+
+            {!isPlanPending && !isPlanError ? (
+              <Column verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
+                <Button
+                  enabled={online && !isBusy}
+                  onClick={() => void Linking.openURL(WEB_BILLING_URL)}
+                  colors={{
+                    containerColor:
+                      plan === "pro" ? colors.surface : colors.primary,
+                    contentColor:
+                      plan === "pro" ? colors.foreground : colors.primaryForeground,
+                  }}
+                  modifiers={[fillMaxWidth()]}
+                >
+                  <Text style={{ fontWeight: "600" }}>
+                    {plan === "pro" ? "Manage billing on web" : "Upgrade to Pro on web"}
+                  </Text>
+                </Button>
+                <Text color={colors.muted} style={{ fontSize: 12 }}>
+                  {plan === "pro"
+                    ? "Subscription is managed on xaply.in. In-app purchases coming later."
+                    : "Play billing isn’t available in the app yet. Upgrade securely on the website."}
+                </Text>
+              </Column>
+            ) : null}
 
             <Column verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
               <Text color={colors.muted} style={{ fontSize: 12, fontWeight: "600" }}>

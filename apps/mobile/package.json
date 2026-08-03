@@ -32,6 +32,8 @@
     "react-native-gesture-handler": "~2.32.0",
     "react-native-gifted-charts": "^1.4.77",
     "react-native-keyboard-controller": "1.21.9",
+    "react-native-purchases": "^10.6.0",
+    "react-native-purchases-ui": "^10.6.0",
     "react-native-qrcode-svg": "^6.3.21",
     "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
@@ -50,6 +52,11 @@
   "scripts": {
     "start": "expo start",
     "dev": "APP_VARIANT=development expo start",
-    "android": "APP_VARIANT=development expo run:android"
+    "android": "APP_VARIANT=development expo run:android",
+    "build:development": "eas build --platform android --profile development",
+    "build:preview": "eas build --platform android --profile preview",
+    "build:production": "eas build --platform android --profile production",
+    "submit:preview": "eas submit --platform android --profile preview --latest",
+    "submit:production": "eas submit --platform android --profile production --latest"
   }
 }

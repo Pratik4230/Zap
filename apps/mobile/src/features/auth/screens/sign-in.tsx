@@ -11,16 +11,10 @@ import {
   TextButton,
   useNativeState,
 } from "@expo/ui/jetpack-compose";
-import {
-  fillMaxWidth,
-  padding,
-} from "@expo/ui/jetpack-compose/modifiers";
+import { fillMaxWidth, padding } from "@expo/ui/jetpack-compose/modifiers";
 import { authClient } from "@/features/auth/utils/client";
 import { enterApp } from "@/features/auth/utils/navigation";
-import {
-  signInSchema,
-  type SignInValues,
-} from "@/features/auth/utils/schemas";
+import { signInSchema, type SignInValues } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 
@@ -46,33 +40,37 @@ function SignInForm() {
     setValue("password", password.get(), { shouldValidate: false });
   }
 
-  const onValid = handleSubmit(async ({ email: emailValue, password: passwordValue }) => {
-    setServerError("");
-    setUnverifiedEmail("");
+  const onValid = handleSubmit(
+    async ({ email: emailValue, password: passwordValue }) => {
+      setServerError("");
+      setUnverifiedEmail("");
 
-    const { error } = await authClient.signIn.email({
-      email: emailValue,
-      password: passwordValue,
-    });
+      const { error } = await authClient.signIn.email({
+        email: emailValue,
+        password: passwordValue,
+      });
 
-    if (error) {
-      const msg = error.message ?? "";
-      if (msg.toLowerCase().includes("verif")) {
-        setUnverifiedEmail(emailValue);
+      if (error) {
+        const msg = error.message ?? "";
+        if (msg.toLowerCase().includes("verif")) {
+          setUnverifiedEmail(emailValue);
+          return;
+        }
+        setServerError(msg || "Something went wrong");
         return;
       }
-      setServerError(msg || "Something went wrong");
-      return;
-    }
 
-    try {
-      await enterApp();
-    } catch (e) {
-      setServerError(
-        e instanceof Error ? e.message : "Signed in, but could not open the app."
-      );
-    }
-  });
+      try {
+        await enterApp();
+      } catch (e) {
+        setServerError(
+          e instanceof Error
+            ? e.message
+            : "Signed in, but could not open the app.",
+        );
+      }
+    },
+  );
 
   async function onSubmit() {
     syncFromNative();
@@ -104,7 +102,7 @@ function SignInForm() {
           <Text>Email</Text>
         </OutlinedTextField.Label>
         <OutlinedTextField.Placeholder>
-          <Text>you@example.com</Text>
+          <Text>Enter Your Email</Text>
         </OutlinedTextField.Placeholder>
         {errors.email ? (
           <OutlinedTextField.SupportingText>
@@ -175,7 +173,7 @@ function SignInForm() {
             contentPadding={{ start: 0, top: 0, end: 0, bottom: 0 }}
             onClick={() =>
               router.push(
-                `/verify-email?email=${encodeURIComponent(unverifiedEmail)}`
+                `/verify-email?email=${encodeURIComponent(unverifiedEmail)}`,
               )
             }
           >
@@ -217,7 +215,10 @@ function SignInForm() {
           contentPadding={{ start: 4, top: 0, end: 0, bottom: 0 }}
           onClick={() => router.push("/sign-up")}
         >
-          <Text color={colors.primary} style={{ fontSize: 14, fontWeight: "600" }}>
+          <Text
+            color={colors.primary}
+            style={{ fontSize: 14, fontWeight: "600" }}
+          >
             Sign up
           </Text>
         </TextButton>

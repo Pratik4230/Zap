@@ -125,7 +125,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | ID  | Task                                                                       | Status                                                              |
 | --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | 4.1 | Profile settings (`PATCH /api/profile`)                                    | `done`                                                              |
-| 4.2 | Show plan / billing status; upgrade via RevenueCat IAP (not web deep-link) | `pending` → see Phase 6                                             |
+| 4.2 | Show plan / billing status; upgrade via RevenueCat IAP (not web deep-link) | `done` (read-only plan + web upgrade; IAP = 6.1–6.3) |
 | 4.3 | Sign out                                                                   | `done`                                                              |
 | 4.4 | QR code for a link (optional; match web if cheap)                          | `done`                                                              |
 | 4.5 | Empty / loading / error states consistently                                | `done`                                                              |
@@ -146,8 +146,8 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | --- | ------------------------------------------------------------------------------ | --------- |
 | 6.1 | RevenueCat SDK + Play subscription product(s) for Pro                          | `pending` |
 | 6.2 | Backend: RevenueCat webhook → set workspace `plan` (coexist with Dodo on web)  | `pending` |
-| 6.3 | Settings: show plan + Upgrade / Restore purchases UI                           | `pending` |
-| 6.4 | In-app toasts/snackbars (create, copy, save, errors)                           | `pending` |
+| 6.3 | Settings: show plan + Upgrade / Restore purchases UI                           | `partial` (plan + web upgrade/manage; Restore/IAP pending) |
+| 6.4 | In-app toasts/snackbars (create, copy, save, errors)                           | `done` |
 | 6.5 | Push: `expo-notifications` + FCM + register Expo push token                    | `done` (client register + listeners; server store = 6.6) |
 | 6.6 | Push triggers: link milestones, expiry / click-limit, optional digest (opt-in) | `done` (click milestones 10…100k via analytics-worker) |
 

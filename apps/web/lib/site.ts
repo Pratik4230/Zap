@@ -35,6 +35,8 @@ export const siteConfig = {
     contact: "/contact",
     deleteAccount: "/delete-account",
   },
+  /** Closed-beta Android APK landing page (binary on Google Drive, not in git). */
+  android: "/android",
 } as const;
 
 const sharedMetadata = {

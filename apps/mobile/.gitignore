@@ -34,7 +34,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-google-services.json
+# google-services.json
 zapp-500215-firebase-adminsdk-fbsvc-f9bc024823.json
 app-example
 

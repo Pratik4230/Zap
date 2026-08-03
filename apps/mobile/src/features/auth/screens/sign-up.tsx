@@ -12,10 +12,7 @@ import {
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
 import { authClient } from "@/features/auth/utils/client";
-import {
-  signUpSchema,
-  type SignUpValues,
-} from "@/features/auth/utils/schemas";
+import { signUpSchema, type SignUpValues } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 
@@ -117,7 +114,7 @@ function SignUpForm() {
           <Text>Email</Text>
         </OutlinedTextField.Label>
         <OutlinedTextField.Placeholder>
-          <Text>you@example.com</Text>
+          <Text>Enter Your Email</Text>
         </OutlinedTextField.Placeholder>
         {errors.email ? (
           <OutlinedTextField.SupportingText>
@@ -192,7 +189,10 @@ function SignUpForm() {
           contentPadding={{ start: 4, top: 0, end: 0, bottom: 0 }}
           onClick={() => router.push("/sign-in")}
         >
-          <Text color={colors.primary} style={{ fontSize: 14, fontWeight: "600" }}>
+          <Text
+            color={colors.primary}
+            style={{ fontSize: 14, fontWeight: "600" }}
+          >
             Sign in
           </Text>
         </TextButton>

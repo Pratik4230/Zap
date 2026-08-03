@@ -35,6 +35,11 @@ dist
 # Workers tmp
 tmp/
 
+# Android APKs — host on Cloudflare R2, not in git
+*.apk
+*.aab
+!**/fixtures/**/*.apk
+
 
 # Debug
 npm-debug.log*
