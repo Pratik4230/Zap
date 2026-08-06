@@ -51,13 +51,16 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
       },
     },
     // Mobile deep-link origins (scheme matches apps/mobile app.json).
-    // Include exp:// always: mobile hits production (xaply.in) from Expo Go.
+    // Include exp:// always: mobile hits production (xaply.in) from Expo Go / dev client.
+    // Triple-slash forms are what Linking.createURL("/", { scheme }) often produces.
     // See https://better-auth.com/docs/integrations/expo#scheme-and-trusted-origins
     trustedOrigins: [
       "xaply://",
+      "xaply:///",
       "xaply://*",
       // Dev client generated scheme (expo-dev-client addGeneratedScheme)
       "exp+xaply://",
+      "exp+xaply:///",
       "exp+xaply://*",
       "exp://",
       "exp://**",
@@ -95,6 +98,7 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
+        prompt: "select_account",
       },
       github: {
         clientId: env.GITHUB_CLIENT_ID,

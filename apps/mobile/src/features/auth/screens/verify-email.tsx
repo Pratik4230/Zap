@@ -3,19 +3,18 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Button,
   OutlinedTextField,
-  Row,
   Text,
-  TextButton,
   useNativeState,
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
+import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
+import { AuthScreen } from "@/features/auth/components/auth-screen";
+import { AuthSwitchLink } from "@/features/auth/components/auth-switch-link";
 import { authClient } from "@/features/auth/utils/client";
 import { enterApp } from "@/features/auth/utils/navigation";
 import { otpSchema, type OtpValues } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
-import { AuthScreen } from "@/features/auth/components/auth-screen";
 
 const RESEND_COOLDOWN = 60;
 
@@ -96,7 +95,7 @@ function VerifyEmailForm() {
       await enterApp();
     } catch (e) {
       setServerError(
-        e instanceof Error ? e.message : "Verified, but could not open the app."
+        e instanceof Error ? e.message : "Verified, but could not open the app.",
       );
     }
   });
@@ -117,6 +116,30 @@ function VerifyEmailForm() {
         sent
           ? `We sent a 6-digit code to ${email}`
           : "Sending verification code…"
+      }
+      footer={
+        <>
+          <AuthPrimaryButton
+            label="Verify email"
+            loadingLabel="Verifying…"
+            loading={isSubmitting}
+            enabled={!isSubmitting && sent}
+            onPress={() => void onSubmit()}
+          />
+          <AuthSwitchLink
+            prompt="Didn't receive it?"
+            actionLabel={
+              cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"
+            }
+            enabled={cooldown === 0 && !isSubmitting}
+            onPress={() => void handleSendOtp()}
+          />
+          <AuthSwitchLink
+            actionLabel="Back to sign in"
+            enabled={!isSubmitting}
+            onPress={() => router.replace("/sign-in")}
+          />
+        </>
       }
     >
       <OutlinedTextField
@@ -156,50 +179,6 @@ function VerifyEmailForm() {
           {serverError}
         </Text>
       ) : null}
-
-      <Button
-        enabled={!isSubmitting && sent}
-        onClick={() => void onSubmit()}
-        colors={{
-          containerColor: colors.primary,
-          contentColor: colors.primaryForeground,
-          disabledContainerColor: "#5c3d00",
-          disabledContentColor: "#1a1a1a",
-        }}
-        modifiers={[fillMaxWidth()]}
-      >
-        <Text style={{ fontWeight: "600" }}>
-          {isSubmitting ? "Verifying…" : "Verify email"}
-        </Text>
-      </Button>
-
-      <Row
-        horizontalArrangement="center"
-        verticalAlignment="center"
-        modifiers={[fillMaxWidth()]}
-      >
-        <Text color={colors.muted} style={{ fontSize: 14 }}>
-          Didn't receive it?
-        </Text>
-        <TextButton
-          enabled={cooldown === 0 && !isSubmitting}
-          contentPadding={{ start: 4, top: 0, end: 0, bottom: 0 }}
-          onClick={() => void handleSendOtp()}
-        >
-          <Text color={colors.primary} style={{ fontSize: 14, fontWeight: "600" }}>
-            {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
-          </Text>
-        </TextButton>
-      </Row>
-
-      <TextButton
-        contentPadding={{ start: 0, top: 0, end: 0, bottom: 0 }}
-        onClick={() => router.replace("/sign-in")}
-      >
-        <Text color={colors.muted} style={{ fontSize: 14 }}>
-          Back to sign in
-        </Text>
-      </TextButton>
     </AuthScreen>
   );
 }

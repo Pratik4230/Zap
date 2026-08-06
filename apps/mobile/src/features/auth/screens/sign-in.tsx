@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Button,
   Column,
   OutlinedTextField,
   Row,
@@ -12,11 +11,14 @@ import {
   useNativeState,
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth, padding } from "@expo/ui/jetpack-compose/modifiers";
+import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
+import { AuthScreen } from "@/features/auth/components/auth-screen";
+import { AuthSwitchLink } from "@/features/auth/components/auth-switch-link";
+import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
 import { authClient } from "@/features/auth/utils/client";
 import { enterApp } from "@/features/auth/utils/navigation";
 import { signInSchema, type SignInValues } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
-import { AuthScreen } from "@/features/auth/components/auth-screen";
 
 function SignInForm() {
   const email = useNativeState("");
@@ -34,6 +36,9 @@ function SignInForm() {
 
   const [serverError, setServerError] = useState("");
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [oauthBusy, setOauthBusy] = useState(false);
+
+  const formBusy = isSubmitting || oauthBusy;
 
   function syncFromNative() {
     setValue("email", email.get().trim(), { shouldValidate: false });
@@ -81,11 +86,36 @@ function SignInForm() {
     <AuthScreen
       title="Welcome back"
       subtitle="Sign in to manage your short links"
+      footer={
+        <>
+          <AuthPrimaryButton
+            label="Sign in"
+            loadingLabel="Signing in…"
+            loading={isSubmitting}
+            enabled={!formBusy}
+            onPress={() => void onSubmit()}
+          />
+          <GoogleSignInButton
+            enabled={!formBusy}
+            onBusyChange={setOauthBusy}
+            onError={(message) => {
+              setUnverifiedEmail("");
+              setServerError(message);
+            }}
+          />
+          <AuthSwitchLink
+            prompt="Don't have an account?"
+            actionLabel="Sign up"
+            enabled={!formBusy}
+            onPress={() => router.push("/sign-up")}
+          />
+        </>
+      }
     >
       <OutlinedTextField
         value={email}
         singleLine
-        enabled={!isSubmitting}
+        enabled={!formBusy}
         isError={!!errors.email}
         onValueChange={(value) =>
           setValue("email", value, { shouldValidate: true })
@@ -114,7 +144,7 @@ function SignInForm() {
       <OutlinedTextField
         value={password}
         singleLine
-        enabled={!isSubmitting}
+        enabled={!formBusy}
         isError={!!errors.password}
         visualTransformation="password"
         onValueChange={(value) =>
@@ -148,7 +178,7 @@ function SignInForm() {
         modifiers={[fillMaxWidth()]}
       >
         <TextButton
-          enabled={!isSubmitting}
+          enabled={!formBusy}
           contentPadding={{ start: 0, top: 0, end: 0, bottom: 0 }}
           onClick={() => router.push("/forgot-password")}
         >
@@ -186,43 +216,6 @@ function SignInForm() {
         </Text>
       ) : null}
 
-      <Button
-        enabled={!isSubmitting}
-        onClick={() => void onSubmit()}
-        colors={{
-          containerColor: colors.primary,
-          contentColor: colors.primaryForeground,
-          disabledContainerColor: "#5c3d00",
-          disabledContentColor: "#1a1a1a",
-        }}
-        modifiers={[fillMaxWidth()]}
-      >
-        <Text style={{ fontWeight: "600" }}>
-          {isSubmitting ? "Signing in…" : "Sign in"}
-        </Text>
-      </Button>
-
-      <Row
-        horizontalArrangement="center"
-        verticalAlignment="center"
-        modifiers={[fillMaxWidth()]}
-      >
-        <Text color={colors.muted} style={{ fontSize: 14 }}>
-          Don't have an account?
-        </Text>
-        <TextButton
-          enabled={!isSubmitting}
-          contentPadding={{ start: 4, top: 0, end: 0, bottom: 0 }}
-          onClick={() => router.push("/sign-up")}
-        >
-          <Text
-            color={colors.primary}
-            style={{ fontSize: 14, fontWeight: "600" }}
-          >
-            Sign up
-          </Text>
-        </TextButton>
-      </Row>
     </AuthScreen>
   );
 }

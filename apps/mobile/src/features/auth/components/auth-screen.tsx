@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import {
   Column,
@@ -7,7 +8,6 @@ import {
 } from "@expo/ui/jetpack-compose";
 import {
   fillMaxWidth,
-  paddingAll,
 } from "@expo/ui/jetpack-compose/modifiers";
 import { ScreenShell } from "@/global/components/screen-shell";
 import { brand, colors } from "@/global/theme";
@@ -15,7 +15,9 @@ import { brand, colors } from "@/global/theme";
 type AuthScreenProps = {
   title: string;
   subtitle: string;
-  children: ReactNode;
+  children?: ReactNode;
+  /** Rendered under the Compose form (e.g. Google button — needs RN Pressable). */
+  footer?: ReactNode;
 };
 
 /**
@@ -23,7 +25,7 @@ type AuthScreenProps = {
  * Keyboard: react-native-keyboard-controller (not RN KeyboardAvoidingView).
  * @see https://docs.expo.dev/versions/v57.0.0/sdk/keyboard-controller/
  */
-export function AuthScreen({ title, subtitle, children }: AuthScreenProps) {
+export function AuthScreen({ title, subtitle, children, footer }: AuthScreenProps) {
   return (
     <ScreenShell edges={["top", "bottom"]}>
       <KeyboardAwareScrollView
@@ -47,7 +49,7 @@ export function AuthScreen({ title, subtitle, children }: AuthScreenProps) {
           style={{ width: "100%" }}
         >
           <Column
-            modifiers={[fillMaxWidth(), paddingAll(8)]}
+            modifiers={[fillMaxWidth()]}
             verticalArrangement={{ spacedBy: 16 }}
           >
             <Text
@@ -72,6 +74,10 @@ export function AuthScreen({ title, subtitle, children }: AuthScreenProps) {
             {children}
           </Column>
         </Host>
+
+        {footer ? (
+          <View style={{ width: "100%", marginTop: 16, gap: 4 }}>{footer}</View>
+        ) : null}
       </KeyboardAwareScrollView>
     </ScreenShell>
   );

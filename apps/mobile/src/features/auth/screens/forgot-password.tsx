@@ -3,21 +3,20 @@ import { router } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Button,
   OutlinedTextField,
-  Row,
   Text,
-  TextButton,
   useNativeState,
 } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
+import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
+import { AuthScreen } from "@/features/auth/components/auth-screen";
+import { AuthSwitchLink } from "@/features/auth/components/auth-switch-link";
 import { authClient } from "@/features/auth/utils/client";
 import {
   forgotPasswordSchema,
   type ForgotPasswordValues,
 } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
-import { AuthScreen } from "@/features/auth/components/auth-screen";
 
 function ForgotPasswordForm() {
   const email = useNativeState("");
@@ -55,6 +54,23 @@ function ForgotPasswordForm() {
     <AuthScreen
       title="Forgot password?"
       subtitle="Enter your email and we'll send a reset code"
+      footer={
+        <>
+          <AuthPrimaryButton
+            label="Send reset code"
+            loadingLabel="Sending…"
+            loading={isSubmitting}
+            enabled={!isSubmitting}
+            onPress={() => void onSubmit()}
+          />
+          <AuthSwitchLink
+            prompt="Remember it?"
+            actionLabel="Sign in"
+            enabled={!isSubmitting}
+            onPress={() => router.replace("/sign-in")}
+          />
+        </>
+      }
     >
       <OutlinedTextField
         value={email}
@@ -91,41 +107,6 @@ function ForgotPasswordForm() {
           {serverError}
         </Text>
       ) : null}
-
-      <Button
-        enabled={!isSubmitting}
-        onClick={() => void onSubmit()}
-        colors={{
-          containerColor: colors.primary,
-          contentColor: colors.primaryForeground,
-          disabledContainerColor: "#5c3d00",
-          disabledContentColor: "#1a1a1a",
-        }}
-        modifiers={[fillMaxWidth()]}
-      >
-        <Text style={{ fontWeight: "600" }}>
-          {isSubmitting ? "Sending…" : "Send reset code"}
-        </Text>
-      </Button>
-
-      <Row
-        horizontalArrangement="center"
-        verticalAlignment="center"
-        modifiers={[fillMaxWidth()]}
-      >
-        <Text color={colors.muted} style={{ fontSize: 14 }}>
-          Remember it?
-        </Text>
-        <TextButton
-          enabled={!isSubmitting}
-          contentPadding={{ start: 4, top: 0, end: 0, bottom: 0 }}
-          onClick={() => router.replace("/sign-in")}
-        >
-          <Text color={colors.primary} style={{ fontSize: 14, fontWeight: "600" }}>
-            Sign in
-          </Text>
-        </TextButton>
-      </Row>
     </AuthScreen>
   );
 }
