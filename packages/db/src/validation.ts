@@ -46,6 +46,24 @@ export function validateDestinationUrl(input: unknown): ValidationResult {
   return { ok: true, value: trimmed };
 }
 
+/** Optional platform URL — empty clears; otherwise same rules as destination. */
+export function validateOptionalDestinationUrl(
+  input: unknown,
+  fieldLabel = "URL"
+): { ok: true; value: string | null } | { ok: false; error: string } {
+  if (input === null || input === undefined || input === "") {
+    return { ok: true, value: null };
+  }
+  if (typeof input !== "string") {
+    return { ok: false, error: `${fieldLabel} must be a string` };
+  }
+  const result = validateDestinationUrl(input);
+  if (!result.ok) {
+    return { ok: false, error: result.error.replace(/^destinationUrl/, fieldLabel) };
+  }
+  return { ok: true, value: result.value };
+}
+
 /** Stricter check used before issuing redirects */
 export function assertSafeRedirectUrl(url: string): boolean {
   const result = validateDestinationUrl(url);

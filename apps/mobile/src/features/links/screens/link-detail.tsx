@@ -40,6 +40,10 @@ export default function LinkDetailScreen() {
 
   const titleState = useNativeState(link?.title ?? "");
   const destinationState = useNativeState(link?.destinationUrl ?? "");
+  const androidUrlState = useNativeState(link?.androidUrl ?? "");
+  const androidStoreUrlState = useNativeState(link?.androidStoreUrl ?? "");
+  const iosUrlState = useNativeState(link?.iosUrl ?? "");
+  const iosStoreUrlState = useNativeState(link?.iosStoreUrl ?? "");
   const expiresAtState = useNativeState(link?.expiresAt ?? "");
   const clickLimitState = useNativeState(link?.clickLimit != null ? String(link.clickLimit) : "");
   const passwordState = useNativeState("");
@@ -55,6 +59,10 @@ export default function LinkDetailScreen() {
       const payload = {
         title: titleState.get().trim() || null,
         destinationUrl: destinationState.get().trim(),
+        androidUrl: androidUrlState.get().trim() || null,
+        androidStoreUrl: androidStoreUrlState.get().trim() || null,
+        iosUrl: iosUrlState.get().trim() || null,
+        iosStoreUrl: iosStoreUrlState.get().trim() || null,
         expiresAt: expiresAtState.get().trim() || null,
         clickLimit: clickLimitRaw === "" ? null : Number(clickLimitRaw),
         password: passwordState.get().trim() || undefined,
@@ -213,7 +221,59 @@ export default function LinkDetailScreen() {
             modifiers={[fillMaxWidth()]}
           >
             <OutlinedTextField.Label>
-              <Text>Destination URL</Text>
+              <Text>Destination URL (default)</Text>
+            </OutlinedTextField.Label>
+          </OutlinedTextField>
+
+          <Text color={colors.muted} style={{ fontSize: 12 }}>
+            Smart redirect — Android / iOS get their own URL when set; otherwise default.
+          </Text>
+
+          <OutlinedTextField
+            value={androidUrlState}
+            singleLine
+            enabled={!isBusy}
+            keyboardOptions={{ keyboardType: "text", imeAction: "next" }}
+            modifiers={[fillMaxWidth()]}
+          >
+            <OutlinedTextField.Label>
+              <Text>Android app URL</Text>
+            </OutlinedTextField.Label>
+          </OutlinedTextField>
+
+          <OutlinedTextField
+            value={androidStoreUrlState}
+            singleLine
+            enabled={!isBusy}
+            keyboardOptions={{ keyboardType: "text", imeAction: "next" }}
+            modifiers={[fillMaxWidth()]}
+          >
+            <OutlinedTextField.Label>
+              <Text>Play Store URL (fallback)</Text>
+            </OutlinedTextField.Label>
+          </OutlinedTextField>
+
+          <OutlinedTextField
+            value={iosUrlState}
+            singleLine
+            enabled={!isBusy}
+            keyboardOptions={{ keyboardType: "text", imeAction: "next" }}
+            modifiers={[fillMaxWidth()]}
+          >
+            <OutlinedTextField.Label>
+              <Text>iOS app URL</Text>
+            </OutlinedTextField.Label>
+          </OutlinedTextField>
+
+          <OutlinedTextField
+            value={iosStoreUrlState}
+            singleLine
+            enabled={!isBusy}
+            keyboardOptions={{ keyboardType: "text", imeAction: "next" }}
+            modifiers={[fillMaxWidth()]}
+          >
+            <OutlinedTextField.Label>
+              <Text>App Store URL (fallback)</Text>
             </OutlinedTextField.Label>
           </OutlinedTextField>
 

@@ -21,6 +21,10 @@ export interface DashboardLink {
   expiresAt: string | null;
   status: LinkStatus;
   hasPassword: boolean;
+  androidUrl?: string | null;
+  androidStoreUrl?: string | null;
+  iosUrl?: string | null;
+  iosStoreUrl?: string | null;
   createdAt: string;
 }
 
@@ -63,6 +67,10 @@ export interface UpdateLinkInput {
   expiresAt?: string | null;
   clickLimit?: number | null;
   password?: string | null;
+  androidUrl?: string | null;
+  androidStoreUrl?: string | null;
+  iosUrl?: string | null;
+  iosStoreUrl?: string | null;
 }
 
 export interface ProfileUser {

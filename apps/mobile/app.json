@@ -46,7 +46,8 @@
           }
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "expo-web-browser"
     ],
     "extra": {
       "router": {},

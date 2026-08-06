@@ -1,6 +1,18 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, hashLinkPassword, toPublicLink, validateClickLimit, validateDestinationUrl, validateExpiresAt, validateLinkPassword, validateLinkStatus, validateTitle, assertCanAddActiveLink } from "@xaply/db";
+import {
+  createDb,
+  hashLinkPassword,
+  toPublicLink,
+  validateClickLimit,
+  validateDestinationUrl,
+  validateExpiresAt,
+  validateLinkPassword,
+  validateLinkStatus,
+  validateOptionalDestinationUrl,
+  validateTitle,
+  assertCanAddActiveLink,
+} from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
@@ -46,6 +58,10 @@ export async function PATCH(
     expiresAt?: unknown;
     clickLimit?: unknown;
     password?: unknown;
+    androidUrl?: unknown;
+    androidStoreUrl?: unknown;
+    iosUrl?: unknown;
+    iosStoreUrl?: unknown;
   };
 
   const updates: {
@@ -55,6 +71,10 @@ export async function PATCH(
     expiresAt?: Date | null;
     clickLimit?: number | null;
     passwordHash?: string | null;
+    androidUrl?: string | null;
+    androidStoreUrl?: string | null;
+    iosUrl?: string | null;
+    iosStoreUrl?: string | null;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
@@ -108,6 +128,41 @@ export async function PATCH(
       }
       updates.passwordHash = await hashLinkPassword(passwordResult.value);
     }
+  }
+
+  if (input.androidUrl !== undefined) {
+    const result = validateOptionalDestinationUrl(input.androidUrl, "androidUrl");
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    updates.androidUrl = result.value;
+  }
+
+  if (input.androidStoreUrl !== undefined) {
+    const result = validateOptionalDestinationUrl(
+      input.androidStoreUrl,
+      "androidStoreUrl"
+    );
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    updates.androidStoreUrl = result.value;
+  }
+
+  if (input.iosUrl !== undefined) {
+    const result = validateOptionalDestinationUrl(input.iosUrl, "iosUrl");
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    updates.iosUrl = result.value;
+  }
+
+  if (input.iosStoreUrl !== undefined) {
+    const result = validateOptionalDestinationUrl(input.iosStoreUrl, "iosStoreUrl");
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    updates.iosStoreUrl = result.value;
   }
 
   if (Object.keys(updates).length === 1) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Linking } from "react-native";
+import { Alert } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -12,6 +12,7 @@ import {
 import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
 import { authClient, signOutFully } from "@/features/auth/utils/client";
 import { refreshAuthSession } from "@/features/auth/utils/navigation";
+import { openWebBilling } from "@/features/billing/open-web-billing";
 import { validateProfileName } from "@/features/settings/utils/profile";
 import { getApiErrorMessage } from "@/global/api/errors";
 import { apiClient } from "@/global/api/client";
@@ -20,11 +21,8 @@ import type { WorkspacePlan } from "@/global/api/types";
 import { AppScreen } from "@/global/components/app-screen";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { toast } from "@/global/components/toast";
-import { API_URL } from "@/global/config/env";
 import { colors } from "@/global/theme";
 import { useIsOnline } from "@/global/utils/network";
-
-const WEB_BILLING_URL = `${API_URL}/settings`;
 
 function planHeadline(plan: WorkspacePlan): string {
   return plan === "pro" ? "Pro" : "Free";
@@ -37,8 +35,9 @@ function planSupporting(plan: WorkspacePlan): string {
 }
 
 /**
- * Settings — profile, plan (read-only), sign out, delete account.
- * In-app Pro purchase comes later (RevenueCat); upgrade/manage via web for now.
+ * Settings — profile, plan, sign out, delete account.
+ * Pro upgrade/manage: in-app browser (expo-web-browser) → xaply.in Dodo billing.
+ * No Play IAP / RevenueCat in this app for now.
  */
 export default function SettingsTabScreen() {
   const queryClient = useQueryClient();
@@ -66,6 +65,7 @@ export default function SettingsTabScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [openingBilling, setOpeningBilling] = useState(false);
 
   useEffect(() => {
     const currentName = session?.user?.name?.trim() ?? "";
@@ -173,9 +173,29 @@ export default function SettingsTabScreen() {
     }
   }
 
+  async function openBillingInApp() {
+    if (!online) {
+      toast("You’re offline. Reconnect to manage billing.", "error");
+      return;
+    }
+    setOpeningBilling(true);
+    try {
+      await openWebBilling();
+      const { data: nextPlan } = await refetchPlan();
+      if (nextPlan === "pro") {
+        toast("You’re on Pro");
+      }
+    } catch (error) {
+      toast(getApiErrorMessage(error), "error");
+    } finally {
+      setOpeningBilling(false);
+    }
+  }
+
   const email = session?.user?.email ?? "";
   const currentName = session?.user?.name?.trim() ?? "";
-  const isBusy = profileMutation.isPending || signingOut || deleting;
+  const isBusy =
+    profileMutation.isPending || signingOut || deleting || openingBilling;
   const canSave =
     Boolean(nameDraft.trim()) &&
     nameDraft.trim() !== currentName &&
@@ -275,7 +295,7 @@ export default function SettingsTabScreen() {
               <Column verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
                 <Button
                   enabled={online && !isBusy}
-                  onClick={() => void Linking.openURL(WEB_BILLING_URL)}
+                  onClick={() => void openBillingInApp()}
                   colors={{
                     containerColor:
                       plan === "pro" ? colors.surface : colors.primary,
@@ -285,13 +305,17 @@ export default function SettingsTabScreen() {
                   modifiers={[fillMaxWidth()]}
                 >
                   <Text style={{ fontWeight: "600" }}>
-                    {plan === "pro" ? "Manage billing on web" : "Upgrade to Pro on web"}
+                    {openingBilling
+                      ? "Opening…"
+                      : plan === "pro"
+                        ? "Manage billing"
+                        : "Upgrade to Pro"}
                   </Text>
                 </Button>
                 <Text color={colors.muted} style={{ fontSize: 12 }}>
                   {plan === "pro"
-                    ? "Subscription is managed on xaply.in. In-app purchases coming later."
-                    : "Play billing isn’t available in the app yet. Upgrade securely on the website."}
+                    ? "Opens Xaply billing in an in-app browser. Sign in with the same account if asked."
+                    : "Complete payment in an in-app browser on xaply.in. Use the same account if asked to sign in."}
                 </Text>
               </Column>
             ) : null}

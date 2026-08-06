@@ -6,6 +6,7 @@ import {
   rateLimitKv,
   REDIRECT_IP_LIMIT,
   REDIRECT_PASSWORD_GUESS_LIMIT,
+  resolveRedirectDestination,
   verifyLinkPassword,
 } from "@xaply/db";
 import { getLinkFromCache, cacheLinkInKV } from "./kv";
@@ -47,7 +48,10 @@ async function issueRedirect(
   ctx: ExecutionContext,
   link: NonNullable<Awaited<ReturnType<typeof getLinkBySlug>>>
 ): Promise<Response> {
-  if (!assertSafeRedirectUrl(link.destinationUrl)) {
+  const ua = request.headers.get("User-Agent") ?? "";
+  const target = resolveRedirectDestination(link, ua);
+
+  if (!assertSafeRedirectUrl(target)) {
     return new Response("Invalid destination", { status: 410 });
   }
 
@@ -62,7 +66,7 @@ async function issueRedirect(
     )
   );
 
-  return Response.redirect(link.destinationUrl, 302);
+  return Response.redirect(target, 302);
 }
 
 export default {

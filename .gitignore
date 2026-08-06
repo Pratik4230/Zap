@@ -67,3 +67,6 @@ apps/mobile/ios/
 .agents
 .claude
 skills-lock.json
+resume.md
+AGENTS.md
+google-services.json

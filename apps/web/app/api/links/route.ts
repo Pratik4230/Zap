@@ -10,6 +10,7 @@ import {
   validateDestinationUrl,
   validateExpiresAt,
   validateLinkPassword,
+  validateOptionalDestinationUrl,
   validateSlug,
   validateTitle,
   assertCanAddActiveLink,
@@ -70,13 +71,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { destinationUrl, slug, title, expiresAt, clickLimit, password } = body as {
+  const {
+    destinationUrl,
+    slug,
+    title,
+    expiresAt,
+    clickLimit,
+    password,
+    androidUrl,
+    androidStoreUrl,
+    iosUrl,
+    iosStoreUrl,
+  } = body as {
     destinationUrl?: unknown;
     slug?: unknown;
     title?: unknown;
     expiresAt?: unknown;
     clickLimit?: unknown;
     password?: unknown;
+    androidUrl?: unknown;
+    androidStoreUrl?: unknown;
+    iosUrl?: unknown;
+    iosStoreUrl?: unknown;
   };
 
   const urlResult = validateDestinationUrl(destinationUrl);
@@ -102,6 +118,26 @@ export async function POST(request: NextRequest) {
   const passwordResult = validateLinkPassword(password);
   if (!passwordResult.ok) {
     return NextResponse.json({ error: passwordResult.error }, { status: 400 });
+  }
+
+  const androidUrlResult = validateOptionalDestinationUrl(androidUrl, "androidUrl");
+  if (!androidUrlResult.ok) {
+    return NextResponse.json({ error: androidUrlResult.error }, { status: 400 });
+  }
+  const androidStoreResult = validateOptionalDestinationUrl(
+    androidStoreUrl,
+    "androidStoreUrl"
+  );
+  if (!androidStoreResult.ok) {
+    return NextResponse.json({ error: androidStoreResult.error }, { status: 400 });
+  }
+  const iosUrlResult = validateOptionalDestinationUrl(iosUrl, "iosUrl");
+  if (!iosUrlResult.ok) {
+    return NextResponse.json({ error: iosUrlResult.error }, { status: 400 });
+  }
+  const iosStoreResult = validateOptionalDestinationUrl(iosStoreUrl, "iosStoreUrl");
+  if (!iosStoreResult.ok) {
+    return NextResponse.json({ error: iosStoreResult.error }, { status: 400 });
   }
 
   let passwordHash: string | null = null;
@@ -140,6 +176,10 @@ export async function POST(request: NextRequest) {
         expiresAt: expiresAtResult.value,
         clickLimit: clickLimitResult.value,
         passwordHash,
+        androidUrl: androidUrlResult.value,
+        androidStoreUrl: androidStoreResult.value,
+        iosUrl: iosUrlResult.value,
+        iosStoreUrl: iosStoreResult.value,
         status: "active",
       })
       .returning();
