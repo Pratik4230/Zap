@@ -33,6 +33,12 @@
           "configureAndroidBackup": true
         }
       ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Xaply to use Face ID to unlock the app."
+        }
+      ],
       "expo-system-ui",
       [
         "expo-splash-screen",

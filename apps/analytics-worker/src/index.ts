@@ -13,9 +13,11 @@ import {
 } from "@xaply/db";
 import type { ClickEvent } from "@xaply/db";
 import { eq, sql } from "drizzle-orm";
+import { runStreakReminderCron } from "./streak-reminders";
 
 interface WorkerEnv {
   DB: D1Database;
+  ZAP_CACHE: KVNamespace;
 }
 
 async function notifyClickMilestones(
@@ -91,9 +93,10 @@ export default {
       const event = message.body;
 
       try {
-        await db.batch([
-          db.insert(clicks).values({
-            id: crypto.randomUUID(),
+        const inserted = await db
+          .insert(clicks)
+          .values({
+            id: message.id,
             linkId: event.linkId,
             timestamp: new Date(event.timestamp),
             country: event.country ?? null,
@@ -102,15 +105,19 @@ export default {
             os: event.os ?? null,
             browser: event.browser ?? null,
             referrer: event.referrer ?? null,
-          }),
-          db
+          })
+          .onConflictDoNothing()
+          .returning({ id: clicks.id });
+
+        if (inserted.length > 0) {
+          await db
             .update(links)
             .set({
               clickCount: sql`${links.clickCount} + 1`,
               updatedAt: new Date(),
             })
-            .where(eq(links.id, event.linkId)),
-        ]);
+            .where(eq(links.id, event.linkId));
+        }
 
         const [link] = await db
           .select()
@@ -143,5 +150,9 @@ export default {
         message.retry();
       }
     }
+  },
+
+  async scheduled(_controller: ScheduledController, env: WorkerEnv, ctx: ExecutionContext) {
+    ctx.waitUntil(runStreakReminderCron(env));
   },
 } satisfies ExportedHandler<WorkerEnv, ClickEvent>;

@@ -6,10 +6,12 @@ import {
   Column,
   ListItem,
   OutlinedTextField,
+  Switch,
   Text,
   useNativeState,
 } from "@expo/ui/jetpack-compose";
-import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
+import { fillMaxWidth, verticalScroll } from "@expo/ui/jetpack-compose/modifiers";
+import { useBiometricUnlock } from "@/features/auth/components/biometric-unlock-provider";
 import { authClient, signOutFully } from "@/features/auth/utils/client";
 import { refreshAuthSession } from "@/features/auth/utils/navigation";
 import { openWebBilling } from "@/features/billing/open-web-billing";
@@ -23,6 +25,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-
 import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
 import { useIsOnline } from "@/global/utils/network";
+import { useStreakStatus, useClaimStreakReward } from "@/features/streak/hooks/use-streak";
 
 function planHeadline(plan: WorkspacePlan): string {
   return plan === "pro" ? "Pro" : "Free";
@@ -42,6 +45,13 @@ function planSupporting(plan: WorkspacePlan): string {
 export default function SettingsTabScreen() {
   const queryClient = useQueryClient();
   const online = useIsOnline();
+  const {
+    ready: biometricReady,
+    capability,
+    enabled: biometricEnabled,
+    enable: enableBiometric,
+    disable: disableBiometric,
+  } = useBiometricUnlock();
   const { data: session, isPending: isSessionPending, error: sessionError } =
     authClient.useSession();
 
@@ -56,6 +66,37 @@ export default function SettingsTabScreen() {
     enabled: Boolean(session?.user),
   });
 
+  const { data: streakData, isLoading: isStreakLoading } = useStreakStatus();
+  const claimMutation = useClaimStreakReward();
+
+  const streakCount = streakData?.streak ?? 0;
+  const streakCanClaim = streakData?.canClaim ?? false;
+  const streakHasClaimed = streakData?.hasClaimedReward ?? false;
+  const streakProDate = streakData?.proGrantedUntil
+    ? new Date(streakData.proGrantedUntil).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  function handleClaimStreak() {
+    claimMutation.mutate(undefined, {
+      onSuccess: (res) => {
+        const until = new Date(res.proGrantedUntil).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        toast(`🎉 Pro Unlocked until ${until}!`);
+        void refetchPlan();
+      },
+      onError: (err) => {
+        toast(getApiErrorMessage(err), "error");
+      },
+    });
+  }
+
   const nameState = useNativeState("");
   const deleteConfirmState = useNativeState("");
   const [nameDraft, setNameDraft] = useState("");
@@ -66,6 +107,7 @@ export default function SettingsTabScreen() {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [openingBilling, setOpeningBilling] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
 
   useEffect(() => {
     const currentName = session?.user?.name?.trim() ?? "";
@@ -192,19 +234,49 @@ export default function SettingsTabScreen() {
     }
   }
 
+  async function onBiometricToggle(next: boolean) {
+    if (biometricBusy) return;
+    setBiometricBusy(true);
+    try {
+      const result = next ? await enableBiometric() : await disableBiometric();
+      if (!result.ok) {
+        if (result.message && result.message !== "Cancelled") {
+          toast(result.message, "error");
+        }
+        return;
+      }
+      toast(next ? "App lock enabled" : "App lock disabled");
+    } finally {
+      setBiometricBusy(false);
+    }
+  }
+
   const email = session?.user?.email ?? "";
   const currentName = session?.user?.name?.trim() ?? "";
   const isBusy =
-    profileMutation.isPending || signingOut || deleting || openingBilling;
+    profileMutation.isPending ||
+    signingOut ||
+    deleting ||
+    openingBilling ||
+    biometricBusy;
   const canSave =
     Boolean(nameDraft.trim()) &&
     nameDraft.trim() !== currentName &&
     !nameError &&
     !isBusy;
+  const biometricSupporting = !biometricReady
+    ? "Checking device support…"
+    : !capability.hardware
+      ? "This device has no biometric sensor."
+      : !capability.enrolled
+        ? "Enroll a fingerprint or face unlock in system settings first."
+        : biometricEnabled
+          ? `Require ${capability.label.toLowerCase()} when opening the app.`
+          : `Lock Xaply with ${capability.label.toLowerCase()} after backgrounding.`;
 
   return (
     <AppScreen title="Settings" subtitle="Profile, plan, and account.">
-      <Column verticalArrangement={{ spacedBy: 14 }} modifiers={[fillMaxWidth()]}>
+      <Column verticalArrangement={{ spacedBy: 14 }} modifiers={[fillMaxWidth(), verticalScroll()]}>
         {isSessionPending ? <LoadingState message="Loading account..." /> : null}
 
         {!isSessionPending && sessionError ? (
@@ -244,6 +316,57 @@ export default function SettingsTabScreen() {
                 <Text>Email can’t be changed in the app.</Text>
               </ListItem.SupportingContent>
             </ListItem>
+
+            <ListItem
+              colors={{
+                containerColor: colors.surface,
+                contentColor: colors.foreground,
+                supportingContentColor: colors.muted,
+                overlineContentColor: colors.muted,
+              }}
+              modifiers={[fillMaxWidth()]}
+            >
+              <ListItem.OverlineContent>
+                <Text style={{ fontSize: 11, fontWeight: "600" }}>STREAK REWARD</Text>
+              </ListItem.OverlineContent>
+              <ListItem.HeadlineContent>
+                <Text style={{ fontSize: 15, fontWeight: "600" }}>
+                  {isStreakLoading
+                    ? "Loading streak…"
+                    : streakHasClaimed
+                      ? "🔥 21-Day Streak Completed 🎉"
+                      : `🔥 ${streakCount}/21 Days Active`}
+                </Text>
+              </ListItem.HeadlineContent>
+              <ListItem.SupportingContent>
+                <Text>
+                  {isStreakLoading
+                    ? "Fetching active day streak status."
+                    : streakHasClaimed
+                      ? `Pro granted until ${streakProDate ?? "1 year"}.`
+                      : streakCanClaim
+                        ? "Streak complete! Tap below to claim your 1-year free Pro access."
+                        : `Keep active ${21 - streakCount} more ${21 - streakCount === 1 ? "day" : "days"} to unlock 1 year Pro free.`}
+                </Text>
+              </ListItem.SupportingContent>
+            </ListItem>
+
+            {streakCanClaim && !streakHasClaimed ? (
+              <Button
+                enabled={online && !isBusy && !claimMutation.isPending}
+                onClick={() => void handleClaimStreak()}
+                colors={{
+                  containerColor: colors.primary,
+                  contentColor: colors.primaryForeground,
+                }}
+                modifiers={[fillMaxWidth()]}
+              >
+                <Text style={{ fontWeight: "600" }}>
+                  {claimMutation.isPending ? "Claiming Pro..." : "Claim 1 Year Free Pro 🎉"}
+                </Text>
+              </Button>
+            ) : null}
+
 
             <ListItem
               colors={{
@@ -319,6 +442,48 @@ export default function SettingsTabScreen() {
                 </Text>
               </Column>
             ) : null}
+
+            <ListItem
+              colors={{
+                containerColor: colors.surface,
+                contentColor: colors.foreground,
+                supportingContentColor: colors.muted,
+                overlineContentColor: colors.muted,
+              }}
+              modifiers={[fillMaxWidth()]}
+            >
+              <ListItem.OverlineContent>
+                <Text style={{ fontSize: 11, fontWeight: "600" }}>SECURITY</Text>
+              </ListItem.OverlineContent>
+              <ListItem.HeadlineContent>
+                <Text style={{ fontSize: 15, fontWeight: "600" }}>
+                  App lock
+                </Text>
+              </ListItem.HeadlineContent>
+              <ListItem.SupportingContent>
+                <Text>{biometricSupporting}</Text>
+              </ListItem.SupportingContent>
+              <ListItem.TrailingContent>
+                <Switch
+                  value={biometricEnabled}
+                  enabled={
+                    biometricReady &&
+                    capability.available &&
+                    !biometricBusy &&
+                    !signingOut &&
+                    !deleting
+                  }
+                  onCheckedChange={(value) => void onBiometricToggle(value)}
+                  colors={{
+                    checkedThumbColor: colors.primaryForeground,
+                    checkedTrackColor: colors.primary,
+                    uncheckedThumbColor: colors.muted,
+                    uncheckedTrackColor: "#2a2a2a",
+                    uncheckedBorderColor: "#3a3a3a",
+                  }}
+                />
+              </ListItem.TrailingContent>
+            </ListItem>
 
             <Column verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
               <Text color={colors.muted} style={{ fontSize: 12, fontWeight: "600" }}>

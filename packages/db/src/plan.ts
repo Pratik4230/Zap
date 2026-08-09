@@ -12,12 +12,18 @@ export async function getUserPlan(
 ): Promise<WorkspacePlan> {
   const drizzle = createDb(db);
   const [workspace] = await drizzle
-    .select({ plan: workspaces.plan })
+    .select({ plan: workspaces.plan, proGrantedUntil: workspaces.proGrantedUntil })
     .from(workspaces)
     .where(eq(workspaces.ownerId, userId))
     .limit(1);
 
-  return workspace?.plan ?? "free";
+  if (!workspace) return "free";
+
+  if (workspace.proGrantedUntil && workspace.proGrantedUntil > new Date()) {
+    return "pro";
+  }
+
+  return workspace.plan ?? "free";
 }
 
 export async function getUserPlanCached(

@@ -21,4 +21,5 @@ export const queryKeys = {
   },
   billing: ["billing"] as const,
   profile: ["profile"] as const,
+  streak: ["streak"] as const,
 } as const;

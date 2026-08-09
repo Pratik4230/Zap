@@ -140,3 +140,10 @@ export interface LinkAnalytics {
   maxRangeDays: number;
   rangeLabel: string;
 }
+
+export interface StreakStatus {
+  streak: number;
+  hasClaimedReward: boolean;
+  canClaim: boolean;
+  proGrantedUntil: string | null; // ISO date string
+}

@@ -11,6 +11,7 @@ import {
   type ProfileUser,
   type UpdateLinkInput,
   type WorkspacePlan,
+  type StreakStatus,
 } from "@/global/api/types";
 
 /** Typed wrappers around production `/api/*` routes. */
@@ -88,6 +89,24 @@ export const apiClient = {
     registerToken(token: string, platform: "android" | "ios" | "unknown") {
       return api
         .post<{ ok: true }>("/api/push/token", { token, platform })
+        .then((res) => res.data);
+    },
+  },
+
+  streak: {
+    ping(): Promise<StreakStatus> {
+      return api
+        .post<StreakStatus>("/api/streak/ping", {})
+        .then((res) => res.data);
+    },
+    status(): Promise<StreakStatus> {
+      return api
+        .get<StreakStatus>("/api/streak/status")
+        .then((res) => res.data);
+    },
+    claim(): Promise<{ success: true; proGrantedUntil: string }> {
+      return api
+        .post<{ success: true; proGrantedUntil: string }>("/api/streak/claim", {})
         .then((res) => res.data);
     },
   },

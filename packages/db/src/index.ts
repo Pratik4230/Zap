@@ -19,3 +19,4 @@ export * from "./click-limit-email";
 export * from "./plan-enforcement";
 export * from "./click-milestones";
 export * from "./expo-push-http";
+export * from "./streak";

@@ -17,6 +17,8 @@ export const users = sqliteTable("user", {
     .default(false),
   image: text("image"),
   dodoCustomerId: text("dodo_customer_id"),
+  /** Last time the user sent a streak ping from mobile — used for reminder notifications. */
+  lastActiveAt: integer("last_active_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -93,6 +95,8 @@ export const workspaces = sqliteTable(
     plan: text("plan", { enum: ["free", "pro"] })
       .notNull()
       .default("free"),
+    /** Unix timestamp — if > now the user has streak-granted Pro regardless of paid plan. */
+    proGrantedUntil: integer("pro_granted_until", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -212,5 +216,40 @@ export const linkClickMilestoneNotifications = sqliteTable(
       table.milestone
     ),
     index("link_click_milestone_link_id_idx").on(table.linkId),
+  ]
+);
+export const streakDays = sqliteTable(
+  "streak_days",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: text("date").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    uniqueIndex("streak_days_user_date_idx").on(table.userId, table.date),
+    index("streak_days_user_id_idx").on(table.userId),
+  ]
+);
+
+export const streakRewards = sqliteTable(
+  "streak_rewards",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "cascade" }),
+    proGrantedUntil: integer("pro_granted_until", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index("streak_rewards_user_id_idx").on(table.userId),
   ]
 );
