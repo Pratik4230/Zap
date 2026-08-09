@@ -2,7 +2,10 @@ import * as WebBrowser from "expo-web-browser";
 import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import { emailOTPClient } from "better-auth/client/plugins";
-import * as SecureStore from "expo-secure-store";
+import {
+  authSecureStorage,
+  hydrateAuthSecureStorage,
+} from "@/features/auth/utils/auth-secure-storage";
 import { API_URL } from "@/global/config/env";
 import {
   captureAuthTokenFromHeaders,
@@ -14,7 +17,20 @@ import {
 /** Required so OAuth redirects complete when returning to the app. */
 WebBrowser.maybeCompleteAuthSession();
 
-void hydrateBearerToken();
+let storageHydratePromise: Promise<void> | null = null;
+
+/** Await before trusting persisted cookies / bearer on cold start. */
+export function ensureAuthStorageHydrated(): Promise<void> {
+  if (!storageHydratePromise) {
+    storageHydratePromise = Promise.all([
+      hydrateBearerToken(),
+      hydrateAuthSecureStorage(),
+    ]).then(() => undefined);
+  }
+  return storageHydratePromise;
+}
+
+void ensureAuthStorageHydrated();
 
 /**
  * Better Auth client for Expo.
@@ -32,7 +48,7 @@ export const authClient = createAuthClient({
     expoClient({
       scheme: "xaply",
       storagePrefix: "xaply",
-      storage: SecureStore,
+      storage: authSecureStorage,
     }),
     emailOTPClient(),
   ],

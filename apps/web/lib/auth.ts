@@ -12,6 +12,7 @@ import {
   isDodoBillingConfigured,
 } from "./dodo-billing";
 import { sendOtpEmail } from "./email";
+import { mobileOAuthPlugin, mobileOAuthRedirectPlugin } from "./mobile-oauth";
 
 export type AuthEnv = Pick<
   CloudflareEnv,
@@ -107,7 +108,9 @@ export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
     },
     plugins: [
       expo(),
+      mobileOAuthPlugin(),
       bearer(),
+      mobileOAuthRedirectPlugin(),
       emailOTP({
         otpLength: 6,
         expiresIn: 300,

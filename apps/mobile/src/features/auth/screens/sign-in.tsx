@@ -16,7 +16,7 @@ import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthSwitchLink } from "@/features/auth/components/auth-switch-link";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
 import { authClient } from "@/features/auth/utils/client";
-import { enterApp } from "@/features/auth/utils/navigation";
+import { finishSignIn } from "@/features/auth/utils/navigation";
 import { signInSchema, type SignInValues } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
 
@@ -66,7 +66,7 @@ function SignInForm() {
       }
 
       try {
-        await enterApp();
+        await finishSignIn();
       } catch (e) {
         setServerError(
           e instanceof Error

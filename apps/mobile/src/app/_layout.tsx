@@ -2,13 +2,17 @@ import "../global.css";
 
 import { useEffect, useRef, useState } from "react";
 import { StatusBar as RNStatusBar, View } from "react-native";
+import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { authClient } from "@/features/auth/utils/client";
-import { hydrateBearerToken } from "@/features/auth/utils/bearer";
+import {
+  authClient,
+  ensureAuthStorageHydrated,
+} from "@/features/auth/utils/client";
+import { applyOAuthCallbackUrl } from "@/features/auth/utils/oauth-callback";
 import { consumePendingDeepLink } from "@/features/auth/utils/pending-deep-link";
 import { PushBootstrap } from "@/features/push/push-bootstrap";
 import { OfflineBanner } from "@/global/components/offline-banner";
@@ -23,33 +27,70 @@ SplashScreen.setOptions({
 });
 
 void SystemUI.setBackgroundColorAsync(colors.background);
-void hydrateBearerToken();
 
 /**
- * Root layout — Stack.Protected auth gate.
- * Session loading only gates the splash once; later refetches must NOT remount
- * auth/app (that caused sign-in to "refresh" after sign-out).
- *
- * App Links: `+native-intent` rewrites https://xaply.in/... → `/links/...`.
- * If the user was logged out, restore the pending path after sign-in.
+ * Root shell — providers only. Auth gating lives in `RootNavigator`.
  *
  * @see https://docs.expo.dev/router/advanced/authentication/
- * @see https://docs.expo.dev/linking/android-app-links/
  */
 export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <QueryProvider>
+        <KeyboardProvider>
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <OfflineBanner />
+            <RootNavigator />
+            <ToastRoot />
+          </View>
+        </KeyboardProvider>
+      </QueryProvider>
+    </SafeAreaProvider>
+  );
+}
+
+/**
+ * `Stack.Protected` gates (app) vs (auth). After sign-in, screens call
+ * `router.replace('/')` per the Expo auth guide — sign-out relies on the guard.
+ */
+function RootNavigator() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const isLoggedIn = !!session?.user;
-  /** Latched true after the first session resolution — never goes back to false. */
+  const [storageReady, setStorageReady] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const didRestoreDeepLink = useRef(false);
+  const oauthHandled = useRef(new Set<string>());
 
   useEffect(() => {
-    if (!isPending) {
+    void ensureAuthStorageHydrated().then(() => setStorageReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!isPending && storageReady) {
       setAuthReady(true);
       SplashScreen.hide();
     }
-  }, [isPending]);
+  }, [isPending, storageReady]);
+
+  useEffect(() => {
+    async function handleOAuthReturn(url: string | null) {
+      if (!url || oauthHandled.current.has(url)) return;
+      oauthHandled.current.add(url);
+      try {
+        await applyOAuthCallbackUrl(url);
+      } catch {
+        oauthHandled.current.delete(url);
+      }
+    }
+
+    void Linking.getInitialURL().then(handleOAuthReturn);
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      void handleOAuthReturn(url);
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!authReady || !isLoggedIn || didRestoreDeepLink.current) return;
@@ -66,36 +107,23 @@ export default function RootLayout() {
   }, [isLoggedIn]);
 
   return (
-    <SafeAreaProvider>
-      <QueryProvider>
-        <KeyboardProvider>
-          <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-            <OfflineBanner />
-            {/* Push after auth is known; registers only when logged in. */}
-            {authReady ? <PushBootstrap enabled={isLoggedIn} /> : null}
-            {authReady ? (
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.background },
-                  animation: "fade",
-                }}
-              >
-                <Stack.Protected guard={isLoggedIn}>
-                  <Stack.Screen name="(app)" />
-                </Stack.Protected>
+    <>
+      <PushBootstrap enabled={authReady && isLoggedIn} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          animation: "fade",
+        }}
+      >
+        <Stack.Protected guard={isLoggedIn}>
+          <Stack.Screen name="(app)" />
+        </Stack.Protected>
 
-                <Stack.Protected guard={!isLoggedIn}>
-                  <Stack.Screen name="(auth)" />
-                </Stack.Protected>
-              </Stack>
-            ) : null}
-            {/* Must be last sibling so toasts overlay navigation */}
-            <ToastRoot />
-          </View>
-        </KeyboardProvider>
-      </QueryProvider>
-    </SafeAreaProvider>
+        <Stack.Protected guard={!isLoggedIn}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+      </Stack>
+    </>
   );
 }

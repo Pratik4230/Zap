@@ -12,7 +12,7 @@ import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-butto
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthSwitchLink } from "@/features/auth/components/auth-switch-link";
 import { authClient } from "@/features/auth/utils/client";
-import { enterApp } from "@/features/auth/utils/navigation";
+import { finishSignIn } from "@/features/auth/utils/navigation";
 import { otpSchema, type OtpValues } from "@/features/auth/utils/schemas";
 import { colors } from "@/global/theme";
 
@@ -92,7 +92,7 @@ function VerifyEmailForm() {
       return;
     }
     try {
-      await enterApp();
+      await finishSignIn();
     } catch (e) {
       setServerError(
         e instanceof Error ? e.message : "Verified, but could not open the app.",

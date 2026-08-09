@@ -73,5 +73,18 @@ export function rewriteAppLinkPath(path: string): string {
     return `${normalized}${search}`;
   }
 
+  // Web dashboard root → mobile links tab (`/`).
+  if (normalized === "/dashboard") {
+    return `/${search}`;
+  }
+  if (normalized === "/settings" || normalized === "/analytics") {
+    return `${normalized}${search}`;
+  }
+
+  // Other xaply.in paths without a mobile screen → entry redirect handles it.
+  if (normalized !== "/") {
+    return `/${search}`;
+  }
+
   return `${normalized}${search}`;
 }

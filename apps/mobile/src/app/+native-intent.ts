@@ -18,6 +18,25 @@ export function redirectSystemPath({
   initial: boolean;
 }): string {
   try {
+    // OAuth return: xaply:///?cookie=… — route exists but session is applied by WebBrowser.
+    if (/^xaply:/i.test(path)) {
+      try {
+        const url = new URL(path);
+        const bare = `${url.pathname || "/"}${url.search}`;
+        if (
+          (url.pathname === "/" || url.pathname === "") &&
+          url.searchParams.has("cookie")
+        ) {
+          return "/sign-in";
+        }
+        if (bare === "/" || bare === "") {
+          return "/sign-in";
+        }
+      } catch {
+        // fall through
+      }
+    }
+
     const rewritten = rewriteAppLinkPath(path);
 
     // Cold start only: stash for post-login when `Stack.Protected` hid `(app)`.
@@ -31,6 +50,6 @@ export function redirectSystemPath({
 
     return rewritten;
   } catch {
-    return "/";
+    return "/sign-in";
   }
 }

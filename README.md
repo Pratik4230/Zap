@@ -204,6 +204,8 @@ npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put GITHUB_CLIENT_SECRET
 npx wrangler secret put ADMIN_EMAIL
+# Android App Links — SHA256 from `eas credentials -p android` (comma-separate upload + app-signing keys)
+npx wrangler secret put ANDROID_SHA256_CERT_FINGERPRINTS
 ```
 
 ### Observability (logs & traces)
@@ -230,7 +232,15 @@ Errors and health alerts emit structured JSON logs (search for `event: "api.unha
 
 **Optional:** Export logs/traces to Datadog, Grafana, Axiom, etc. via Cloudflare dashboard → Observability → **Add destination** (OpenTelemetry). Then add destination names to each worker's `wrangler.jsonc` under `observability.logs.destinations` / `observability.traces.destinations`.
 
-### OAuth callbacks
+**Google OAuth (mobile):** Better Auth browser flow uses the **Web** OAuth client only. In [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → your **Web client** → Authorized redirect URIs must include:
+
+```
+https://xaply.in/api/auth/callback/google
+```
+
+No separate **Android** OAuth client is required for this flow (only for native `@react-native-google-signin` idToken, which we do not use).
+
+**Web (local + prod) redirect URIs:**
 
 ```
 http://localhost:3000/api/auth/callback/google
