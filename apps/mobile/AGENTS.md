@@ -10,7 +10,7 @@ IMPORTANT follow official latest documentation https://docs.expo.dev/llms.txt
 3. **Every Jetpack Compose tree** must be wrapped in `Host` from `@expo/ui/jetpack-compose`.
 4. **No HeroUI Native** for v1 (heavier peers; not true Compose native).
 5. **API base** = production `https://xaply.in` (auth + REST).
-6. **Auth v1** = email + password + OTP only. Google later.
+6. **Auth** = email + password + OTP + Google (Better Auth social / Expo browser).
 7. Follow this file’s **TODO** in order; update status when a step finishes (`pending` → `in_progress` → `done`).
 
 ## Package manager
@@ -35,9 +35,9 @@ Expo CLI still works under pnpm (`expo start`, `expo run:android`).
 | Icons (Compose)     | **`@expo/material-symbols`** — import icons as `@expo/material-symbols/home.xml` (no hand-written XML). Do not use `@expo/vector-icons` for new code. |
 | Styling (secondary) | **Uniwind** — RN shells, safe areas, non-Compose wrappers ([docs](https://docs.uniwind.dev/llms.txt))                                                 |
 | Data                | TanStack Query v5 → `https://xaply.in/api/*`                                                                                                          |
-| Auth                | Better Auth + `@better-auth/expo` + SecureStore; server has `bearer()` + `expo()`                                                                     |
+| Auth                | Better Auth + `@better-auth/expo` + SecureStore; email/OTP + Google social                                            |
 | Network (auth)      | **`expo-network`** — Better Auth uses it to pause session refresh when offline (install only; no app calls)                                           |
-| Out of scope v1     | HeroUI Native, Google OAuth, in-app billing checkout, admin                                                                                           |
+| Out of scope v1     | HeroUI Native, Play IAP / RevenueCat, admin                                                                                                           |
 
 ## Important docs (keep current)
 
@@ -98,7 +98,7 @@ Update the **Status** column as you work. Do not skip prerequisites.
 | 1.5 | Forgot / reset password                                                                                              | `done`                                                            |
 | 1.6 | Session gate: unauthenticated → auth stack; authenticated → app tabs                                                 | `done` (`Stack.Protected` + `authClient.useSession`; tabs in 2.2) |
 | 1.7 | Authenticated API client: axios + session cookie via `authClient.getCookie()`                                        | `done` (`src/global/api/http.ts`)                                 |
-| 1.8 | _(Later)_ Google OAuth — see **5.1**                                                                                 | `pending`                                                         |
+| 1.8 | Google OAuth — see **5.1**                                                                                           | `done`                                                            |
 
 ### Phase 2 — App shell & links
 
@@ -122,48 +122,64 @@ Update the **Status** column as you work. Do not skip prerequisites.
 
 ### Phase 4 — Settings & polish
 
-| ID  | Task                                                                       | Status                                                              |
-| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 4.1 | Profile settings (`PATCH /api/profile`)                                    | `done`                                                              |
-| 4.2 | Show plan / billing status; upgrade via RevenueCat IAP (not web deep-link) | `done` (read-only plan + web upgrade; IAP = 6.1–6.3) |
-| 4.3 | Sign out                                                                   | `done`                                                              |
-| 4.4 | QR code for a link (optional; match web if cheap)                          | `done`                                                              |
-| 4.5 | Empty / loading / error states consistently                                | `done`                                                              |
-| 4.6 | App icons, splash, Android package id                                      | `done` (icons + splash from web `public/`; package id in 4.7 / EAS) |
-| 4.7 | EAS build profile for Android (preview + production)                       | `pending` _(prereq for Google / IAP / push)_                        |
+| ID  | Task                                                                          | Status                                                              |
+| --- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 4.1 | Profile settings (`PATCH /api/profile`)                                       | `done`                                                              |
+| 4.2 | Show plan / billing status; upgrade via in-app web browser (Dodo on xaply.in) | `done` (`expo-web-browser` → `/settings`)                           |
+| 4.3 | Sign out                                                                      | `done`                                                              |
+| 4.4 | QR code for a link (optional; match web if cheap)                             | `done`                                                              |
+| 4.5 | Empty / loading / error states consistently                                   | `done`                                                              |
+| 4.6 | App icons, splash, Android package id                                         | `done` (icons + splash from web `public/`; package id in 4.7 / EAS) |
+| 4.7 | EAS build profile for Android (preview + production)                          | `done` (scripts + profiles; internal Play track in use)             |
 
 ### Phase 5 — Hardening (post-MVP)
 
 | ID  | Task                                                        | Status    |
 | --- | ----------------------------------------------------------- | --------- |
-| 5.1 | Google sign-in (Expo + Better Auth + EAS/dev build)         | `pending` |
+| 5.1 | Google sign-in (Expo + Better Auth browser OAuth → `xaply://`) | `done` (explicit `xaply://` callbacks; web deployed) |
 | 5.2 | Offline / retry UX                                          | `done`    |
-| 5.3 | Deep links / Android App Links into link detail + analytics | `pending` |
+| 5.3 | Deep links / Android App Links into link detail + analytics | `done` (intentFilters + `+native-intent` + pending restore; set `ANDROID_SHA256_CERT_FINGERPRINTS` on web for verification) |
+| 5.4 | Smart redirects — `androidUrl` / Play Store / iOS URLs at edge by UA | `done` (redirect-worker + API + mobile link detail) |
 
 ### Phase 6 — Monetization & notifications (mobile-only)
 
-| ID  | Task                                                                           | Status    |
-| --- | ------------------------------------------------------------------------------ | --------- |
-| 6.1 | RevenueCat SDK + Play subscription product(s) for Pro                          | `pending` |
-| 6.2 | Backend: RevenueCat webhook → set workspace `plan` (coexist with Dodo on web)  | `pending` |
-| 6.3 | Settings: show plan + Upgrade / Restore purchases UI                           | `partial` (plan + web upgrade/manage; Restore/IAP pending) |
-| 6.4 | In-app toasts/snackbars (create, copy, save, errors)                           | `done` |
-| 6.5 | Push: `expo-notifications` + FCM + register Expo push token                    | `done` (client register + listeners; server store = 6.6) |
-| 6.6 | Push triggers: link milestones, expiry / click-limit, optional digest (opt-in) | `done` (click milestones 10…100k via analytics-worker) |
+| ID  | Task                                                                           | Status                                                                 |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 6.1 | ~~RevenueCat SDK + Play subscription product(s) for Pro~~                      | `cancelled` (blocked on BillDesk / live Play listing; use web billing) |
+| 6.2 | ~~Backend: RevenueCat webhook → set workspace `plan`~~                         | `cancelled` (web Dodo already sets plan)                               |
+| 6.3 | Settings: show plan + Upgrade / Manage via in-app browser (expo-web-browser)   | `done`                                                                 |
+| 6.4 | In-app toasts/snackbars (create, copy, save, errors)                           | `done`                                                                 |
+| 6.5 | Push: `expo-notifications` + FCM + register Expo push token                    | `done` (client register + listeners; server store = 6.6)               |
+| 6.6 | Push triggers: link milestones, expiry / click-limit, optional digest (opt-in) | `done` (click milestones 10…100k via analytics-worker)                 |
 
-**Build order:** `4.7 EAS` → internal Play track → `5.1` Google + `6.1–6.3` IAP + `6.4–6.6` notifications.
+**Billing (current):** Pro is purchased/managed on **xaply.in** inside Chrome Custom Tabs (`features/billing/open-web-billing.ts`). No `react-native-purchases` / RevenueCat in the app.
+
+### Android App Links (5.3) — finish verification
+
+Android-only. Host file is required by Google (not a web product feature):
+
+1. `eas credentials -p android` → copy **SHA256 Fingerprint**
+2. Set web secret/env `ANDROID_SHA256_CERT_FINGERPRINTS`
+3. Deploy web → open `https://xaply.in/.well-known/assetlinks.json` (fingerprints non-empty)
+4. Rebuild Android preview/production and install
+5. Test:  
+   `adb shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://xaply.in/links/<LINK_ID>/analytics"`
+
+Paths: `/links/:id`, `/links/:id/analytics` (also rewrites `/dashboard/links/...` if opened on device).
+
+**Build order:** EAS preview → Play internal → App Links SHA-256 → Google sign-in is done (`5.1`).
 
 ### Phase 7 — Native depth (portfolio / platform)
 
-| ID  | Task                                                      | Status                                                       |
-| --- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| 7.1 | Biometric app unlock (`expo-local-authentication`)        | `pending`                                                    |
-| 7.2 | Home-screen widgets (e.g. click stats / quick create)     | `pending`                                                    |
-| 7.3 | App icon long-press shortcuts (Create link, Analytics, …) | `cancelled` |
-| 7.4 | Material You / dynamic color (Android wallpaper seed)     | `pending`                                                    |
-| 7.5 | Store review prompt (`expo-store-review`)                 | `pending`                                                    |
-| 7.6 | EAS Update (OTA) for JS fixes without full Play review    | `pending` _(later)_                                          |
-| 7.7 | Import URLs from file → bulk create (mobile **and** web)  | `pending` _(long future)_                                    |
+| ID  | Task                                                      | Status                    |
+| --- | --------------------------------------------------------- | ------------------------- |
+| 7.1 | Biometric app unlock (`expo-local-authentication`)        | `done` (Settings toggle + lock overlay; rebuild for plugin) |
+| 7.2 | Home-screen widgets (e.g. click stats / quick create)     | `cancelled`               |
+| 7.3 | App icon long-press shortcuts (Create link, Analytics, …) | `cancelled`               |
+| 7.4 | Material You / dynamic color (Android wallpaper seed)     | `cancelled`               |
+| 7.5 | Store review prompt (`expo-store-review`)                 | `pending`                 |
+| 7.6 | EAS Update (OTA) for JS fixes without full Play review    | `pending` _(later)_       |
+| 7.7 | Import URLs from file → bulk create (mobile **and** web)  | `pending` _(long future)_ |
 
 ---
 
@@ -185,11 +201,13 @@ src/
   features/
     auth/
       screens/                 sign-in, sign-up, verify, forgot, reset
-      components/              AuthScreen chrome
-      utils/                   client, navigation, schemas
+      components/              AuthScreen chrome, biometric lock
+      utils/                   client, navigation, schemas, biometric
     links/screens/             Links tab (+ list/create later)
     analytics/screens/         Account analytics
-    settings/screens/          Profile, plan, sign out
+    settings/screens/          Profile, plan (web billing), sign out
+    billing/                   open-web-billing (expo-web-browser → xaply.in)
+    push/                      register + bootstrap
 
   global/
     api/                       http, client, types, errors, query-keys

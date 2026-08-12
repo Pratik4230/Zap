@@ -6,9 +6,7 @@ import {
   Host,
   Text,
 } from "@expo/ui/jetpack-compose";
-import {
-  fillMaxWidth,
-} from "@expo/ui/jetpack-compose/modifiers";
+import { fillMaxWidth } from "@expo/ui/jetpack-compose/modifiers";
 import { ScreenShell } from "@/global/components/screen-shell";
 import { brand, colors } from "@/global/theme";
 
@@ -25,7 +23,12 @@ type AuthScreenProps = {
  * Keyboard: react-native-keyboard-controller (not RN KeyboardAvoidingView).
  * @see https://docs.expo.dev/versions/v57.0.0/sdk/keyboard-controller/
  */
-export function AuthScreen({ title, subtitle, children, footer }: AuthScreenProps) {
+export function AuthScreen({
+  title,
+  subtitle,
+  children,
+  footer,
+}: AuthScreenProps) {
   return (
     <ScreenShell edges={["top", "bottom"]}>
       <KeyboardAwareScrollView
