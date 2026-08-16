@@ -97,9 +97,9 @@ export function LandingPage() {
             <HeroHeadline />
 
             <p className="relative z-10 mx-auto mb-8 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Turn long URLs into {siteConfig.shortLinkDomain} links your
-              audience actually clicks. Fast redirects, honest analytics, and
-              tools that stay out of your way.
+              Free URL shortener with the fastest Cloudflare redirects. Turn
+              long URLs into {siteConfig.shortLinkDomain} links — analytics for
+              everyone, workspaces and webhooks for business teams.
             </p>
 
             <div className="relative z-10 flex flex-col items-center justify-center gap-3 sm:flex-row">

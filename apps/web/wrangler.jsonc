@@ -52,6 +52,7 @@
     "NEXT_PUBLIC_APP_URL": "https://xaply.in",
     "DODO_PAYMENTS_ENVIRONMENT": "live_mode",
     "DODO_PRO_PRODUCT_ID": "pdt_0Nj5ZNYfYMgino04QF73N",
+    "DODO_BUSINESS_PRODUCT_ID": "pdt_0NlVPKrndogJlVU39O7cG",
     "GOOGLE_CLIENT_ID": "704988536404-6n3pk1ulm5u9k0id39p7mb81r9o5prmf.apps.googleusercontent.com",
     "GITHUB_CLIENT_ID": "Ov23liuuTAUYkePHCDTn",
   },

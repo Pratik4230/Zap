@@ -1,5 +1,13 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { links, clicks, workspaces, users } from "./schema";
+import {
+  links,
+  clicks,
+  workspaces,
+  users,
+  workspaceMembers,
+  workspaceInvitations,
+  workspaceWebhooks,
+} from "./schema";
 
 export type User = InferSelectModel<typeof users>;
 export type Workspace = InferSelectModel<typeof workspaces>;
@@ -10,6 +18,9 @@ export type NewUser = InferInsertModel<typeof users>;
 export type NewWorkspace = InferInsertModel<typeof workspaces>;
 export type NewLink = InferInsertModel<typeof links>;
 export type NewClick = InferInsertModel<typeof clicks>;
+export type WorkspaceMember = InferSelectModel<typeof workspaceMembers>;
+export type WorkspaceInvitation = InferSelectModel<typeof workspaceInvitations>;
+export type WorkspaceWebhook = InferSelectModel<typeof workspaceWebhooks>;
 
 export interface ClickEvent {
   linkId: string;

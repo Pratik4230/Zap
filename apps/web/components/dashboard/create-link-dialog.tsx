@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useForm } from "@tanstack/react-form";
-import { ChevronDown, ChevronUp, Shuffle } from "lucide-react";
+import { useState } from "react"
+import { useForm } from "@tanstack/react-form"
+import { ChevronDown, ChevronUp, Shuffle } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { SHORT_LINK_DOMAIN } from "@xaply/db";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { SHORT_LINK_DOMAIN, generateRandomLinkSlug } from "@xaply/db"
 import {
   validateClickLimitField,
   validateDestinationField,
@@ -21,47 +21,66 @@ import {
   validateLinkPasswordField,
   validateSlugField,
   validateTitleField,
-} from "@/lib/validation";
-import type { DashboardLink } from "@/lib/links-query-cache";
-import { apiFetch } from "@/lib/api-fetch";
-import { toast } from "sonner";
+} from "@/lib/validation"
+import type { DashboardLink } from "@/lib/links-query-cache"
+import { apiFetch } from "@/lib/api-fetch"
+import { toast } from "sonner"
 
-const AMBER = "oklch(0.769 0.188 70.08)";
-
-function generateSlug() {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-}
+const AMBER = "oklch(0.769 0.188 70.08)"
 
 interface CreateLinkDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated?: (link: DashboardLink) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onCreated?: (link: DashboardLink) => void
 }
 
-export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDialogProps) {
-  const [serverError, setServerError] = useState("");
-  const [showAdditional, setShowAdditional] = useState(false);
+export function CreateLinkDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: CreateLinkDialogProps) {
+  const [serverError, setServerError] = useState("")
+  const [showAdditional, setShowAdditional] = useState(false)
 
   const form = useForm({
-    defaultValues: { destination: "", slug: "", title: "", expiresAt: "", clickLimit: "", password: "" },
+    defaultValues: {
+      destination: "",
+      slug: "",
+      title: "",
+      expiresAt: "",
+      clickLimit: "",
+      password: "",
+    },
     onSubmit: async ({ value }) => {
-      setServerError("");
+      setServerError("")
 
-      const destinationError = validateDestinationField(value.destination);
-      const slugError = validateSlugField(value.slug);
-      const titleError = validateTitleField(value.title);
-      const expiresAtError = validateExpiresAtField(value.expiresAt);
-      const clickLimitError = validateClickLimitField(value.clickLimit);
-      const passwordError = validateLinkPasswordField(value.password);
-      if (destinationError || slugError || titleError || expiresAtError || clickLimitError || passwordError) {
+      const destinationError = validateDestinationField(value.destination)
+      const slugError = validateSlugField(value.slug)
+      const titleError = validateTitleField(value.title)
+      const expiresAtError = validateExpiresAtField(value.expiresAt)
+      const clickLimitError = validateClickLimitField(value.clickLimit)
+      const passwordError = validateLinkPasswordField(value.password)
+      if (
+        destinationError ||
+        slugError ||
+        titleError ||
+        expiresAtError ||
+        clickLimitError ||
+        passwordError
+      ) {
         if (expiresAtError || clickLimitError || passwordError) {
-          setShowAdditional(true);
+          setShowAdditional(true)
         }
         setServerError(
-          destinationError ?? slugError ?? titleError ?? expiresAtError ?? clickLimitError ?? passwordError ?? "Invalid input"
-        );
-        return;
+          destinationError ??
+            slugError ??
+            titleError ??
+            expiresAtError ??
+            clickLimitError ??
+            passwordError ??
+            "Invalid input"
+        )
+        return
       }
 
       const res = await apiFetch("/api/links", {
@@ -71,51 +90,58 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
           destinationUrl: value.destination.trim(),
           slug: value.slug || undefined,
           title: value.title || undefined,
-          expiresAt: value.expiresAt ? new Date(value.expiresAt).toISOString() : undefined,
+          expiresAt: value.expiresAt
+            ? new Date(value.expiresAt).toISOString()
+            : undefined,
           clickLimit: value.clickLimit ? Number(value.clickLimit) : undefined,
           password: value.password.trim() || undefined,
         }),
-      });
+      })
       if (!res.ok) {
-        const data = await res.json() as { error?: string };
+        const data = (await res.json()) as { error?: string }
         const message =
           res.status === 409
             ? "That slug is already taken. Try another."
             : res.status === 429
               ? "Too many requests. Please wait and try again."
-              : (data.error ?? "Something went wrong");
+              : (data.error ?? "Something went wrong")
 
         if (res.status === 403) {
           toast.error(message, {
             duration: 6000,
             action: message.includes("Upgrade to Pro")
-              ? { label: "View plans", onClick: () => { window.location.href = "/settings"; } }
+              ? {
+                  label: "View plans",
+                  onClick: () => {
+                    window.location.href = "/settings"
+                  },
+                }
               : undefined,
-          });
+          })
         }
 
-        setServerError(message);
-        return;
+        setServerError(message)
+        return
       }
 
-      const data = await res.json() as { link: DashboardLink };
+      const data = (await res.json()) as { link: DashboardLink }
 
-      onOpenChange(false);
-      form.reset();
-      setShowAdditional(false);
-      onCreated?.(data.link);
+      handleOpenChange(false)
+      onCreated?.(data.link)
     },
-  });
+  })
 
-  useEffect(() => {
-    if (!open) {
-      setShowAdditional(false);
-      setServerError("");
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setShowAdditional(false)
+      setServerError("")
+      form.reset()
     }
-  }, [open]);
+    onOpenChange(nextOpen)
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="max-w-lg border-white/8"
         style={{ background: "oklch(0.12 0 0)" }}
@@ -131,17 +157,24 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
 
         <form
           onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
+            e.preventDefault()
+            form.handleSubmit()
           }}
           className="flex flex-col gap-4 pt-1"
         >
           <form.Field
             name="destination"
-            validators={{ onChange: ({ value }) => validateDestinationField(value) }}
+            validators={{
+              onChange: ({ value }) => validateDestinationField(value),
+            }}
           >
             {(field) => (
-              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+              <Field
+                data-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
+              >
                 <FieldLabel htmlFor={field.name}>
                   Destination URL <span style={{ color: AMBER }}>*</span>
                 </FieldLabel>
@@ -154,7 +187,11 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                   onBlur={field.handleBlur}
                 />
                 {field.state.meta.isTouched && (
-                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                  <FieldError
+                    errors={field.state.meta.errors.map((e) => ({
+                      message: String(e),
+                    }))}
+                  />
                 )}
               </Field>
             )}
@@ -165,14 +202,21 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
             validators={{ onChange: ({ value }) => validateSlugField(value) }}
           >
             {(field) => (
-              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+              <Field
+                data-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
+              >
                 <FieldLabel htmlFor={field.name}>
                   Custom slug{" "}
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (optional)
+                  </span>
                 </FieldLabel>
                 <div className="flex gap-2">
                   <div className="flex flex-1 items-center overflow-hidden rounded-md border border-input bg-transparent text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                    <span className="shrink-0 border-r border-input px-3 py-2.5 text-muted-foreground text-xs">
+                    <span className="shrink-0 border-r border-input px-3 py-2.5 text-xs text-muted-foreground">
                       {SHORT_LINK_DOMAIN}/
                     </span>
                     <input
@@ -181,7 +225,11 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                       placeholder="my-link"
                       className="flex-1 bg-transparent px-3 py-2.5 outline-none placeholder:text-muted-foreground/50"
                       value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                      onChange={(e) =>
+                        field.handleChange(
+                          e.target.value.toLowerCase().replace(/\s+/g, "-")
+                        )
+                      }
                       onBlur={field.handleBlur}
                     />
                   </div>
@@ -190,14 +238,18 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                     variant="outline"
                     size="icon"
                     className="shrink-0"
-                    onClick={() => field.handleChange(generateSlug())}
+                    onClick={() => field.handleChange(generateRandomLinkSlug())}
                     title="Generate random slug"
                   >
                     <Shuffle size={14} />
                   </Button>
                 </div>
                 {field.state.meta.isTouched && (
-                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                  <FieldError
+                    errors={field.state.meta.errors.map((e) => ({
+                      message: String(e),
+                    }))}
+                  />
                 )}
               </Field>
             )}
@@ -208,10 +260,17 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
             validators={{ onChange: ({ value }) => validateTitleField(value) }}
           >
             {(field) => (
-              <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
+              <Field
+                data-invalid={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0
+                }
+              >
                 <FieldLabel htmlFor={field.name}>
                   Title{" "}
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (optional)
+                  </span>
                 </FieldLabel>
                 <Input
                   id={field.name}
@@ -222,7 +281,11 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
                   onBlur={field.handleBlur}
                 />
                 {field.state.meta.isTouched && (
-                  <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
+                  <FieldError
+                    errors={field.state.meta.errors.map((e) => ({
+                      message: String(e),
+                    }))}
+                  />
                 )}
               </Field>
             )}
@@ -234,87 +297,130 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
             className="flex w-full items-center justify-between rounded-lg border border-white/8 bg-white/2 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/4 hover:text-foreground"
           >
             <span>Additional options</span>
-            {showAdditional ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {showAdditional ? (
+              <ChevronUp size={16} />
+            ) : (
+              <ChevronDown size={16} />
+            )}
           </button>
 
           {showAdditional && (
-          <div className="flex flex-col gap-4">
-            <form.Field
-              name="expiresAt"
-              validators={{ onChange: ({ value }) => validateExpiresAtField(value) }}
-            >
-              {(field) => (
-                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>
-                    Expires at{" "}
-                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={field.name}
-                    type="datetime-local"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                  {field.state.meta.isTouched && (
-                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                  )}
-                </Field>
-              )}
-            </form.Field>
+            <div className="flex flex-col gap-4">
+              <form.Field
+                name="expiresAt"
+                validators={{
+                  onChange: ({ value }) => validateExpiresAtField(value),
+                }}
+              >
+                {(field) => (
+                  <Field
+                    data-invalid={
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                    }
+                  >
+                    <FieldLabel htmlFor={field.name}>
+                      Expires at{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="datetime-local"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    {field.state.meta.isTouched && (
+                      <FieldError
+                        errors={field.state.meta.errors.map((e) => ({
+                          message: String(e),
+                        }))}
+                      />
+                    )}
+                  </Field>
+                )}
+              </form.Field>
 
-            <form.Field
-              name="clickLimit"
-              validators={{ onChange: ({ value }) => validateClickLimitField(value) }}
-            >
-              {(field) => (
-                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>
-                    Max clicks{" "}
-                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={field.name}
-                    type="number"
-                    min={1}
-                    placeholder="e.g. 100"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                  {field.state.meta.isTouched && (
-                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                  )}
-                </Field>
-              )}
-            </form.Field>
+              <form.Field
+                name="clickLimit"
+                validators={{
+                  onChange: ({ value }) => validateClickLimitField(value),
+                }}
+              >
+                {(field) => (
+                  <Field
+                    data-invalid={
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                    }
+                  >
+                    <FieldLabel htmlFor={field.name}>
+                      Max clicks{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="number"
+                      min={1}
+                      placeholder="e.g. 100"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    {field.state.meta.isTouched && (
+                      <FieldError
+                        errors={field.state.meta.errors.map((e) => ({
+                          message: String(e),
+                        }))}
+                      />
+                    )}
+                  </Field>
+                )}
+              </form.Field>
 
-            <form.Field
-              name="password"
-              validators={{ onChange: ({ value }) => validateLinkPasswordField(value) }}
-            >
-              {(field) => (
-                <Field data-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}>
-                  <FieldLabel htmlFor={field.name}>
-                    Password{" "}
-                    <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={field.name}
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Require a password to open this link"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                  {field.state.meta.isTouched && (
-                    <FieldError errors={field.state.meta.errors.map((e) => ({ message: String(e) }))} />
-                  )}
-                </Field>
-              )}
-            </form.Field>
-          </div>
+              <form.Field
+                name="password"
+                validators={{
+                  onChange: ({ value }) => validateLinkPasswordField(value),
+                }}
+              >
+                {(field) => (
+                  <Field
+                    data-invalid={
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length > 0
+                    }
+                  >
+                    <FieldLabel htmlFor={field.name}>
+                      Password{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="Require a password to open this link"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                    {field.state.meta.isTouched && (
+                      <FieldError
+                        errors={field.state.meta.errors.map((e) => ({
+                          message: String(e),
+                        }))}
+                      />
+                    )}
+                  </Field>
+                )}
+              </form.Field>
+            </div>
           )}
 
           {serverError && (
@@ -324,7 +430,11 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleOpenChange(false)}
+            >
               Cancel
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
@@ -343,5 +453,5 @@ export function CreateLinkDialog({ open, onOpenChange, onCreated }: CreateLinkDi
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

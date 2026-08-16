@@ -38,7 +38,7 @@ interface AnalyticsData {
   countries: { country: string; count: number }[];
   cities: { label: string; count: number }[];
   devices: { device: string; count: number; pct: number }[];
-  plan: "free" | "pro";
+  plan: "free" | "pro" | "business";
   rangeDays: number;
   rangeLabel: string;
 }

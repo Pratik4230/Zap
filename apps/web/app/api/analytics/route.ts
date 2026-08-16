@@ -1,6 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { getUserPlan } from "@xaply/db";
 import { isSession, requireSession } from "@/lib/api-auth";
 import { withApiHandler } from "@/lib/api-handler";
 import {
@@ -8,6 +7,7 @@ import {
   queryAccountAnalytics,
 } from "@/lib/analytics-query";
 import { API_READ_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { requireWorkspaceAccess } from "@/lib/workspace-context";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
     });
     if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
-    const plan = await getUserPlan(env.DB, session.user.id);
-    const range = getAnalyticsRangeFromRequest(plan, request.nextUrl.searchParams);
+    const access = await requireWorkspaceAccess(request, env, session);
+    const range = getAnalyticsRangeFromRequest(access.plan, request.nextUrl.searchParams);
     const analytics = await queryAccountAnalytics(
       env.DB,
-      session.user.id,
+      access.workspaceId,
       range.rangeDays,
       range.rangeStart,
       range.chartBucket

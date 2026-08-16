@@ -18,6 +18,7 @@ interface __BaseEnv_CloudflareEnv {
 	DODO_PAYMENTS_WEBHOOK_SECRET: string;
 	DODO_PAYMENTS_ENVIRONMENT: string;
 	DODO_PRO_PRODUCT_ID: string;
+	DODO_BUSINESS_PRODUCT_ID?: string;
 	ADMIN_EMAIL: string;
 	ANDROID_SHA256_CERT_FINGERPRINTS?: string;
 	WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
@@ -33,7 +34,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "NEXTJS_ENV" | "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL" | "RESEND_API_KEY" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET" | "DODO_PAYMENTS_ENVIRONMENT" | "DODO_PRO_PRODUCT_ID" | "DODO_PAYMENTS_API_KEY" | "DODO_PAYMENTS_WEBHOOK_SECRET" | "ADMIN_EMAIL" | "ANDROID_SHA256_CERT_FINGERPRINTS">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "NEXTJS_ENV" | "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL" | "RESEND_API_KEY" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET" | "DODO_PAYMENTS_ENVIRONMENT" | "DODO_PRO_PRODUCT_ID" | "DODO_BUSINESS_PRODUCT_ID" | "DODO_PAYMENTS_API_KEY" | "DODO_PAYMENTS_WEBHOOK_SECRET" | "ADMIN_EMAIL" | "ANDROID_SHA256_CERT_FINGERPRINTS">> {}
 }
 
 // Begin runtime types

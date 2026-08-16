@@ -1,45 +1,54 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { User, Lock, Trash2, LogOut, ShieldCheck } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { authClient, signOutAndRedirect } from "@/lib/auth-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { validateProfileNameField } from "@/lib/validation";
-import { apiFetch } from "@/lib/api-fetch";
-import { BillingSettingsCard } from "@/components/billing/billing-settings-card";
+import { useState } from "react"
+import { User, Lock, Trash2, LogOut, ShieldCheck } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { authClient, signOutAndRedirect } from "@/lib/auth-client"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { validateProfileNameField } from "@/lib/validation"
+import { apiFetch } from "@/lib/api-fetch"
+import { BillingSettingsCard } from "@/components/billing/billing-settings-card"
 
-const AMBER = "oklch(0.769 0.188 70.08)";
+const AMBER = "oklch(0.769 0.188 70.08)"
 
 interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  image?: string | null;
-  emailVerified: boolean;
+  id: string
+  name: string
+  email: string
+  image?: string | null
+  emailVerified: boolean
 }
 
 async function fetchSession(): Promise<UserData> {
-  const session = await authClient.getSession();
-  if (!session.data?.user) throw new Error("Not authenticated");
-  return session.data.user as UserData;
+  const session = await authClient.getSession()
+  if (!session.data?.user) throw new Error("Not authenticated")
+  return session.data.user as UserData
 }
 
 export default function SettingsPage() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
-  const { data: user } = useQuery({ queryKey: ["session"], queryFn: fetchSession });
+  const { data: user } = useQuery({
+    queryKey: ["session"],
+    queryFn: fetchSession,
+  })
 
-  const [name, setName] = useState("");
-  const [nameError, setNameError] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [name, setName] = useState("")
+  const [nameError, setNameError] = useState("")
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [deleteConfirm, setDeleteConfirm] = useState("")
 
   const profileMutation = useMutation({
     mutationFn: async (newName: string) => {
@@ -47,70 +56,81 @@ export default function SettingsPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName }),
-      });
+      })
       if (!res.ok) {
-        const d = await res.json() as { error: string };
-        throw new Error(d.error);
+        const d = (await res.json()) as { error: string }
+        throw new Error(d.error)
       }
-      return res.json();
+      return res.json()
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-      toast.success("Profile updated");
-      setName("");
+      queryClient.invalidateQueries({ queryKey: ["session"] })
+      toast.success("Profile updated")
+      setName("")
     },
     onError: (e) => toast.error(e.message),
-  });
+  })
 
   const passwordMutation = useMutation({
     mutationFn: async () => {
-      if (newPassword !== confirmPassword) throw new Error("Passwords do not match");
-      if (newPassword.length < 8) throw new Error("Password must be at least 8 characters");
+      if (newPassword !== confirmPassword)
+        throw new Error("Passwords do not match")
+      if (newPassword.length < 8)
+        throw new Error("Password must be at least 8 characters")
       const res = await authClient.changePassword({
         currentPassword,
         newPassword,
         revokeOtherSessions: true,
-      });
-      if (res.error) throw new Error(res.error.message ?? "Failed to change password");
+      })
+      if (res.error)
+        throw new Error(res.error.message ?? "Failed to change password")
     },
     onSuccess: () => {
-      toast.success("Password changed");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      toast.success("Password changed")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
     },
     onError: (e) => toast.error(e.message),
-  });
+  })
 
   const signOutMutation = useMutation({
     mutationFn: () => signOutAndRedirect(),
     onError: () => toast.error("Failed to sign out"),
-  });
+  })
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      if (deleteConfirm !== user?.email) throw new Error("Email does not match");
-      const res = await authClient.deleteUser();
-      if (res.error) throw new Error(res.error.message ?? "Failed to delete account");
+      if (deleteConfirm !== user?.email) throw new Error("Email does not match")
+      const res = await authClient.deleteUser()
+      if (res.error)
+        throw new Error(res.error.message ?? "Failed to delete account")
     },
     onSuccess: () => {
-      window.location.assign("/sign-up");
+      window.location.assign("/sign-up")
     },
     onError: (e) => toast.error(e.message),
-  });
+  })
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Manage your account and preferences</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Settings
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Account, password, and billing
+        </p>
       </div>
 
       <BillingSettingsCard />
 
-      <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
+      <Card
+        className="border-white/6"
+        style={{ background: "oklch(0.12 0 0)" }}
+      >
         <CardHeader className="px-6 pt-5 pb-4">
-          <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <User size={16} style={{ color: AMBER }} />
             Profile
           </CardTitle>
@@ -118,11 +138,15 @@ export default function SettingsPage() {
             Update your display name
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-6 pb-6 space-y-4">
+        <CardContent className="space-y-4 px-6 pb-6">
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
+            <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+              Email
+            </p>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-foreground">{user?.email ?? "Not set"}</p>
+              <p className="text-sm text-foreground">
+                {user?.email ?? "Not set"}
+              </p>
               {user?.emailVerified && (
                 <span className="flex items-center gap-1 text-xs text-emerald-400">
                   <ShieldCheck size={12} /> Verified
@@ -131,28 +155,30 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <label className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
               Display name
             </label>
             <Input
               placeholder={user?.name ?? "Your name"}
               value={name}
               onChange={(e) => {
-                setName(e.target.value);
-                setNameError(validateProfileNameField(e.target.value) ?? "");
+                setName(e.target.value)
+                setNameError(validateProfileNameField(e.target.value) ?? "")
               }}
             />
-            {nameError && <p className="text-sm text-destructive">{nameError}</p>}
+            {nameError && (
+              <p className="text-sm text-destructive">{nameError}</p>
+            )}
           </div>
           <Button
             disabled={!name.trim() || !!nameError || profileMutation.isPending}
             onClick={() => {
-              const error = validateProfileNameField(name);
+              const error = validateProfileNameField(name)
               if (error) {
-                setNameError(error);
-                return;
+                setNameError(error)
+                return
               }
-              profileMutation.mutate(name.trim());
+              profileMutation.mutate(name.trim())
             }}
             className="font-semibold"
             style={{ background: AMBER, color: "oklch(0 0 0)" }}
@@ -162,9 +188,12 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
+      <Card
+        className="border-white/6"
+        style={{ background: "oklch(0.12 0 0)" }}
+      >
         <CardHeader className="px-6 pt-5 pb-4">
-          <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <Lock size={16} style={{ color: AMBER }} />
             Password
           </CardTitle>
@@ -172,9 +201,9 @@ export default function SettingsPage() {
             Change your account password
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-6 pb-6 space-y-4">
+        <CardContent className="space-y-4 px-6 pb-6">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <label className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
               Current password
             </label>
             <Input
@@ -185,7 +214,7 @@ export default function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <label className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
               New password
             </label>
             <Input
@@ -196,7 +225,7 @@ export default function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <label className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
               Confirm new password
             </label>
             <Input
@@ -207,7 +236,12 @@ export default function SettingsPage() {
             />
           </div>
           <Button
-            disabled={!currentPassword || !newPassword || !confirmPassword || passwordMutation.isPending}
+            disabled={
+              !currentPassword ||
+              !newPassword ||
+              !confirmPassword ||
+              passwordMutation.isPending
+            }
             onClick={() => passwordMutation.mutate()}
             variant="outline"
             className="font-semibold"
@@ -217,9 +251,12 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
+      <Card
+        className="border-white/6"
+        style={{ background: "oklch(0.12 0 0)" }}
+      >
         <CardHeader className="px-6 pt-5 pb-4">
-          <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <LogOut size={16} className="text-muted-foreground" />
             Session
           </CardTitle>
@@ -235,20 +272,26 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-red-500/20" style={{ background: "oklch(0.12 0 0)" }}>
+      <Card
+        className="border-red-500/20"
+        style={{ background: "oklch(0.12 0 0)" }}
+      >
         <CardHeader className="px-6 pt-5 pb-4">
-          <CardTitle className="text-base font-semibold text-destructive flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-destructive">
             <Trash2 size={16} />
             Danger Zone
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            Permanently delete your account and all links. This cannot be undone.
+            Permanently delete your account and all links. This cannot be
+            undone.
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-6 pb-6 space-y-3">
+        <CardContent className="space-y-3 px-6 pb-6">
           <Separator className="bg-white/6" />
           <p className="text-sm text-muted-foreground">
-            Type your email <span className="font-mono text-foreground">{user?.email}</span> to confirm
+            Type your email{" "}
+            <span className="font-mono text-foreground">{user?.email}</span> to
+            confirm
           </p>
           <Input
             placeholder={user?.email ?? "your@email.com"}
@@ -266,5 +309,5 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

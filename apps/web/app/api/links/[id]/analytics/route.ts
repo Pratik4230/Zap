@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, getUserPlan } from "@xaply/db";
+import { createDb } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { and, eq } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
@@ -10,6 +10,7 @@ import {
   queryLinkAnalytics,
 } from "@/lib/analytics-query";
 import { API_READ_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { requireWorkspaceAccess } from "@/lib/workspace-context";
 
 export async function GET(
   request: NextRequest,
@@ -32,14 +33,14 @@ export async function GET(
       return NextResponse.json({ error: "Invalid link id" }, { status: 400 });
     }
 
+    const access = await requireWorkspaceAccess(request, env, session);
     const db = createDb(env.DB);
-    const plan = await getUserPlan(env.DB, session.user.id);
-    const range = getAnalyticsRangeFromRequest(plan, request.nextUrl.searchParams);
+    const range = getAnalyticsRangeFromRequest(access.plan, request.nextUrl.searchParams);
 
     const [link] = await db
       .select()
       .from(links)
-      .where(and(eq(links.id, id), eq(links.userId, session.user.id)))
+      .where(and(eq(links.id, id), eq(links.workspaceId, access.workspaceId)))
       .limit(1);
 
     if (!link) {

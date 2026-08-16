@@ -18,8 +18,8 @@ import {
   type LinksListParams,
 } from "@/lib/filter-links";
 
-function buildLinksWhere(userId: string, q: string, status: LinkStatusFilter): SQL | undefined {
-  const conditions: SQL[] = [eq(links.userId, userId)];
+function buildLinksWhere(workspaceId: string, q: string, status: LinkStatusFilter): SQL | undefined {
+  const conditions: SQL[] = [eq(links.workspaceId, workspaceId)];
 
   if (status !== "all") {
     conditions.push(eq(links.status, status));
@@ -45,8 +45,8 @@ function buildLinksOrder(sort: LinkSortOption) {
   return desc(links.createdAt);
 }
 
-export async function queryLinksPage(db: ReturnType<typeof createDb>, userId: string, params: LinksListParams) {
-  const where = buildLinksWhere(userId, params.q, params.status);
+export async function queryLinksPage(db: ReturnType<typeof createDb>, workspaceId: string, params: LinksListParams) {
+  const where = buildLinksWhere(workspaceId, params.q, params.status);
   const offset = (params.page - 1) * params.limit;
 
   const [countRow] = await db
@@ -73,7 +73,7 @@ export async function queryLinksPage(db: ReturnType<typeof createDb>, userId: st
   };
 }
 
-export async function queryLinksSummary(db: ReturnType<typeof createDb>, userId: string) {
+export async function queryLinksSummary(db: ReturnType<typeof createDb>, workspaceId: string) {
   const [row] = await db
     .select({
       totalLinks: count(),
@@ -81,7 +81,7 @@ export async function queryLinksSummary(db: ReturnType<typeof createDb>, userId:
       activeLinks: sql<number>`coalesce(sum(case when ${links.status} = 'active' then 1 else 0 end), 0)`,
     })
     .from(links)
-    .where(eq(links.userId, userId));
+    .where(eq(links.workspaceId, workspaceId));
 
   const totalLinks = Number(row?.totalLinks ?? 0);
   const activeLinks = Number(row?.activeLinks ?? 0);

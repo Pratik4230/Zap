@@ -14,14 +14,20 @@ import {
   validateSlug,
   validateTitle,
   assertCanAddActiveLink,
+  deliverWorkspaceWebhooks,
+  generateRandomLinkSlug,
+  GENERATED_LINK_SLUG_MAX_ATTEMPTS,
+  isUniqueConstraintError,
 } from "@xaply/db";
 import { links } from "@xaply/db/schema";
-import { nanoid } from "nanoid";
 import { isSession, requireSession } from "@/lib/api-auth";
 import { withApiHandler } from "@/lib/api-handler";
 import { parseLinksListParams } from "@/lib/filter-links";
 import { queryLinksPage } from "@/lib/links-list-query";
 import { API_READ_LIMIT, LINK_CREATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { requireWorkspaceAccess } from "@/lib/workspace-context";
+import { scheduleBackground } from "@/lib/schedule-background";
+import { webhookLinkPayload } from "@/lib/webhook-payload";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
@@ -36,9 +42,10 @@ export async function GET(request: NextRequest) {
     });
     if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
+    const access = await requireWorkspaceAccess(request, env, session);
     const params = parseLinksListParams(request.nextUrl.searchParams);
     const db = createDb(env.DB);
-    const result = await queryLinksPage(db, session.user.id, params);
+    const result = await queryLinksPage(db, access.workspaceId, params);
 
     return NextResponse.json({
       ...result,
@@ -145,10 +152,9 @@ export async function POST(request: NextRequest) {
     passwordHash = await hashLinkPassword(passwordResult.value);
   }
 
-  let finalSlug: string;
-  if (slug === undefined || slug === null || slug === "") {
-    finalSlug = nanoid(7);
-  } else {
+  let finalSlug: string | null = null;
+  const autoSlug = slug === undefined || slug === null || slug === "";
+  if (!autoSlug) {
     const slugResult = validateSlug(slug);
     if (!slugResult.ok) {
       return NextResponse.json({ error: slugResult.error }, { status: 400 });
@@ -156,39 +162,73 @@ export async function POST(request: NextRequest) {
     finalSlug = slugResult.value;
   }
 
+  const access = await requireWorkspaceAccess(request, env, session);
   const db = createDb(env.DB);
 
-  const activeLinkLimit = await assertCanAddActiveLink(env.DB, session.user.id);
+  const activeLinkLimit = await assertCanAddActiveLink(env.DB, access.workspaceId);
   if (!activeLinkLimit.ok) {
     return NextResponse.json({ error: activeLinkLimit.error }, { status: 403 });
   }
 
-  try {
-    const [link] = await db
-      .insert(links)
-      .values({
-        id: nanoid(),
-        userId: session.user.id,
-        slug: finalSlug,
-        domain: SHORT_LINK_DOMAIN,
-        destinationUrl: urlResult.value,
-        title: titleResult.value || null,
-        expiresAt: expiresAtResult.value,
-        clickLimit: clickLimitResult.value,
-        passwordHash,
-        androidUrl: androidUrlResult.value,
-        androidStoreUrl: androidStoreResult.value,
-        iosUrl: iosUrlResult.value,
-        iosStoreUrl: iosStoreResult.value,
-        status: "active",
-      })
-      .returning();
+  const linkValues = {
+    userId: session.user.id,
+    workspaceId: access.workspaceId,
+    domain: SHORT_LINK_DOMAIN,
+    destinationUrl: urlResult.value,
+    title: titleResult.value || null,
+    expiresAt: expiresAtResult.value,
+    clickLimit: clickLimitResult.value,
+    passwordHash,
+    androidUrl: androidUrlResult.value,
+    androidStoreUrl: androidStoreResult.value,
+    iosUrl: iosUrlResult.value,
+    iosStoreUrl: iosStoreResult.value,
+    status: "active" as const,
+  };
 
-    void env.ZAP_CACHE.put(finalSlug, JSON.stringify(link), { expirationTtl: 60 * 60 * 24 * 7 });
+  const maxAttempts = autoSlug ? GENERATED_LINK_SLUG_MAX_ATTEMPTS : 1;
+  let lastError: unknown;
 
-    return NextResponse.json({ link: toPublicLink(link) }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const attemptSlug = autoSlug ? generateRandomLinkSlug(attempt) : finalSlug!;
+    try {
+      const [link] = await db
+        .insert(links)
+        .values({
+          id: crypto.randomUUID(),
+          ...linkValues,
+          slug: attemptSlug,
+        })
+        .returning();
+
+      void env.ZAP_CACHE.put(attemptSlug, JSON.stringify(link), {
+        expirationTtl: 60 * 60 * 24 * 7,
+      });
+      scheduleBackground(
+        deliverWorkspaceWebhooks(
+          env.DB,
+          access.workspaceId,
+          "link.created",
+          webhookLinkPayload(link)
+        )
+      );
+
+      return NextResponse.json({ link: toPublicLink(link) }, { status: 201 });
+    } catch (error) {
+      lastError = error;
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+      if (!autoSlug) {
+        return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
+      }
+    }
   }
+
+  console.error("link slug allocation exhausted", lastError);
+  return NextResponse.json(
+    { error: "Could not allocate a unique short URL. Please try again." },
+    { status: 503 }
+  );
   });
 }

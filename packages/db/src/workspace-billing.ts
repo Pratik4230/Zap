@@ -1,12 +1,13 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { createDb } from "./db";
-import { users, workspaces } from "./schema";
+import { links, users, workspaceMembers, workspaces } from "./schema";
 import {
   type WorkspacePlan,
   userPlanCacheKey,
+  workspacePlanCacheKey,
 } from "./plan-limits";
 
-function workspaceSlugFromName(name: string): string {
+export function workspaceSlugFromName(name: string): string {
   const base =
     name
       .toLowerCase()
@@ -19,7 +20,7 @@ function workspaceSlugFromName(name: string): string {
 export async function ensureUserWorkspace(
   db: D1Database,
   userId: string,
-  name: string
+  name: string,
 ): Promise<string> {
   const drizzle = createDb(db);
   const [existing] = await drizzle
@@ -28,25 +29,60 @@ export async function ensureUserWorkspace(
     .where(eq(workspaces.ownerId, userId))
     .limit(1);
 
-  if (existing) return existing.id;
+  if (existing) {
+    await ensureOwnerMembership(db, existing.id, userId);
+    await backfillLinkWorkspaceIds(db, existing.id, userId);
+    return existing.id;
+  }
 
   const id = crypto.randomUUID();
   await drizzle.insert(workspaces).values({
     id,
-    name: name.trim() || "My workspace",
+    name: (name ?? "").trim() || "My workspace",
     slug: workspaceSlugFromName(name),
     ownerId: userId,
     plan: "free",
   });
+  await ensureOwnerMembership(db, id, userId);
+  await backfillLinkWorkspaceIds(db, id, userId);
 
   return id;
+}
+
+async function backfillLinkWorkspaceIds(
+  db: D1Database,
+  workspaceId: string,
+  userId: string,
+): Promise<void> {
+  const drizzle = createDb(db);
+  await drizzle
+    .update(links)
+    .set({ workspaceId })
+    .where(and(eq(links.userId, userId), isNull(links.workspaceId)));
+}
+
+export async function ensureOwnerMembership(
+  db: D1Database,
+  workspaceId: string,
+  ownerId: string,
+): Promise<void> {
+  const drizzle = createDb(db);
+  await drizzle
+    .insert(workspaceMembers)
+    .values({
+      id: crypto.randomUUID(),
+      workspaceId,
+      userId: ownerId,
+      role: "owner",
+    })
+    .onConflictDoNothing();
 }
 
 export async function setWorkspacePlanByUserId(
   db: D1Database,
   kv: KVNamespace,
   userId: string,
-  plan: WorkspacePlan
+  plan: WorkspacePlan,
 ): Promise<void> {
   const drizzle = createDb(db);
   const [user] = await drizzle
@@ -57,19 +93,20 @@ export async function setWorkspacePlanByUserId(
 
   if (!user) return;
 
-  await ensureUserWorkspace(db, userId, user.name);
+  const workspaceId = await ensureUserWorkspace(db, userId, user.name);
   await drizzle
     .update(workspaces)
     .set({ plan, updatedAt: new Date() })
     .where(eq(workspaces.ownerId, userId));
 
   await kv.delete(userPlanCacheKey(userId));
+  await kv.delete(workspacePlanCacheKey(workspaceId));
 }
 
 export async function resolveUserIdForDodoCustomer(
   db: D1Database,
   metadataUserId: string | undefined,
-  dodoCustomerId: string | undefined
+  dodoCustomerId: string | undefined,
 ): Promise<string | null> {
   if (metadataUserId) return metadataUserId;
 
@@ -85,9 +122,10 @@ export async function resolveUserIdForDodoCustomer(
   return user?.id ?? null;
 }
 
-export function readDodoCustomerMetadata(
-  payload: unknown
-): { userId?: string; dodoCustomerId?: string } {
+export function readDodoCustomerMetadata(payload: unknown): {
+  userId?: string;
+  dodoCustomerId?: string;
+} {
   if (!payload || typeof payload !== "object") return {};
 
   const data = (payload as { data?: unknown }).data;

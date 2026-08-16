@@ -186,21 +186,24 @@ export const PRICING_PLANS = [
   {
     id: "business",
     name: "Business",
-    badge: "Coming soon",
+    badge: "For teams",
     price: 39,
     period: "month",
-    description: "Team seats, webhooks, and deeper analytics. Shipping soon.",
+    description: "Team seats, webhooks, and 3-year analytics.",
     features: [
+      "Everything in Pro",
       "Unlimited links",
+      "1,000,000 link visits per month",
       "View click history up to 3 years back",
-      "Team seats & workspaces",
+      "50 team seats",
+      "Create extra workspaces (up to 30)",
       "Webhooks",
       "Priority support",
     ],
-    cta: "Coming soon",
-    href: "/sign-up",
+    cta: "Get Business",
+    href: "/sign-up?plan=business",
     highlighted: false,
-    comingSoon: true,
+    comingSoon: false,
   },
 ] as const
 
@@ -211,12 +214,20 @@ export const FREE_TIER = PRICING_PLANS[0].features
 
 export const FAQ = [
   {
+    q: "What is Xaply?",
+    a: "Xaply is a free URL shortener with some of the fastest redirects on the web — short links resolve on Cloudflare's edge in under 10ms. You get analytics, QR codes, and password protection on go.xaply.in. Teams use Xaply as a URL shortener for business: seats, workspaces, and webhooks on the Business plan.",
+  },
+  {
     q: "Is Xaply free?",
-    a: "Yes. The free plan includes up to 50 active links, 5,000 tracked clicks per month, 7-day click history, custom slugs, QR codes, password protection, and expiry controls. No credit card required.",
+    a: "Yes. The free URL shortener plan includes up to 50 active links, 5,000 tracked clicks per month, 7-day click history, custom slugs, QR codes, password protection, and expiry controls. No credit card required.",
+  },
+  {
+    q: "Is Xaply a URL shortener for business?",
+    a: "Yes. Business is built for companies: unlimited links, 1,000,000 visits per month, 3-year analytics, 50 team seats, up to 30 owned workspaces, webhooks, and priority support. Start free, then upgrade from Settings.",
   },
   {
     q: "What counts as a tracked click?",
-    a: "Each time someone opens one of your short links, that counts as 1 visit toward your monthly limit (all links combined). On Free, links stop redirecting after 5,000 visits in a month. We email you when you hit the limit. Upgrade to Pro for a higher allowance, or wait until next month when the counter resets.",
+    a: "Each time someone opens one of your short links, that counts as 1 visit toward your monthly limit (all links combined). On Free, links stop redirecting after 5,000 visits in a month. We email you when you hit the limit. Upgrade to Pro (50,000) or Business (1,000,000), or wait until next month when the counter resets.",
   },
   {
     q: "Do you track referrers?",
@@ -224,11 +235,11 @@ export const FAQ = [
   },
   {
     q: "What does click history mean?",
-    a: "It is how far back you can view clicks in your dashboard: charts, countries, devices, and referrers. Free shows the last 7 days. Pro will show up to 1 year. We store every click; the plan just controls how much history you can browse.",
+    a: "It is how far back you can view clicks in your dashboard: charts, countries, devices, and referrers. Free shows the last 7 days. Pro shows up to 1 year. Business shows up to 3 years. We store every click; the plan just controls how much history you can browse.",
   },
   {
     q: "How does billing work?",
-    a: "Free accounts never need a card. Pro is billed securely through Dodo Payments. Business is coming soon. You can upgrade, downgrade, or cancel anytime from your dashboard. Fees are non-refundable — see our Terms.",
+    a: "Free accounts never need a card. Pro and Business are billed securely through Dodo Payments. You can upgrade, downgrade, or cancel anytime from your dashboard. Fees are non-refundable — see our Terms.",
   },
   {
     q: "What does runs on Cloudflare Edge mean?",
@@ -240,6 +251,6 @@ export const FAQ = [
   },
   {
     q: "Who is Xaply for?",
-    a: "Creators, marketers, founders, and developers who want fast short links with honest analytics and no bloat.",
+    a: "Anyone who needs a best free URL shortener or a URL shortener for business: creators, marketers, founders, developers, and teams who want fast short links with honest analytics and no bloat.",
   },
 ] as const

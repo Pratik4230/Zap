@@ -1,17 +1,18 @@
-import type { Metadata } from "next";
-import { siteConfig } from "@/lib/site";
+import type { Metadata } from "next"
+import { siteConfig } from "@/lib/site"
 
 /** Paths blocked in robots.txt — keep in sync with app/robots.ts */
 export const PRIVATE_PATHS = [
   "/dashboard/",
   "/analytics/",
+  "/workspaces/",
   "/settings/",
-  "/admin/",
+  "/invite/",
   "/api/",
   "/forgot-password",
   "/reset-password",
   "/verify-email",
-] as const;
+] as const
 
 export const noIndexRobots: Metadata["robots"] = {
   index: false,
@@ -20,7 +21,7 @@ export const noIndexRobots: Metadata["robots"] = {
     index: false,
     follow: false,
   },
-};
+}
 
 export const indexRobots: Metadata["robots"] = {
   index: true,
@@ -31,17 +32,17 @@ export const indexRobots: Metadata["robots"] = {
     "max-image-preview": "large",
     "max-snippet": -1,
   },
-};
+}
 
 export function createPageMetadata(options: {
-  title: string;
-  description: string;
-  path: string;
-  index?: boolean;
+  title: string
+  description: string
+  path: string
+  index?: boolean
 }): Metadata {
-  const url = `${siteConfig.url}${options.path}`;
-  const index = options.index ?? false;
-  const fullTitle = `${options.title} | ${siteConfig.name}`;
+  const url = `${siteConfig.url}${options.path}`
+  const index = options.index ?? false
+  const fullTitle = `${options.title} | ${siteConfig.name}`
 
   return {
     title: options.title,
@@ -58,8 +59,8 @@ export function createPageMetadata(options: {
       description: options.description,
     },
     robots: index ? indexRobots : noIndexRobots,
-  };
+  }
 }
 
 /** Stable sitemap timestamp — update when marketing pages change meaningfully */
-export const SITEMAP_LAST_MODIFIED = new Date("2026-07-31");
+export const SITEMAP_LAST_MODIFIED = new Date("2026-08-16")

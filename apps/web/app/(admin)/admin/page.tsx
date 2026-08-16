@@ -29,7 +29,7 @@ interface AdminUser {
   email: string;
   emailVerified: boolean;
   createdAt: string;
-  plan: "free" | "pro" | null;
+  plan: "free" | "pro" | "business" | null;
   totalLinks: number;
   totalClicks: number;
 }
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
                             variant="outline"
                             className="capitalize"
                             style={
-                              user.plan === "pro"
+                              user.plan === "pro" || user.plan === "business"
                                 ? { borderColor: `${AMBER}55`, color: AMBER }
                                 : undefined
                             }

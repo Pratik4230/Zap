@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
-import { UpgradeProButton } from "@/components/billing/upgrade-pro-button";
+import { UpgradePlanButton } from "@/components/billing/upgrade-pro-button";
 import { AMBER, AMBER_BORDER, PRICING_PLANS } from "@/lib/landing";
 import { useInView } from "@/hooks/use-in-view";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
@@ -94,10 +94,12 @@ export function PricingCard() {
               >
                 {plan.cta}
               </div>
-            ) : plan.id === "pro" ? (
-              <UpgradeProButton
+            ) : plan.id === "pro" || plan.id === "business" ? (
+              <UpgradePlanButton
                 className="mt-8 h-11 w-full rounded-xl text-sm font-semibold"
                 label={plan.cta}
+                plan={plan.id}
+                variant={plan.highlighted ? "primary" : "secondary"}
               />
             ) : (
               <Link

@@ -10,6 +10,7 @@ import {
   sendExpoPushHttp,
   logError,
   logEvent,
+  deliverWorkspaceWebhooks,
 } from "@xaply/db";
 import type { ClickEvent } from "@xaply/db";
 import { eq, sql } from "drizzle-orm";
@@ -146,6 +147,14 @@ export default {
 
           // Fire-and-forget style but awaited so errors are logged before ack.
           await notifyClickMilestones(db, link, previousCount, newCount);
+          if (inserted.length > 0) {
+            await deliverWorkspaceWebhooks(env.DB, link.workspaceId, "link.clicked", {
+              id: link.id,
+              slug: link.slug,
+              domain: link.domain,
+              clickCount: newCount,
+            });
+          }
         }
 
         message.ack();

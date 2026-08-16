@@ -41,7 +41,7 @@ export async function sendMonthlyClickLimitEmail({
                   <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#fafafa;">Monthly click limit reached</h1>
                   <p style="margin:0 0 24px;font-size:14px;color:#a1a1aa;line-height:1.6;">
                     Your free plan has reached <strong style="color:#fafafa;">${formattedLimit} link visits</strong> this month.
-                    All of your short links are paused until next month or you upgrade to Pro.
+                    All of your short links are paused until next month or you upgrade.
                   </p>
                   <a href="${upgradeUrl}" style="display:inline-block;background:#fbbf24;color:#000;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:10px;">
                     Upgrade to Pro

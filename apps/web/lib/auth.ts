@@ -26,6 +26,7 @@ export type AuthEnv = Pick<
   | "DODO_PAYMENTS_WEBHOOK_SECRET"
   | "DODO_PAYMENTS_ENVIRONMENT"
   | "DODO_PRO_PRODUCT_ID"
+  | "DODO_BUSINESS_PRODUCT_ID"
 > & { DB: D1Database };
 
 export function createAuth(db: D1Database, env: Omit<AuthEnv, "DB">) {
@@ -138,6 +139,7 @@ let cachedAuth: { auth: Auth; key: string } | undefined;
 export function getAuth(env: AuthEnv) {
   const key = [
     env.DODO_PRO_PRODUCT_ID,
+    env.DODO_BUSINESS_PRODUCT_ID,
     env.DODO_PAYMENTS_ENVIRONMENT,
     isDodoBillingConfigured(env) ? "dodo" : "no-dodo",
   ].join(":");

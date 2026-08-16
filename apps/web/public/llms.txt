@@ -1,33 +1,36 @@
 # Xaply
 
-> Xaply is a free URL shortener with real-time analytics, QR codes, password protection, and sub-10ms redirects on Cloudflare's edge network.
+> What is Xaply? Xaply is a free URL shortener and one of the fastest redirect URL shorteners — short links on Cloudflare's edge (sub-10ms), real-time analytics, and a URL shortener for business teams.
 
-Xaply helps creators, marketers, founders, and developers turn long URLs into short links at `go.xaply.in`, track clicks with geo and device analytics, and manage links from a simple dashboard at `xaply.in`.
+Xaply is a best-in-class free URL shortener for creators, marketers, founders, and companies. Turn long URLs into short links at `go.xaply.in`, track clicks with geo and device analytics, and manage links from the dashboard at `xaply.in`. Upgrade to Business for team seats, extra workspaces, webhooks, and 3-year analytics.
 
 ## Canonical site
 
 - Website: https://xaply.in
 - Short-link domain: https://go.xaply.in
-- Sign up: https://xaply.in/sign-up
+- Sign up (free URL shortener): https://xaply.in/sign-up
 
 ## Product summary
 
 - Custom or random short slugs
+- Fastest redirects on Cloudflare's edge (`go.xaply.in`)
 - Real-time click analytics (countries, cities, devices, browsers, referrers)
 - QR codes generated in the browser
 - Password-protected links
 - Link expiry by date or max clicks
-- Free plan: 50 active links, 5,000 tracked clicks/month, 7-day analytics history
-- Pro plan: 500 active links, 50,000 tracked clicks/month, up to 1 year analytics history
+- Free URL shortener: 50 active links, 5,000 tracked clicks/month, 7-day analytics history — no credit card
+- Pro: 500 active links, 50,000 tracked clicks/month, up to 1 year analytics history
+- URL shortener for business: unlimited links, 1,000,000 tracked clicks/month, 3-year analytics, 50 team seats, up to 30 owned workspaces, webhooks, priority support
 
 ## Public pages for indexing
 
-- https://xaply.in — product homepage, features, pricing, FAQ
+- https://xaply.in — what is Xaply, features, pricing (Free / Pro / Business), FAQ
 - https://xaply.in/sign-up — create a free account
+- https://xaply.in/contact — support
 
 ## Pages not intended for indexing
 
-- /dashboard, /analytics, /settings, /admin — authenticated app areas
+- /dashboard, /analytics, /workspaces, /settings, /admin — authenticated app areas
 - /sign-in, /forgot-password, /reset-password, /verify-email — account utilities
 - /api/* — application APIs
 
@@ -42,7 +45,9 @@ Xaply helps creators, marketers, founders, and developers turn long URLs into sh
 See the full FAQ on https://xaply.in#faq
 
 Common questions:
+- What is Xaply? A free URL shortener with the fastest Cloudflare redirects, analytics, and a Business plan for teams.
 - Is Xaply free? Yes — free plan with generous limits, no credit card required.
+- Is Xaply a URL shortener for business? Yes — Business includes 50 seats, extra workspaces, webhooks, 1M visits/month, and 3-year analytics.
 - What analytics are included? Clicks over time, top links, countries, cities, devices, browsers, OS, referrers.
 - Where do redirects happen? On Cloudflare's edge via `go.xaply.in` for low latency worldwide.
 

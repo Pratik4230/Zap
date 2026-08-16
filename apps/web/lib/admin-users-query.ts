@@ -19,7 +19,7 @@ export interface AdminUserRow {
   email: string;
   emailVerified: boolean;
   createdAt: Date;
-  plan: "free" | "pro" | null;
+  plan: "free" | "pro" | "business" | null;
   totalLinks: number;
   totalClicks: number;
 }

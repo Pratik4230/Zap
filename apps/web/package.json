@@ -36,7 +36,6 @@
     "expo-server-sdk": "^7.0.0",
     "lucide-react": "^1.17.0",
     "motion": "^12.42.2",
-    "nanoid": "^5.1.15",
     "next": "16.2.6",
     "qrcode.react": "^4.2.0",
     "radix-ui": "^1.5.0",

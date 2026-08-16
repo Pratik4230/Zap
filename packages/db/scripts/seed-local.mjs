@@ -122,7 +122,18 @@ function resolveUserId() {
   return row.id;
 }
 
-function buildSeedSql(userId) {
+function resolveUserWorkspace(userId) {
+  const result = runWranglerJson(
+    `SELECT id FROM workspaces WHERE owner_id = '${sqlEscape(userId)}' LIMIT 1;`
+  );
+  const row = result[0]?.results?.[0];
+  if (!row?.id) {
+    throw new Error("No workspace found for seed user. Sign up locally first.");
+  }
+  return row.id;
+}
+
+function buildSeedSql(userId, workspaceId) {
   const now = Math.floor(Date.now() / 1000);
   const statements = [];
 
@@ -196,9 +207,10 @@ function buildSeedSql(userId) {
 
   for (const link of links) {
     statements.push(
-      `INSERT INTO links (id, user_id, slug, domain, destination_url, title, password_hash, expires_at, click_limit, click_count, status, created_at, updated_at) VALUES (` +
+      `INSERT INTO links (id, user_id, workspace_id, slug, domain, destination_url, title, password_hash, expires_at, click_limit, click_count, status, created_at, updated_at) VALUES (` +
         `'${link.id}', ` +
         `'${userId}', ` +
+        `'${workspaceId}', ` +
         `'${sqlEscape(link.slug)}', ` +
         `'${DOMAIN}', ` +
         `'${sqlEscape(link.destinationUrl)}', ` +
@@ -236,7 +248,8 @@ function buildSeedSql(userId) {
 
 function main() {
   const userId = resolveUserId();
-  const { sql, linkCount, clickCount } = buildSeedSql(userId);
+  const workspaceId = resolveUserWorkspace(userId);
+  const { sql, linkCount, clickCount } = buildSeedSql(userId, workspaceId);
   const filePath = join(WEB_DIR, ".seed-local.sql");
 
   writeFileSync(filePath, sql, "utf8");

@@ -1,26 +1,29 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BarChart3, LinkIcon, Settings } from "lucide-react";
-import { AppIcon } from "@/components/app-icon";
-import { cn } from "@/lib/utils";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { BarChart3, Building2, LinkIcon, Settings } from "lucide-react"
+import { AppIcon } from "@/components/app-icon"
+import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher"
+import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LinkIcon, label: "Links" },
   { href: "/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/workspaces", icon: Building2, label: "Workspaces" },
   { href: "/settings", icon: Settings, label: "Settings" },
-];
+]
 
-const AMBER = "oklch(0.769 0.188 70.08)";
+const AMBER = "oklch(0.769 0.188 70.08)"
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-white/6"
-      style={{ background: "oklch(0.1 0 0 / 80%)" }}>
-
+    <aside
+      className="flex h-full w-60 shrink-0 flex-col border-r border-white/6"
+      style={{ background: "oklch(0.1 0 0 / 80%)" }}
+    >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2.5 border-b border-white/6 px-5">
         <div
@@ -29,13 +32,17 @@ export function Sidebar() {
         >
           <AppIcon size={20} />
         </div>
-        <span className="text-base font-bold tracking-tight text-foreground">Xaply</span>
+        <span className="text-base font-bold tracking-tight text-foreground">
+          Xaply
+        </span>
       </div>
+
+      <WorkspaceSwitcher />
 
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
+          const active = pathname === href || pathname.startsWith(`${href}/`)
           return (
             <Link
               key={href}
@@ -44,12 +51,16 @@ export function Sidebar() {
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 active
                   ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/4"
+                  : "text-muted-foreground hover:bg-white/4 hover:text-foreground"
               )}
-              style={active ? {
-                background: `${AMBER}15`,
-                color: AMBER,
-              } : {}}
+              style={
+                active
+                  ? {
+                      background: `${AMBER}15`,
+                      color: AMBER,
+                    }
+                  : {}
+              }
             >
               <Icon
                 size={16}
@@ -64,16 +75,22 @@ export function Sidebar() {
                 />
               )}
             </Link>
-          );
+          )
         })}
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-white/6 p-3">
+      <div className="space-y-2 border-t border-white/6 p-3">
+        <Link
+          href="/contact"
+          className="block px-3 text-xs text-muted-foreground hover:text-foreground"
+        >
+          Help
+        </Link>
         <p className="px-3 text-xs text-muted-foreground/50">
           Xaply © {new Date().getFullYear()}
         </p>
       </div>
     </aside>
-  );
+  )
 }

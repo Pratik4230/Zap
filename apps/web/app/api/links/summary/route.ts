@@ -5,6 +5,7 @@ import { isSession, requireSession } from "@/lib/api-auth";
 import { withApiHandler } from "@/lib/api-handler";
 import { queryLinksSummary } from "@/lib/links-list-query";
 import { API_READ_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { requireWorkspaceAccess } from "@/lib/workspace-context";
 
 export async function GET(request: NextRequest) {
   const { env } = getCloudflareContext();
@@ -19,8 +20,9 @@ export async function GET(request: NextRequest) {
     });
     if (!rl.success) return rateLimitResponse(rl.retryAfter ?? 60);
 
+    const access = await requireWorkspaceAccess(request, env, session);
     const db = createDb(env.DB);
-    const summary = await queryLinksSummary(db, session.user.id);
+    const summary = await queryLinksSummary(db, access.workspaceId);
 
     return NextResponse.json(summary);
   });

@@ -11,14 +11,23 @@ const RANGE_OPTIONS = [
   { days: 30, label: "30D" },
   { days: 90, label: "90D" },
   { days: 365, label: "1Y" },
+  { days: 1095, label: "3Y" },
 ] as const;
+
+type Plan = "free" | "pro" | "business";
 
 type AnalyticsRangePickerProps = {
   value: number;
-  plan: "free" | "pro";
+  plan: Plan;
   onChange: (days: number) => void;
   className?: string;
 };
+
+function maxHistoryDays(plan: Plan): number {
+  if (plan === "business") return 1095;
+  if (plan === "pro") return 365;
+  return 7;
+}
 
 export function AnalyticsRangePicker({
   value,
@@ -26,13 +35,13 @@ export function AnalyticsRangePicker({
   onChange,
   className,
 }: AnalyticsRangePickerProps) {
-  const isPro = plan === "pro";
+  const maxDays = maxHistoryDays(plan);
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <div className="inline-flex rounded-lg border border-white/10 bg-white/3 p-1">
         {RANGE_OPTIONS.map((option) => {
-          const locked = !isPro && option.days !== 7;
+          const locked = option.days > maxDays;
           const selected = value === option.days;
 
           return (
@@ -52,7 +61,9 @@ export function AnalyticsRangePicker({
               style={selected ? { background: AMBER } : undefined}
               title={
                 locked
-                  ? "Upgrade to Pro for longer analytics history"
+                  ? plan === "pro"
+                    ? "Upgrade to Business for 3-year analytics"
+                    : "Upgrade for longer analytics history"
                   : `Show ${option.label} of data`
               }
             >
@@ -61,19 +72,11 @@ export function AnalyticsRangePicker({
           );
         })}
       </div>
-
-      {!isPro ? (
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="h-8 border-white/10 bg-white/5 text-xs hover:bg-white/10"
-        >
-          <Link href="/settings">Unlock 1 year on Pro</Link>
+      {plan === "free" ? (
+        <Button asChild variant="outline" size="sm" className="h-8 text-xs">
+          <Link href="/settings">Upgrade</Link>
         </Button>
-      ) : (
-        <span className="text-xs text-muted-foreground">Pro: up to 1 year of history</span>
-      )}
+      ) : null}
     </div>
   );
 }

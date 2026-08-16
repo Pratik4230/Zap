@@ -60,7 +60,7 @@ interface LinkAnalyticsData {
   browsers: { label: string; count: number }[];
   os: { label: string; count: number }[];
   referrers: { label: string; count: number }[];
-  plan: "free" | "pro";
+  plan: "free" | "pro" | "business";
   rangeDays: number;
   rangeLabel: string;
 }

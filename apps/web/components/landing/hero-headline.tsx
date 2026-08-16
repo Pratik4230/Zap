@@ -6,7 +6,8 @@ export function HeroHeadline() {
   return (
     <h1 className="relative z-10 mb-5 text-5xl font-bold tracking-tight md:text-6xl">
       <span className="sr-only">
-        Short links that are worldwide, instant, trackable, and secure
+        What is Xaply? Free URL shortener with the fastest redirects and a URL
+        shortener for business
       </span>
       <span
         aria-hidden="true"

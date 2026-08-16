@@ -1,7 +1,7 @@
 {
   "name": "Xaply",
   "short_name": "Xaply",
-  "description": "Fast URL shortener with real-time analytics and edge redirects",
+  "description": "What is Xaply? Free URL shortener with the fastest redirects and a URL shortener for business teams.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050505",

@@ -1,9 +1,10 @@
 import {
-  FREE_MAX_TRACKED_CLICKS_PER_MONTH,
+  clickLimitAccountId,
   getMonthlyTrackedClicks,
+  getPlanForLink,
   getTrackedClickLimit,
   getUserEmail,
-  getUserPlanCached,
+  getWorkspaceOwnerEmail,
   incrementMonthlyTrackedClicks,
   monthlyClickLimitNotifiedKey,
   sendMonthlyClickLimitEmail,
@@ -21,11 +22,10 @@ export async function enforceMonthlyClickLimit(
   env: PlanLimitEnv,
   link: Link
 ): Promise<Response | null> {
-  const plan = await getUserPlanCached(env.ZAP_CACHE, env.DB, link.userId);
+  const plan = await getPlanForLink(env.ZAP_CACHE, env.DB, link);
   const limit = getTrackedClickLimit(plan);
-  if (limit == null) return null;
-
-  const current = await getMonthlyTrackedClicks(env.ZAP_CACHE, link.userId);
+  const accountId = clickLimitAccountId(link);
+  const current = await getMonthlyTrackedClicks(env.ZAP_CACHE, accountId);
   if (current >= limit) {
     return renderMonthlyClickLimitPage();
   }
@@ -37,12 +37,13 @@ export async function recordTrackedClick(
   env: PlanLimitEnv,
   link: Link
 ): Promise<number> {
-  const newCount = await incrementMonthlyTrackedClicks(env.ZAP_CACHE, link.userId);
-  const plan = await getUserPlanCached(env.ZAP_CACHE, env.DB, link.userId);
-  const limit = getTrackedClickLimit(plan) ?? FREE_MAX_TRACKED_CLICKS_PER_MONTH;
+  const accountId = clickLimitAccountId(link);
+  const newCount = await incrementMonthlyTrackedClicks(env.ZAP_CACHE, accountId);
+  const plan = await getPlanForLink(env.ZAP_CACHE, env.DB, link);
+  const limit = getTrackedClickLimit(plan);
 
   if (newCount === limit) {
-    await notifyMonthlyClickLimit(env, link.userId, limit);
+    await notifyMonthlyClickLimit(env, link, limit);
   }
 
   return newCount;
@@ -50,10 +51,11 @@ export async function recordTrackedClick(
 
 async function notifyMonthlyClickLimit(
   env: PlanLimitEnv,
-  userId: string,
+  link: Link,
   limit: number
 ): Promise<void> {
-  const notifyKey = monthlyClickLimitNotifiedKey(userId);
+  const accountId = clickLimitAccountId(link);
+  const notifyKey = monthlyClickLimitNotifiedKey(accountId);
   if (await env.ZAP_CACHE.get(notifyKey)) return;
 
   const apiKey = env.RESEND_API_KEY;
@@ -62,7 +64,9 @@ async function notifyMonthlyClickLimit(
     return;
   }
 
-  const email = await getUserEmail(env.DB, userId);
+  const email = link.workspaceId
+    ? await getWorkspaceOwnerEmail(env.DB, link.workspaceId)
+    : await getUserEmail(env.DB, link.userId);
   if (!email) return;
 
   try {

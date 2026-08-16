@@ -12,12 +12,16 @@ import {
   validateOptionalDestinationUrl,
   validateTitle,
   assertCanAddActiveLink,
+  deliverWorkspaceWebhooks,
 } from "@xaply/db";
 import { links } from "@xaply/db/schema";
 import { eq, and } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
 import { withApiHandler } from "@/lib/api-handler";
 import { LINK_MUTATE_LIMIT, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { requireWorkspaceAccess } from "@/lib/workspace-context";
+import { scheduleBackground } from "@/lib/schedule-background";
+import { webhookLinkPayload } from "@/lib/webhook-payload";
 
 export async function PATCH(
   request: NextRequest,
@@ -169,18 +173,19 @@ export async function PATCH(
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
+  const access = await requireWorkspaceAccess(request, env, session);
   const db = createDb(env.DB);
 
   const [existing] = await db
     .select()
     .from(links)
-    .where(and(eq(links.id, id), eq(links.userId, session.user.id)))
+    .where(and(eq(links.id, id), eq(links.workspaceId, access.workspaceId)))
     .limit(1);
 
   if (!existing) return NextResponse.json({ error: "Link not found" }, { status: 404 });
 
   if (updates.status === "active" && existing.status !== "active") {
-    const activeLinkLimit = await assertCanAddActiveLink(env.DB, session.user.id);
+    const activeLinkLimit = await assertCanAddActiveLink(env.DB, access.workspaceId);
     if (!activeLinkLimit.ok) {
       return NextResponse.json({ error: activeLinkLimit.error }, { status: 403 });
     }
@@ -199,12 +204,15 @@ export async function PATCH(
   const [updated] = await db
     .update(links)
     .set(updates)
-    .where(and(eq(links.id, id), eq(links.userId, session.user.id)))
+    .where(and(eq(links.id, id), eq(links.workspaceId, access.workspaceId)))
     .returning();
 
   if (!updated) return NextResponse.json({ error: "Link not found" }, { status: 404 });
 
   void env.ZAP_CACHE.delete(updated.slug);
+  scheduleBackground(
+    deliverWorkspaceWebhooks(env.DB, access.workspaceId, "link.updated", webhookLinkPayload(updated))
+  );
 
   return NextResponse.json({ link: toPublicLink(updated) });
   });
@@ -231,15 +239,19 @@ export async function DELETE(
     return NextResponse.json({ error: "Invalid link id" }, { status: 400 });
   }
 
+  const access = await requireWorkspaceAccess(request, env, session);
   const db = createDb(env.DB);
   const [deleted] = await db
     .delete(links)
-    .where(and(eq(links.id, id), eq(links.userId, session.user.id)))
+    .where(and(eq(links.id, id), eq(links.workspaceId, access.workspaceId)))
     .returning();
 
   if (!deleted) return NextResponse.json({ error: "Link not found" }, { status: 404 });
 
   void env.ZAP_CACHE.delete(deleted.slug);
+  scheduleBackground(
+    deliverWorkspaceWebhooks(env.DB, access.workspaceId, "link.deleted", webhookLinkPayload(deleted))
+  );
 
   return NextResponse.json({ success: true });
   });

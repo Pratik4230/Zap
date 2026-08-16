@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, lt, isNotNull } from "drizzle-orm";
 import { createDb } from "./db";
 import { users, workspaces, streakDays, streakRewards, pushTokens } from "./schema";
-import { userPlanCacheKey } from "./plan-limits";
+import { userPlanCacheKey, workspacePlanCacheKey } from "./plan-limits";
 
 export const STREAK_REQUIRED_DAYS = 21;
 export const STREAK_PRO_GRANT_DAYS = 365;
@@ -133,6 +133,12 @@ export async function claimStreakReward(
   ]);
 
   await kv.delete(userPlanCacheKey(userId));
+  const [workspace] = await drizzle
+    .select({ id: workspaces.id })
+    .from(workspaces)
+    .where(eq(workspaces.ownerId, userId))
+    .limit(1);
+  if (workspace) await kv.delete(workspacePlanCacheKey(workspace.id));
 
   return { ok: true, proGrantedUntil };
 }

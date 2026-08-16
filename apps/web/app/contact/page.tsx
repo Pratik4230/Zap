@@ -37,7 +37,9 @@ export default function ContactPage() {
         </p>
         <p>
           Operated by <strong>{LEGAL_OPERATOR.name}</strong> ({LEGAL_OPERATOR.location}).
-          We aim to reply within a few business days.
+          Free and Pro: we aim to reply within a few business days. Business
+          subscribers get priority support and we aim to reply within 1 business
+          day.
         </p>
       </section>
 

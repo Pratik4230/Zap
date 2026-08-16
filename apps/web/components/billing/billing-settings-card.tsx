@@ -4,48 +4,55 @@ import { useState } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UpgradeProButton } from "@/components/billing/upgrade-pro-button";
+import { UpgradePlanButton } from "@/components/billing/upgrade-pro-button";
 import { BoltPillSkeleton } from "@/components/ui/bolt-skeleton";
 import { authClient } from "@/lib/auth-client";
 import { apiJson } from "@/lib/api-fetch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { WorkspacePlan } from "@xaply/db";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
 
-type BillingPlan = "free" | "pro";
+type BillingResponse = {
+  plan: WorkspacePlan;
+  businessCheckout: boolean;
+};
 
-async function fetchBillingPlan(): Promise<BillingPlan> {
-  const data = await apiJson<{ plan: BillingPlan }>("/api/billing");
-  return data.plan;
+async function fetchBilling(): Promise<BillingResponse> {
+  return apiJson<BillingResponse>("/api/billing");
 }
 
-function planLabel(plan: BillingPlan): string {
-  return plan === "pro" ? "Pro" : "Free";
+function planLabel(plan: WorkspacePlan): string {
+  if (plan === "business") return "Business";
+  if (plan === "pro") return "Pro";
+  return "Free";
 }
 
 export function BillingSettingsCard() {
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const { data: plan, isLoading, isError } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["billing"],
-    queryFn: fetchBillingPlan,
+    queryFn: fetchBilling,
   });
 
   async function openPortal() {
     setPortalLoading(true);
     try {
-      const { data, error } = await authClient.dodopayments.customer.portal();
+      const { data: portal, error } = await authClient.dodopayments.customer.portal();
       if (error) throw new Error(error.message ?? "Could not open billing portal");
-      if (!data?.url) throw new Error("Billing portal URL missing");
-      window.location.href = data.url;
+      if (!portal?.url) throw new Error("Billing portal URL missing");
+      window.location.href = portal.url;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not open billing portal");
       setPortalLoading(false);
     }
   }
 
-  const isPro = plan === "pro";
+  const plan = data?.plan ?? "free";
+  const isPaid = plan === "pro" || plan === "business";
+  const isBusiness = plan === "business";
 
   return (
     <Card className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
@@ -55,9 +62,11 @@ export function BillingSettingsCard() {
           Billing
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          {isPro
-            ? "Manage your Pro subscription via Dodo Payments"
-            : "Upgrade to Pro or manage billing via Dodo Payments"}
+          {isBusiness
+            ? "Manage your Business subscription via Dodo Payments"
+            : isPaid
+              ? "Manage your Pro subscription or upgrade to Business"
+              : "Upgrade to Pro or Business via Dodo Payments"}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-6 pb-6 space-y-4">
@@ -71,17 +80,27 @@ export function BillingSettingsCard() {
             <span
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                isPro ? "text-black" : "border border-white/10 bg-white/5 text-foreground",
+                isPaid ? "text-black" : "border border-white/10 bg-white/5 text-foreground",
               )}
-              style={isPro ? { background: AMBER } : undefined}
+              style={isPaid ? { background: AMBER } : undefined}
             >
-              {planLabel(plan ?? "free")}
+              {planLabel(plan)}
             </span>
           )}
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {!isPro && <UpgradeProButton className="h-10 rounded-lg px-4" label="Upgrade to Pro" />}
+          {plan === "free" && (
+            <UpgradePlanButton className="h-10 rounded-lg px-4" label="Upgrade to Pro" plan="pro" />
+          )}
+          {!isBusiness && data?.businessCheckout && (
+            <UpgradePlanButton
+              className="h-10 rounded-lg px-4"
+              label="Upgrade to Business"
+              plan="business"
+              variant={plan === "free" ? "secondary" : "primary"}
+            />
+          )}
           <button
             type="button"
             onClick={openPortal}
