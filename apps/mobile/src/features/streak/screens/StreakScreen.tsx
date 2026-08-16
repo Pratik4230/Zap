@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BoltSpinner } from "@/global/components/bolt-skeleton";
 import { colors } from "@/global/theme";
 import { useStreakStatus, useClaimStreakReward } from "../hooks/use-streak";
 
@@ -67,7 +67,7 @@ export function StreakScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 40 }} />
+        <BoltSpinner size={28} style={{ marginTop: 40 }} />
       </SafeAreaView>
     );
   }
@@ -136,7 +136,7 @@ export function StreakScreen() {
             activeOpacity={0.85}
           >
             {claimMutation.isPending ? (
-              <ActivityIndicator color={colors.primaryForeground} />
+              <BoltSpinner size={18} />
             ) : (
               <Text style={styles.claimButtonText}>Claim your free Pro year →</Text>
             )}

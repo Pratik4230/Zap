@@ -1,11 +1,18 @@
-import { Button, Column, ListItem, Text } from "@expo/ui/jetpack-compose";
+import { StyleSheet, Text, View } from "react-native";
+import { Button, Column, ListItem, Text as ComposeText } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth, padding } from "@expo/ui/jetpack-compose/modifiers";
+import {
+  BoltAnalyticsSkeleton,
+  BoltLinkListSkeleton,
+  BoltSpinner,
+} from "@/global/components/bolt-skeleton";
 import { useIsOnline } from "@/global/utils/network";
 import { colors } from "@/global/theme";
 
 type LoadingStateProps = {
   message?: string;
   padded?: boolean;
+  variant?: "list" | "analytics" | "inline";
 };
 
 type ErrorStateProps = {
@@ -24,20 +31,33 @@ function padModifiers(padded?: boolean) {
   return padded ? [fillMaxWidth(), padding(14, 0, 14, 0)] : [fillMaxWidth()];
 }
 
-/** Shared loading row for list / analytics screens. */
-export function LoadingState({ message = "Loading...", padded }: LoadingStateProps) {
+/** Shared bolt loading UI — RN-only so it can live inside Compose LazyColumn. */
+export function LoadingState({
+  message = "Loading...",
+  padded,
+  variant = "list",
+}: LoadingStateProps) {
   return (
-    <ListItem
-      colors={{
-        containerColor: colors.surface,
-        contentColor: colors.muted,
-      }}
-      modifiers={padModifiers(padded)}
+    <View
+      style={[
+        styles.container,
+        padded ? styles.containerPadded : null,
+      ]}
     >
-      <ListItem.HeadlineContent>
-        <Text>{message}</Text>
-      </ListItem.HeadlineContent>
-    </ListItem>
+      {variant === "analytics" ? (
+        <BoltAnalyticsSkeleton />
+      ) : variant === "inline" ? (
+        <View style={styles.inline}>
+          <BoltSpinner size={24} />
+          <Text style={styles.message}>{message}</Text>
+        </View>
+      ) : (
+        <>
+          <BoltLinkListSkeleton rows={5} />
+          {message ? <Text style={styles.listMessage}>{message}</Text> : null}
+        </>
+      )}
+    </View>
   );
 }
 
@@ -53,9 +73,9 @@ export function ErrorState({ message, onRetry, padded }: ErrorStateProps) {
       verticalArrangement={{ spacedBy: 8 }}
       modifiers={padModifiers(padded)}
     >
-      <Text color={colors.destructive} style={{ fontSize: 13 }}>
+      <ComposeText color={colors.destructive} style={{ fontSize: 13 }}>
         {displayMessage}
-      </Text>
+      </ComposeText>
       {onRetry ? (
         <Button
           enabled={online}
@@ -66,9 +86,9 @@ export function ErrorState({ message, onRetry, padded }: ErrorStateProps) {
           }}
           modifiers={[fillMaxWidth()]}
         >
-          <Text style={{ fontWeight: "600" }}>
+          <ComposeText style={{ fontWeight: "600" }}>
             {online ? "Try again" : "Waiting for connection…"}
-          </Text>
+          </ComposeText>
         </Button>
       ) : null}
     </Column>
@@ -87,13 +107,40 @@ export function EmptyState({ title, description, padded }: EmptyStateProps) {
       modifiers={padModifiers(padded)}
     >
       <ListItem.HeadlineContent>
-        <Text>{title}</Text>
+        <ComposeText>{title}</ComposeText>
       </ListItem.HeadlineContent>
       {description ? (
         <ListItem.SupportingContent>
-          <Text>{description}</Text>
+          <ComposeText>{description}</ComposeText>
         </ListItem.SupportingContent>
       ) : null}
     </ListItem>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: "100%",
+    paddingVertical: 4,
+  },
+  containerPadded: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  inline: {
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 8,
+  },
+  message: {
+    color: colors.muted,
+    fontSize: 13,
+    textAlign: "center",
+  },
+  listMessage: {
+    color: colors.muted,
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: "center",
+  },
+});

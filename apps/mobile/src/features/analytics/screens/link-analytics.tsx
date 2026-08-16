@@ -321,7 +321,7 @@ export default function LinkAnalyticsScreen() {
               ) : null}
 
               {analyticsQuery.isLoading ? (
-                <LoadingState padded message="Loading analytics..." />
+                <LoadingState padded variant="analytics" message="Loading analytics..." />
               ) : null}
             </LazyColumn>
           </PullToRefreshBox>

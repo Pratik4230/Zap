@@ -55,6 +55,7 @@ import {
   ErrorState,
   LoadingState,
 } from "@/global/components/query-state";
+import { BoltSpinner } from "@/global/components/bolt-skeleton";
 import { ScreenShell } from "@/global/components/screen-shell";
 import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
@@ -64,10 +65,12 @@ import { useIsOnline } from "@/global/utils/network";
 function StatCard({
   label,
   value,
+  loading = false,
   weightModifier,
 }: {
   label: string;
   value: string;
+  loading?: boolean;
   weightModifier?: ReturnType<typeof weight>;
 }) {
   return (
@@ -80,7 +83,9 @@ function StatCard({
       modifiers={weightModifier ? [weightModifier] : undefined}
     >
       <ListItem.HeadlineContent>
-        <Text style={{ fontSize: 18, fontWeight: "700" }}>{value}</Text>
+        <Text style={{ fontSize: 18, fontWeight: "700" }}>
+          {loading ? "—" : value}
+        </Text>
       </ListItem.HeadlineContent>
       <ListItem.SupportingContent>
         <Text style={{ fontSize: 12 }}>{label}</Text>
@@ -362,29 +367,20 @@ export default function LinksTabScreen() {
           >
             <StatCard
               label="Total links"
-              value={
-                isSummaryLoading || isSummaryFetching
-                  ? "..."
-                  : String(summary?.totalLinks ?? 0)
-              }
+              loading={isSummaryLoading || isSummaryFetching}
+              value={String(summary?.totalLinks ?? 0)}
               weightModifier={weight(1)}
             />
             <StatCard
               label="Total clicks"
-              value={
-                isSummaryLoading || isSummaryFetching
-                  ? "..."
-                  : formatClickCount(summary?.totalClicks ?? 0)
-              }
+              loading={isSummaryLoading || isSummaryFetching}
+              value={formatClickCount(summary?.totalClicks ?? 0)}
               weightModifier={weight(1)}
             />
             <StatCard
               label="Active rate"
-              value={
-                isSummaryLoading || isSummaryFetching
-                  ? "..."
-                  : `${Math.round(summary?.activeRate ?? 0)}%`
-              }
+              loading={isSummaryLoading || isSummaryFetching}
+              value={`${Math.round(summary?.activeRate ?? 0)}%`}
               weightModifier={weight(1)}
             />
           </Row>
@@ -490,7 +486,7 @@ export default function LinksTabScreen() {
               modifiers={[fillMaxSize()]}
             >
               {showInitialLoading ? (
-                <LoadingState message="Loading..." />
+                <LoadingState message="Loading links..." />
               ) : null}
 
               {!showInitialLoading && links.length === 0 && !error ? (
@@ -528,12 +524,14 @@ export default function LinksTabScreen() {
                 >
                   <ListItem.HeadlineContent>
                     <Text>
-                      {isFetchingNextPage
-                        ? "Loading more..."
-                        : "Scroll for more"}
+                      {isFetchingNextPage ? "Loading more..." : "Scroll for more"}
                     </Text>
                   </ListItem.HeadlineContent>
                 </ListItem>
+              ) : null}
+
+              {isFetchingNextPage ? (
+                <BoltSpinner size={18} />
               ) : null}
 
               {!hasNextPage && links.length > 0 && !isFetching ? (

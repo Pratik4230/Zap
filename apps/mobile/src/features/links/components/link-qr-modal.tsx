@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   Text,
@@ -15,6 +14,7 @@ import {
   qrDownloadFilename,
 } from "@/features/links/utils/format";
 import { colors } from "@/global/theme";
+import { BoltSpinner } from "@/global/components/bolt-skeleton";
 
 const QR_SIZE = 220;
 
@@ -198,7 +198,7 @@ export function LinkQrModal({
               }}
             >
               {busy ? (
-                <ActivityIndicator color={colors.primaryForeground} />
+                <BoltSpinner size={18} />
               ) : (
                 <Text style={{ color: colors.primaryForeground, fontWeight: "600" }}>
                   Share PNG

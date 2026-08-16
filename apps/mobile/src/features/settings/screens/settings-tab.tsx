@@ -21,7 +21,7 @@ import { apiClient } from "@/global/api/client";
 import { queryKeys } from "@/global/api/query-keys";
 import type { WorkspacePlan } from "@/global/api/types";
 import { AppScreen } from "@/global/components/app-screen";
-import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
+import { EmptyState, ErrorState } from "@/global/components/query-state";
 import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
 import { useIsOnline } from "@/global/utils/network";
@@ -277,7 +277,19 @@ export default function SettingsTabScreen() {
   return (
     <AppScreen title="Settings" subtitle="Profile, plan, and account.">
       <Column verticalArrangement={{ spacedBy: 14 }} modifiers={[fillMaxWidth(), verticalScroll()]}>
-        {isSessionPending ? <LoadingState message="Loading account..." /> : null}
+        {isSessionPending ? (
+          <ListItem
+            colors={{
+              containerColor: colors.surface,
+              contentColor: colors.muted,
+            }}
+            modifiers={[fillMaxWidth()]}
+          >
+            <ListItem.HeadlineContent>
+              <Text>Loading account...</Text>
+            </ListItem.HeadlineContent>
+          </ListItem>
+        ) : null}
 
         {!isSessionPending && sessionError ? (
           <ErrorState
