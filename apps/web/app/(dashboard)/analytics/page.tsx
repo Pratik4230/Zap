@@ -4,7 +4,12 @@ import { useState } from "react";
 import { BarChart3, Globe, MapPin, Monitor, Smartphone, Tablet, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  BoltBadgeSkeleton,
+  BoltChartBarsSkeleton,
+  BoltDeviceRingsSkeleton,
+  BoltRankedListSkeleton,
+} from "@/components/ui/bolt-skeleton";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { AnalyticsRangePicker } from "@/components/analytics/analytics-range-picker";
 import { cn } from "@/lib/utils";
@@ -41,19 +46,6 @@ interface AnalyticsData {
 async function fetchAnalytics(rangeDays?: number): Promise<AnalyticsData> {
   const query = rangeDays ? `?range=${rangeDays}` : "";
   return apiJson<AnalyticsData>(`/api/analytics${query}`);
-}
-
-function BarSkeleton({ bars = 7 }: { bars?: number }) {
-  return (
-    <div className="flex items-end gap-2 h-40 overflow-hidden">
-      {Array.from({ length: bars }).map((_, i) => (
-        <div key={i} className="flex min-w-5 flex-1 flex-col items-center gap-2">
-          <Skeleton className="w-full" style={{ height: `${35 + (i % 5) * 12}%` }} />
-          <Skeleton className="h-3 w-6" />
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default function AnalyticsPage() {
@@ -111,7 +103,7 @@ export default function AnalyticsPage() {
               Clicks, {data?.rangeLabel ?? "Last 7 days"}
             </CardTitle>
             {isLoading || isFetching ? (
-              <Skeleton className="h-5 w-24" />
+              <BoltBadgeSkeleton />
             ) : (
               <Badge variant="outline" className="text-xs border-white/10 text-muted-foreground">
                 {(data?.totalClicks ?? 0).toLocaleString()} clicks
@@ -121,7 +113,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent className="px-6 pb-6">
           {isLoading ? (
-            <BarSkeleton bars={activeRange > 14 ? 12 : 7} />
+            <BoltChartBarsSkeleton bars={activeRange > 14 ? 12 : 7} />
           ) : (
             <div
               className={cn(
@@ -171,15 +163,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="px-6 pb-5 space-y-3">
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                  <Skeleton className="h-1 w-full" />
-                </div>
-              ))
+              <BoltRankedListSkeleton rows={5} labelWidth="w-32" />
             ) : data?.topLinks.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No clicks in this period</p>
             ) : (
@@ -213,15 +197,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="px-6 pb-5 space-y-3">
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                  <Skeleton className="h-1 w-full" />
-                </div>
-              ))
+              <BoltRankedListSkeleton rows={5} labelWidth="w-28" />
             ) : data?.countries.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No click data yet</p>
             ) : (
@@ -253,15 +229,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent className="px-6 pb-5 space-y-3">
           {isLoading ? (
-            Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="space-y-1">
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-4 w-12" />
-                </div>
-                <Skeleton className="h-1 w-full" />
-              </div>
-            ))
+            <BoltRankedListSkeleton rows={7} labelWidth="w-36" />
           ) : data?.cities.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">No city data yet</p>
           ) : (
@@ -291,14 +259,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent className="px-6 pb-6">
           {isLoading ? (
-            <div className="flex items-center gap-8">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex flex-col items-center gap-3">
-                  <Skeleton className="h-20 w-20 rounded-full" />
-                  <Skeleton className="h-4 w-12" />
-                </div>
-              ))}
-            </div>
+            <BoltDeviceRingsSkeleton count={3} />
           ) : data?.devices.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">No device data yet</p>
           ) : (

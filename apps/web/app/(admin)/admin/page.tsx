@@ -7,7 +7,7 @@ import { Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AdminTableSkeletonRows } from "@/components/ui/bolt-skeleton";
 import {
   Table,
   TableBody,
@@ -151,15 +151,7 @@ export default function AdminUsersPage() {
               </TableHeader>
               <TableBody>
                 {isLoading
-                  ? Array.from({ length: 8 }).map((_, index) => (
-                      <TableRow key={index} className="border-white/6">
-                        {Array.from({ length: 7 }).map((__, cellIndex) => (
-                          <TableCell key={cellIndex}>
-                            <Skeleton className="h-4 w-full max-w-28" />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                  ? <AdminTableSkeletonRows rows={8} cols={7} />
                   : data?.users.map((user) => (
                       <TableRow key={user.id} className="border-white/6">
                         <TableCell className="font-medium text-foreground">{user.name}</TableCell>

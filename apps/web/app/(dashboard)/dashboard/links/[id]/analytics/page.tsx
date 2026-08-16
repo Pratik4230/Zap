@@ -6,7 +6,13 @@ import { ArrowLeft, BarChart3, ExternalLink, Globe, Link2, MapPin, Monitor, Smar
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  BoltBadgeSkeleton,
+  BoltChartBarsSkeleton,
+  BoltDeviceRingsSkeleton,
+  BoltHeaderSkeleton,
+  BoltPanelSkeleton,
+} from "@/components/ui/bolt-skeleton";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { AnalyticsRangePicker } from "@/components/analytics/analytics-range-picker";
 import { apiFetch } from "@/lib/api-fetch";
@@ -68,19 +74,6 @@ async function fetchLinkAnalytics(id: string, rangeDays?: number): Promise<LinkA
 }
 
 const SKELETON_HEIGHTS = [45, 70, 55, 90, 75, 40, 60];
-
-function BarSkeleton() {
-  return (
-    <div className="flex items-end gap-3 h-40">
-      {SKELETON_HEIGHTS.map((h, i) => (
-        <div key={i} className="flex flex-1 flex-col items-center gap-2">
-          <Skeleton className="w-full" style={{ height: `${h}%` }} />
-          <Skeleton className="h-3 w-6" />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function CountList({
   items,
@@ -172,10 +165,7 @@ export default function LinkAnalyticsPage({
         </Button>
 
         {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
-          </div>
+          <BoltHeaderSkeleton />
         ) : link ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -247,7 +237,7 @@ export default function LinkAnalyticsPage({
               Clicks, {data?.rangeLabel ?? "Last 7 days"}
             </CardTitle>
             {isLoading || isFetching ? (
-              <Skeleton className="h-5 w-24" />
+              <BoltBadgeSkeleton />
             ) : (
               <Badge variant="outline" className="text-xs border-white/10 text-muted-foreground">
                 {(data?.totalClicks ?? 0).toLocaleString()} clicks
@@ -257,7 +247,7 @@ export default function LinkAnalyticsPage({
         </CardHeader>
         <CardContent className="px-6 pb-6">
           {isLoading ? (
-            <BarSkeleton />
+            <BoltChartBarsSkeleton bars={SKELETON_HEIGHTS.length} heights={SKELETON_HEIGHTS} />
           ) : (
             <div
               className={cn(
@@ -310,7 +300,7 @@ export default function LinkAnalyticsPage({
           </CardHeader>
           <CardContent className="px-6 pb-5">
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <BoltPanelSkeleton rows={5} />
             ) : (
               <CountList
                 items={data?.countries ?? []}
@@ -330,7 +320,7 @@ export default function LinkAnalyticsPage({
           </CardHeader>
           <CardContent className="px-6 pb-5">
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <BoltPanelSkeleton rows={5} />
             ) : (
               <CountList
                 items={data?.cities ?? []}
@@ -349,7 +339,7 @@ export default function LinkAnalyticsPage({
           </CardHeader>
           <CardContent className="px-6 pb-5">
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <BoltPanelSkeleton rows={5} />
             ) : (
               <CountList
                 items={data?.referrers ?? []}
@@ -366,7 +356,7 @@ export default function LinkAnalyticsPage({
           </CardHeader>
           <CardContent className="px-6 pb-5">
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <BoltPanelSkeleton rows={5} />
             ) : (
               <CountList
                 items={data?.browsers ?? []}
@@ -385,7 +375,7 @@ export default function LinkAnalyticsPage({
           </CardHeader>
           <CardContent className="px-6 pb-5">
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <BoltPanelSkeleton rows={5} />
             ) : (
               <CountList items={data?.os ?? []} emptyMessage="No OS data yet" max={maxOs} />
             )}
@@ -398,11 +388,7 @@ export default function LinkAnalyticsPage({
           </CardHeader>
           <CardContent className="px-6 pb-6">
             {isLoading ? (
-              <div className="flex items-center gap-8">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-20 w-20 rounded-full" />
-                ))}
-              </div>
+              <BoltDeviceRingsSkeleton count={3} />
             ) : data?.devices.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No device data yet</p>
             ) : (

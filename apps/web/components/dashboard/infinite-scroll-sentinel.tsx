@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { BoltSpinner } from "@/components/ui/bolt-skeleton";
 
 interface InfiniteScrollSentinelProps {
   hasMore: boolean;
@@ -36,7 +36,7 @@ export function InfiniteScrollSentinel({
   return (
     <div ref={sentinelRef} className="flex justify-center py-6">
       {isLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <BoltSpinner size={20} />
       ) : (
         <span className="text-xs text-muted-foreground">Scroll for more</span>
       )}

@@ -86,6 +86,14 @@ async function notifyClickMilestones(
 }
 
 export default {
+  async fetch(request: Request): Promise<Response> {
+    const { pathname } = new URL(request.url);
+    if (pathname === "/health" || pathname === "/") {
+      return Response.json({ ok: true, worker: "xaply-analytics" });
+    }
+    return new Response("Not Found", { status: 404 });
+  },
+
   async queue(batch: MessageBatch<ClickEvent>, env: WorkerEnv): Promise<void> {
     const db = createDb(env.DB);
 

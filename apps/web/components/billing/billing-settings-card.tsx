@@ -5,6 +5,7 @@ import { CreditCard, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpgradeProButton } from "@/components/billing/upgrade-pro-button";
+import { BoltPillSkeleton } from "@/components/ui/bolt-skeleton";
 import { authClient } from "@/lib/auth-client";
 import { apiJson } from "@/lib/api-fetch";
 import { toast } from "sonner";
@@ -63,7 +64,7 @@ export function BillingSettingsCard() {
         <div className="flex items-center justify-between gap-3 rounded-lg border border-white/8 bg-white/3 px-4 py-3">
           <span className="text-sm text-muted-foreground">Current plan</span>
           {isLoading ? (
-            <span className="h-6 w-16 animate-pulse rounded-full bg-white/10" />
+            <BoltPillSkeleton />
           ) : isError ? (
             <span className="text-sm text-muted-foreground">Unavailable</span>
           ) : (
