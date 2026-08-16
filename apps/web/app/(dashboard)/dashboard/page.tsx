@@ -29,8 +29,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import { CreateLinkDialog } from "@/components/dashboard/create-link-dialog";
+import {
+  FadeIn,
+  LinkCountSkeleton,
+  LinkTableSkeletonRows,
+  StatValueSkeleton,
+  fadeInClass,
+  fadeInStyle,
+} from "@/components/dashboard/dashboard-skeletons";
 import { EditLinkDialog, type EditableLink } from "@/components/dashboard/edit-link-dialog";
 import { LinkQrDialog } from "@/components/dashboard/link-qr-dialog";
 import { InfiniteScrollSentinel } from "@/components/dashboard/infinite-scroll-sentinel";
@@ -246,14 +253,14 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const { data: summary, isLoading: isSummaryLoading, error: summaryError, refetch: refetchSummary } = useQuery({
+  const { data: summary, isPending: isSummaryPending, error: summaryError, refetch: refetchSummary } = useQuery({
     queryKey: ["links-summary"],
     queryFn: fetchLinksSummary,
   });
 
   const {
     data,
-    isLoading,
+    isPending: isLinksPending,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -280,7 +287,7 @@ export default function DashboardPage() {
   const filteredTotal = data?.pages[0]?.total ?? 0;
   const hasActiveFilters = debouncedSearch.length > 0 || statusFilter !== "all";
   const isSearchPending = search !== debouncedSearch;
-  const hasNoLinksEver = summary?.totalLinks === 0 && !isSummaryLoading;
+  const hasNoLinksEver = summary?.totalLinks === 0 && !isSummaryPending;
 
   const clearFilters = useCallback(() => {
     setSearch("");
@@ -412,7 +419,7 @@ export default function DashboardPage() {
     toast.success("Link created");
   }, [queryClient, debouncedSearch, statusFilter, sortBy]);
 
-  const showTableLoading = isLoading || isSearchPending;
+  const showTableLoading = isLinksPending || isSearchPending;
   const loadError = linksError ?? summaryError;
 
   if (loadError && !data && !summary) {
@@ -448,7 +455,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon }) => (
+        {stats.map(({ label, value, icon: Icon }, index) => (
           <Card key={label} className="border-white/6" style={{ background: "oklch(0.12 0 0)" }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -459,10 +466,12 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              {isSummaryLoading ? (
-                <Skeleton className="h-8 w-24" />
+              {isSummaryPending ? (
+                <StatValueSkeleton index={index} />
               ) : (
-                <p className="text-2xl font-bold text-foreground">{value}</p>
+                <FadeIn show delayMs={index * 40}>
+                  <p className="text-2xl font-bold text-foreground">{value}</p>
+                </FadeIn>
               )}
             </CardContent>
           </Card>
@@ -473,13 +482,17 @@ export default function DashboardPage() {
         <CardHeader className="px-6 pt-5 pb-4 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base font-semibold text-foreground">All Links</CardTitle>
-            {!showTableLoading && (
-              <p className="text-xs text-muted-foreground">
-                {hasActiveFilters
-                  ? `${loadedLinks.length} of ${filteredTotal} links`
-                  : `${filteredTotal} links`}
-                {hasNextPage ? " · scroll for more" : ""}
-              </p>
+            {showTableLoading ? (
+              <LinkCountSkeleton />
+            ) : (
+              <FadeIn show>
+                <p className="text-xs text-muted-foreground">
+                  {hasActiveFilters
+                    ? `${loadedLinks.length} of ${filteredTotal} links`
+                    : `${filteredTotal} links`}
+                  {hasNextPage ? " · scroll for more" : ""}
+                </p>
+              </FadeIn>
             )}
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -549,49 +562,46 @@ export default function DashboardPage() {
             </TableHeader>
             <TableBody>
               {showTableLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i} className="border-white/6">
-                    <TableCell className="pl-6"><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell />
-                  </TableRow>
-                ))
+                <LinkTableSkeletonRows />
               ) : hasNoLinksEver ? (
                 <TableRow className="border-white/6">
                   <TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">
-                    No links yet.{" "}
-                    <button
-                      onClick={() => setCreateOpen(true)}
-                      className="font-medium transition-colors"
-                      style={{ color: AMBER }}
-                    >
-                      Create your first link
-                    </button>
+                    <FadeIn show>
+                      No links yet.{" "}
+                      <button
+                        onClick={() => setCreateOpen(true)}
+                        className="font-medium transition-colors"
+                        style={{ color: AMBER }}
+                      >
+                        Create your first link
+                      </button>
+                    </FadeIn>
                   </TableCell>
                 </TableRow>
               ) : loadedLinks.length === 0 ? (
                 <TableRow className="border-white/6">
                   <TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">
-                    No links match your filters.{" "}
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="font-medium transition-colors"
-                      style={{ color: AMBER }}
-                    >
-                      Clear filters
-                    </button>
+                    <FadeIn show>
+                      No links match your filters.{" "}
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="font-medium transition-colors"
+                        style={{ color: AMBER }}
+                      >
+                        Clear filters
+                      </button>
+                    </FadeIn>
                   </TableCell>
                 </TableRow>
               ) : (
-                loadedLinks.map((link) => (
+                loadedLinks.map((link, index) => (
                   <TableRow
                     key={link.id}
+                    style={fadeInStyle(Math.min(index * 30, 150))}
                     className={cn(
                       "border-white/6 hover:bg-white/2 group transition-opacity",
+                      fadeInClass(),
                       mutatingLinkIds.has(link.id) && "opacity-60",
                     )}
                   >
