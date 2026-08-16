@@ -128,7 +128,7 @@ export function WorkspacesSettingsCard() {
           Workspaces
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          Switch, rename, create, or delete workspaces. Delete also removes that space’s links and members.
+          Switch, rename, or create workspaces. You must keep at least one workspace.
         </CardDescription>
       </CardHeader>
       <CardContent className="px-6 pb-6 space-y-4">
@@ -201,7 +201,7 @@ export function WorkspacesSettingsCard() {
                         Switch
                       </Button>
                     ) : (
-                      <p className="text-xs text-muted-foreground">Current</p>
+                      <p className="text-xs text-muted-foreground">Keep at least one workspace</p>
                     )}
                   </div>
                 );

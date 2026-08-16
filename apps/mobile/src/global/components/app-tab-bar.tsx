@@ -3,12 +3,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Host, Icon } from "@expo/ui/jetpack-compose";
 import LinkIcon from "@expo/material-symbols/link.xml";
 import AnalyticsIcon from "@expo/material-symbols/analytics.xml";
+import WorkspacesIcon from "@expo/material-symbols/workspaces.xml";
 import SettingsIcon from "@expo/material-symbols/settings.xml";
 import { colors } from "@/global/theme";
 
 const TAB_ITEMS = {
   index: { label: "Links", icon: LinkIcon },
   analytics: { label: "Analytics", icon: AnalyticsIcon },
+  workspace: { label: "Workspace", icon: WorkspacesIcon },
   settings: { label: "Settings", icon: SettingsIcon },
 } as const;
 
@@ -63,10 +65,6 @@ export function AppTabBar({ state, navigation }: AppTabBarProps) {
             accessibilityRole="button"
             accessibilityLabel={label}
             accessibilityState={selected ? { selected: true } : {}}
-            android_ripple={{
-              color: "rgba(254, 154, 0, 0.12)",
-              borderless: false,
-            }}
             onPress={() => {
               const event = navigation.emit({
                 type: "tabPress",
@@ -78,15 +76,14 @@ export function AppTabBar({ state, navigation }: AppTabBarProps) {
                 navigation.navigate(route.name, route.params);
               }
             }}
-            style={({ pressed }) => ({
+            style={{
               flex: 1,
               minHeight: TAB_MIN_HEIGHT,
               alignItems: "center",
               justifyContent: "center",
               gap: 2,
               paddingVertical: 6,
-              opacity: pressed ? 0.85 : 1,
-            })}
+            }}
           >
             <View pointerEvents="none">
               <Host

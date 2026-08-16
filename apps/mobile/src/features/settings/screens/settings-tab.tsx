@@ -28,13 +28,19 @@ import { useIsOnline } from "@/global/utils/network";
 import { useStreakStatus, useClaimStreakReward } from "@/features/streak/hooks/use-streak";
 
 function planHeadline(plan: WorkspacePlan): string {
-  return plan === "pro" ? "Pro" : "Free";
+  if (plan === "business") return "Business";
+  if (plan === "pro") return "Pro";
+  return "Free";
 }
 
 function planSupporting(plan: WorkspacePlan): string {
-  return plan === "pro"
-    ? "500 active links · 50,000 visits/mo · 1-year analytics"
-    : "50 active links · 5,000 visits/mo · 7-day analytics";
+  if (plan === "business") {
+    return "Unlimited links · 1M visits/mo · 3-year analytics · 50 seats";
+  }
+  if (plan === "pro") {
+    return "500 active links · 50,000 visits/mo · 1-year analytics";
+  }
+  return "50 active links · 5,000 visits/mo · 7-day analytics";
 }
 
 /**
@@ -224,7 +230,9 @@ export default function SettingsTabScreen() {
     try {
       await openWebBilling();
       const { data: nextPlan } = await refetchPlan();
-      if (nextPlan === "pro") {
+      if (nextPlan === "business") {
+        toast("You’re on Business");
+      } else if (nextPlan === "pro") {
         toast("You’re on Pro");
       }
     } catch (error) {
@@ -379,7 +387,6 @@ export default function SettingsTabScreen() {
               </Button>
             ) : null}
 
-
             <ListItem
               colors={{
                 containerColor: colors.surface,
@@ -404,7 +411,7 @@ export default function SettingsTabScreen() {
               <ListItem.SupportingContent>
                 <Text>
                   {isPlanPending
-                    ? "Fetching your workspace plan."
+                    ? "Fetching your plan."
                     : isPlanError
                       ? "Couldn’t load plan. Tap Retry plan below."
                       : planSupporting(plan ?? "free")}
@@ -433,24 +440,28 @@ export default function SettingsTabScreen() {
                   onClick={() => void openBillingInApp()}
                   colors={{
                     containerColor:
-                      plan === "pro" ? colors.surface : colors.primary,
+                      plan === "free" ? colors.primary : colors.surface,
                     contentColor:
-                      plan === "pro" ? colors.foreground : colors.primaryForeground,
+                      plan === "free" ? colors.primaryForeground : colors.foreground,
                   }}
                   modifiers={[fillMaxWidth()]}
                 >
                   <Text style={{ fontWeight: "600" }}>
                     {openingBilling
                       ? "Opening…"
-                      : plan === "pro"
+                      : plan === "business"
                         ? "Manage billing"
-                        : "Upgrade to Pro"}
+                        : plan === "pro"
+                          ? "Manage billing"
+                          : "Upgrade plan"}
                   </Text>
                 </Button>
                 <Text color={colors.muted} style={{ fontSize: 12 }}>
-                  {plan === "pro"
+                  {plan === "business"
                     ? "Opens Xaply billing in an in-app browser. Sign in with the same account if asked."
-                    : "Complete payment in an in-app browser on xaply.in. Use the same account if asked to sign in."}
+                    : plan === "pro"
+                      ? "Manage Pro or upgrade to Business on xaply.in. Use the same account if asked to sign in."
+                      : "Upgrade to Pro or Business in an in-app browser on xaply.in. Use the same account if asked to sign in."}
                 </Text>
               </Column>
             ) : null}

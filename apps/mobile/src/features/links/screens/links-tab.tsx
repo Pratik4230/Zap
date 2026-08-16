@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Share } from "react-native";
+import { ActivityIndicator, Share } from "react-native";
 import { useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
@@ -55,12 +55,12 @@ import {
   ErrorState,
   LoadingState,
 } from "@/global/components/query-state";
-import { BoltSpinner } from "@/global/components/bolt-skeleton";
 import { ScreenShell } from "@/global/components/screen-shell";
 import { toast } from "@/global/components/toast";
 import { colors } from "@/global/theme";
 import { useDebouncedValue } from "@/global/utils/use-debounced-value";
 import { useIsOnline } from "@/global/utils/network";
+import { useWorkspace } from "@/features/workspace/use-workspace";
 
 function StatCard({
   label,
@@ -112,6 +112,9 @@ export default function LinksTabScreen() {
   const [showQr, setShowQr] = useState(false);
   const [serverError, setServerError] = useState("");
 
+  const { current: workspace, usable: usableWorkspaces } = useWorkspace();
+  const workspaceId = workspace?.workspaceId ?? "";
+
   const destinationState = useNativeState("");
   const slugState = useNativeState("");
   const titleState = useNativeState("");
@@ -123,8 +126,10 @@ export default function LinksTabScreen() {
     isLoading: isSummaryLoading,
     isFetching: isSummaryFetching,
   } = useQuery({
-    queryKey: queryKeys.links.summary,
+    queryKey: queryKeys.links.summary(workspaceId),
     queryFn: () => apiClient.links.summary(),
+    enabled: Boolean(workspaceId),
+    placeholderData: (previous) => previous,
   });
 
   const {
@@ -141,6 +146,7 @@ export default function LinksTabScreen() {
     q: debouncedSearch,
     status,
     sort,
+    workspaceId,
   });
 
   const createMutation = useMutation({
@@ -154,7 +160,7 @@ export default function LinksTabScreen() {
       toast("Link created");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.links.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.links.summaryRoot }),
       ]);
     },
     onError: (createError) => {
@@ -181,7 +187,7 @@ export default function LinksTabScreen() {
       toast("Link updated");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.links.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.links.summaryRoot }),
       ]);
       setEditingLinkId(null);
     },
@@ -197,7 +203,7 @@ export default function LinksTabScreen() {
       toast("Link deleted");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.links.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.links.summaryRoot }),
       ]);
       setEditingLinkId(null);
     },
@@ -223,7 +229,7 @@ export default function LinksTabScreen() {
   const onRefresh = useCallback(() => {
     void Promise.all([
       refetch(),
-      queryClient.invalidateQueries({ queryKey: queryKeys.links.summary }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.links.summaryRoot }),
     ]);
   }, [queryClient, refetch]);
 
@@ -330,10 +336,12 @@ export default function LinksTabScreen() {
   const subtitle = showInitialLoading
     ? "Loading your links..."
     : total > 0
-      ? `${total} links · Tap for analytics to manage`
+      ? `${workspace?.workspaceName ? `${workspace.workspaceName} · ` : ""}${total} links · Tap for analytics to manage`
       : hasActiveFilters
         ? "No links match these filters"
-        : "No links yet";
+        : workspace?.workspaceName
+          ? `${workspace.workspaceName} · No links yet`
+          : "No links yet";
 
   return (
     <ScreenShell>
@@ -359,6 +367,16 @@ export default function LinksTabScreen() {
             <Text color={colors.muted} style={{ fontSize: 13 }}>
               {subtitle}
             </Text>
+            {usableWorkspaces.length > 1 ? (
+              <TextButton
+                contentPadding={{ start: 0, top: 4, end: 0, bottom: 0 }}
+                onClick={() => router.navigate("/workspace")}
+              >
+                <Text color={colors.primary} style={{ fontSize: 13 }}>
+                  Switch workspace
+                </Text>
+              </TextButton>
+            ) : null}
           </Column>
 
           <Row
@@ -531,7 +549,7 @@ export default function LinksTabScreen() {
               ) : null}
 
               {isFetchingNextPage ? (
-                <BoltSpinner size={18} />
+                <ActivityIndicator color={colors.primary} />
               ) : null}
 
               {!hasNextPage && links.length > 0 && !isFetching ? (

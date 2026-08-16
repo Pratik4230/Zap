@@ -48,6 +48,11 @@ export default ({ config }) => {
               host: APP_LINK_HOST,
               pathPrefix: "/dashboard/links",
             },
+            {
+              scheme: "https",
+              host: APP_LINK_HOST,
+              pathPrefix: "/invite",
+            },
           ],
         },
       ],

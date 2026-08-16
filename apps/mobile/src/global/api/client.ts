@@ -10,8 +10,15 @@ import {
   type LinksSummary,
   type ProfileUser,
   type UpdateLinkInput,
+  type InvitePreview,
+  type WorkspaceMembersResponse,
   type WorkspacePlan,
+  type WorkspaceResponse,
+  type WorkspaceRole,
+  type WorkspaceWebhook,
+  type WorkspaceWebhooksResponse,
   type StreakStatus,
+  type WebhookEvent,
 } from "@/global/api/types";
 
 /** Typed wrappers around production `/api/*` routes. */
@@ -74,6 +81,112 @@ export const apiClient = {
       return api
         .get<{ plan: WorkspacePlan }>("/api/billing")
         .then((res) => res.data.plan);
+    },
+  },
+
+  workspace: {
+    get(): Promise<WorkspaceResponse> {
+      return api.get<WorkspaceResponse>("/api/workspace").then((res) => res.data);
+    },
+    select(workspaceId: string): Promise<void> {
+      return api
+        .post("/api/workspace", { workspaceId })
+        .then(() => undefined);
+    },
+    create(name: string): Promise<{ id: string; name: string }> {
+      return api
+        .post<{ ok: true; workspace: { id: string; name: string } }>(
+          "/api/workspace/create",
+          { name }
+        )
+        .then((res) => res.data.workspace);
+    },
+    rename(name: string): Promise<void> {
+      return api
+        .patch("/api/workspace", { name })
+        .then(() => undefined);
+    },
+    delete(id: string): Promise<{ workspaceId: string }> {
+      return api
+        .delete<{ ok: true; workspaceId: string }>(`/api/workspace/${id}`)
+        .then((res) => res.data);
+    },
+    members(): Promise<WorkspaceMembersResponse> {
+      return api
+        .get<WorkspaceMembersResponse>("/api/workspace/members")
+        .then((res) => res.data);
+    },
+    updateMemberRole(userId: string, role: Exclude<WorkspaceRole, "owner">) {
+      return api
+        .patch<{ member: { userId: string; role: WorkspaceRole } }>(
+          `/api/workspace/members/${userId}`,
+          { role }
+        )
+        .then((res) => res.data.member);
+    },
+    removeMember(userId: string): Promise<void> {
+      return api
+        .delete(`/api/workspace/members/${userId}`)
+        .then(() => undefined);
+    },
+    invite(email: string, role: Exclude<WorkspaceRole, "owner">): Promise<void> {
+      return api
+        .post("/api/workspace/invites", { email, role })
+        .then(() => undefined);
+    },
+    revokeInvite(id: string): Promise<void> {
+      return api
+        .delete(`/api/workspace/invites/${id}`)
+        .then(() => undefined);
+    },
+    webhooks: {
+      list(): Promise<WorkspaceWebhooksResponse> {
+        return api
+          .get<WorkspaceWebhooksResponse>("/api/workspace/webhooks")
+          .then((res) => res.data);
+      },
+      create(input: { url: string; events: WebhookEvent[] }) {
+        return api
+          .post<{ webhook: WorkspaceWebhook }>("/api/workspace/webhooks", input)
+          .then((res) => res.data.webhook);
+      },
+      update(
+        id: string,
+        input: { url?: string; events?: WebhookEvent[]; enabled?: boolean }
+      ) {
+        return api
+          .patch<{ webhook: WorkspaceWebhook }>(
+            `/api/workspace/webhooks/${id}`,
+            input
+          )
+          .then((res) => res.data.webhook);
+      },
+      delete(id: string): Promise<void> {
+        return api
+          .delete(`/api/workspace/webhooks/${id}`)
+          .then(() => undefined);
+      },
+      rotate(id: string): Promise<string> {
+        return api
+          .post<{ secret: string }>(`/api/workspace/webhooks/${id}/rotate`)
+          .then((res) => res.data.secret);
+      },
+      test(id: string): Promise<void> {
+        return api
+          .post(`/api/workspace/webhooks/${id}/test`)
+          .then(() => undefined);
+      },
+    },
+  },
+
+  invite: {
+    preview(token: string): Promise<InvitePreview> {
+      return api.get<InvitePreview>(`/api/invite/${token}`).then((res) => res.data);
+    },
+    accept(token: string): Promise<{ workspaceId: string }> {
+      return api
+        .post<{ ok: true; workspaceId: string }>(`/api/invite/${token}`)
+        .then((res) => res.data);
     },
   },
 

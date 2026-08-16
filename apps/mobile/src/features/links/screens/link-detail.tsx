@@ -73,7 +73,7 @@ export default function LinkDetailScreen() {
     onSuccess: (updated) => {
       setServerError("");
       upsertLinkInCache(queryClient, updated);
-      queryClient.invalidateQueries({ queryKey: queryKeys.links.summary });
+      queryClient.invalidateQueries({ queryKey: queryKeys.links.summaryRoot });
       passwordState.set("");
     },
     onError: (error) => {
@@ -89,7 +89,7 @@ export default function LinkDetailScreen() {
     },
     onSuccess: (deletedId) => {
       removeLinkFromCache(queryClient, deletedId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.links.summary });
+      queryClient.invalidateQueries({ queryKey: queryKeys.links.summaryRoot });
       router.back();
     },
     onError: (error) => {

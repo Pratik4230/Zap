@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
+import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { PieChart } from "react-native-gifted-charts";
 import {
@@ -12,6 +13,7 @@ import {
   PullToRefreshBox,
   Row,
   Text,
+  TextButton,
 } from "@expo/ui/jetpack-compose";
 import {
   fillMaxSize,
@@ -25,9 +27,13 @@ import { queryKeys } from "@/global/api/query-keys";
 import type { CountRow, DeviceBreakdown } from "@/global/api/types";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { ScreenShell } from "@/global/components/screen-shell";
+import {
+  analyticsRangeOptions,
+  clampAnalyticsRange,
+} from "@/features/analytics/utils/range-options";
+import { useWorkspace } from "@/features/workspace/use-workspace";
 import { colors } from "@/global/theme";
 
-const RANGE_OPTIONS = [7, 30, 90] as const;
 const PIE_COLORS = [
   "#3b82f6", // blue
   "#ef4444", // red
@@ -180,10 +186,21 @@ function PieSection({
 }
 
 export default function AnalyticsTabScreen() {
+  const router = useRouter();
+  const { current: workspace, usable: usableWorkspaces } = useWorkspace();
+  const workspaceId = workspace?.workspaceId ?? "";
   const [rangeDays, setRangeDays] = useState<number>(30);
+  const rangeOptions = analyticsRangeOptions(workspace?.plan);
+
+  useEffect(() => {
+    setRangeDays((days) => clampAnalyticsRange(days, workspace?.plan));
+  }, [workspace?.plan]);
+
   const analyticsQuery = useQuery({
-    queryKey: queryKeys.analytics.account(rangeDays),
+    queryKey: queryKeys.analytics.account(rangeDays, workspaceId),
     queryFn: () => apiClient.analytics.account(rangeDays),
+    enabled: Boolean(workspaceId),
+    placeholderData: (previous) => previous,
   });
 
   const analytics = analyticsQuery.data;
@@ -226,8 +243,10 @@ export default function AnalyticsTabScreen() {
   );
 
   const subtitle = analytics
-    ? `${analytics.rangeLabel} • ${analytics.totalClicks} total clicks`
-    : "Account-wide click stats";
+    ? `${workspace?.workspaceName ? `${workspace.workspaceName} · ` : ""}${analytics.rangeLabel} • ${analytics.totalClicks} total clicks`
+    : workspace?.workspaceName
+      ? `${workspace.workspaceName} · Workspace click stats`
+      : "Workspace click stats";
 
   return (
     <ScreenShell>
@@ -240,14 +259,24 @@ export default function AnalyticsTabScreen() {
             <Text color={colors.muted} style={{ fontSize: 13 }}>
               {subtitle}
             </Text>
+            {usableWorkspaces.length > 1 ? (
+              <TextButton
+                contentPadding={{ start: 0, top: 4, end: 0, bottom: 0 }}
+                onClick={() => router.navigate("/workspace")}
+              >
+                <Text color={colors.primary} style={{ fontSize: 13 }}>
+                  Switch workspace
+                </Text>
+              </TextButton>
+            ) : null}
           </Column>
 
           <FlowRow horizontalArrangement={{ spacedBy: 8 }} verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
-            {RANGE_OPTIONS.map((option) => (
+            {rangeOptions.map((option) => (
               <FilterChip
-                key={option}
-                selected={rangeDays === option}
-                onClick={() => setRangeDays(option)}
+                key={option.days}
+                selected={rangeDays === option.days}
+                onClick={() => setRangeDays(option.days)}
                 colors={{
                   selectedContainerColor: colors.primary,
                   selectedLabelColor: colors.primaryForeground,
@@ -256,7 +285,7 @@ export default function AnalyticsTabScreen() {
                 }}
               >
                 <FilterChip.Label>
-                  <Text>{option}d</Text>
+                  <Text>{option.label}</Text>
                 </FilterChip.Label>
               </FilterChip>
             ))}
@@ -276,7 +305,6 @@ export default function AnalyticsTabScreen() {
               {analytics ? (
                 <Row horizontalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth(), padding(14, 0, 14, 0)]}>
                   <MetricCard label="Total clicks" value={String(analytics.totalClicks)} />
-                  <MetricCard label="Plan" value={analytics.plan.toUpperCase()} />
                   <MetricCard label="Top links" value={String(analytics.topLinks.length)} />
                 </Row>
               ) : null}
@@ -313,7 +341,7 @@ export default function AnalyticsTabScreen() {
               ) : null}
 
               {analyticsQuery.isLoading ? (
-                <LoadingState padded variant="analytics" message="Loading analytics..." />
+                <LoadingState padded message="Loading analytics..." />
               ) : null}
             </LazyColumn>
           </PullToRefreshBox>

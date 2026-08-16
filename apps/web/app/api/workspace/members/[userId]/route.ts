@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
-import { createDb, canManageTeam } from "@xaply/db";
+import { createDb, canManageTeam, countUserWorkspaceMemberships } from "@xaply/db";
 import { workspaceMembers } from "@xaply/db/schema";
 import { and, eq } from "drizzle-orm";
 import { isSession, requireSession } from "@/lib/api-auth";
@@ -89,6 +89,16 @@ export async function DELETE(
     }
     if (userId === access.ownerId) {
       return NextResponse.json({ error: "Cannot remove the workspace owner" }, { status: 400 });
+    }
+
+    if (isSelf) {
+      const memberships = await countUserWorkspaceMemberships(env.DB, session.user.id);
+      if (memberships <= 1) {
+        return NextResponse.json(
+          { error: "You must keep at least one workspace." },
+          { status: 400 }
+        );
+      }
     }
 
     const db = createDb(env.DB);

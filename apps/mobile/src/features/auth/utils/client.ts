@@ -13,6 +13,10 @@ import {
   getBearerTokenSync,
   hydrateBearerToken,
 } from "@/features/auth/utils/bearer";
+import {
+  clearWorkspaceId,
+  hydrateWorkspaceId,
+} from "@/features/workspace/workspace-id";
 
 /** Required so OAuth redirects complete when returning to the app. */
 WebBrowser.maybeCompleteAuthSession();
@@ -25,6 +29,7 @@ export function ensureAuthStorageHydrated(): Promise<void> {
     storageHydratePromise = Promise.all([
       hydrateBearerToken(),
       hydrateAuthSecureStorage(),
+      hydrateWorkspaceId(),
     ]).then(() => undefined);
   }
   return storageHydratePromise;
@@ -68,5 +73,6 @@ export async function signOutFully() {
     await authClient.signOut();
   } finally {
     await clearBearerToken();
+    await clearWorkspaceId();
   }
 }

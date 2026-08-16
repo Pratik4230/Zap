@@ -4,6 +4,11 @@ import { BiometricLockOverlay } from "@/features/auth/components/biometric-lock-
 import { BiometricUnlockProvider } from "@/features/auth/components/biometric-unlock-provider";
 import { colors } from "@/global/theme";
 
+const slide = {
+  animation: "slide_from_right" as const,
+  gestureEnabled: true,
+};
+
 /**
  * Authenticated stack — biometric lock gates the whole app shell.
  */
@@ -19,8 +24,13 @@ export default function AppLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="links/[id]" />
-          <Stack.Screen name="links/[id]/analytics" />
+          <Stack.Screen name="links/[id]" options={slide} />
+          <Stack.Screen name="links/[id]/analytics" options={slide} />
+          <Stack.Screen name="workspaces/index" />
+          <Stack.Screen name="workspaces/team" />
+          <Stack.Screen name="workspaces/webhooks/index" />
+          <Stack.Screen name="workspaces/webhooks/[id]" options={slide} />
+          <Stack.Screen name="invite/[token]" options={slide} />
         </Stack>
         <BiometricLockOverlay />
       </View>

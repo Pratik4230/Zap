@@ -7,11 +7,13 @@ type UseLinksInfiniteParams = {
   q: string;
   status: LinkStatusFilter;
   sort: LinkSortOption;
+  workspaceId: string;
 };
 
-export function useLinksInfinite({ q, status, sort }: UseLinksInfiniteParams) {
+export function useLinksInfinite({ q, status, sort, workspaceId }: UseLinksInfiniteParams) {
   return useInfiniteQuery({
-    queryKey: queryKeys.links.list({ q, status, sort }),
+    queryKey: queryKeys.links.list({ q, status, sort, workspaceId }),
+    enabled: Boolean(workspaceId),
     queryFn: ({ pageParam }) =>
       apiClient.links.list({
         page: pageParam,
@@ -19,6 +21,7 @@ export function useLinksInfinite({ q, status, sort }: UseLinksInfiniteParams) {
         status,
         sort,
       }),
+    placeholderData: (previous) => previous,
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.page + 1 : undefined,

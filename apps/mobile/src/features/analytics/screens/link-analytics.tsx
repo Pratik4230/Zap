@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -25,9 +25,13 @@ import { queryKeys } from "@/global/api/query-keys";
 import type { CountRow, DeviceBreakdown } from "@/global/api/types";
 import { EmptyState, ErrorState, LoadingState } from "@/global/components/query-state";
 import { ScreenShell } from "@/global/components/screen-shell";
+import {
+  analyticsRangeOptions,
+  clampAnalyticsRange,
+} from "@/features/analytics/utils/range-options";
+import { useWorkspace } from "@/features/workspace/use-workspace";
 import { colors } from "@/global/theme";
 
-const RANGE_OPTIONS = [7, 30, 90] as const;
 const PIE_COLORS = [
   "#3b82f6", // blue
   "#ef4444", // red
@@ -161,12 +165,20 @@ function PieSection({
 
 export default function LinkAnalyticsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { current: workspace } = useWorkspace();
+  const workspaceId = workspace?.workspaceId ?? "";
   const [rangeDays, setRangeDays] = useState<number>(30);
+  const rangeOptions = analyticsRangeOptions(workspace?.plan);
+
+  useEffect(() => {
+    setRangeDays((days) => clampAnalyticsRange(days, workspace?.plan));
+  }, [workspace?.plan]);
 
   const analyticsQuery = useQuery({
-    enabled: !!id,
-    queryKey: queryKeys.links.analytics(id ?? "", rangeDays),
+    enabled: !!id && Boolean(workspaceId),
+    queryKey: queryKeys.links.analytics(id ?? "", rangeDays, workspaceId),
     queryFn: () => apiClient.links.analytics(id as string, rangeDays),
+    placeholderData: (previous) => previous,
   });
 
   const analytics = analyticsQuery.data;
@@ -248,11 +260,11 @@ export default function LinkAnalyticsScreen() {
           </Column>
 
           <FlowRow horizontalArrangement={{ spacedBy: 8 }} verticalArrangement={{ spacedBy: 8 }} modifiers={[fillMaxWidth()]}>
-            {RANGE_OPTIONS.map((option) => (
+            {rangeOptions.map((option) => (
               <FilterChip
-                key={option}
-                selected={rangeDays === option}
-                onClick={() => setRangeDays(option)}
+                key={option.days}
+                selected={rangeDays === option.days}
+                onClick={() => setRangeDays(option.days)}
                 colors={{
                   selectedContainerColor: colors.primary,
                   selectedLabelColor: colors.primaryForeground,
@@ -261,7 +273,7 @@ export default function LinkAnalyticsScreen() {
                 }}
               >
                 <FilterChip.Label>
-                  <Text>{option}d</Text>
+                  <Text>{option.label}</Text>
                 </FilterChip.Label>
               </FilterChip>
             ))}
@@ -321,7 +333,7 @@ export default function LinkAnalyticsScreen() {
               ) : null}
 
               {analyticsQuery.isLoading ? (
-                <LoadingState padded variant="analytics" message="Loading analytics..." />
+                <LoadingState padded message="Loading analytics..." />
               ) : null}
             </LazyColumn>
           </PullToRefreshBox>

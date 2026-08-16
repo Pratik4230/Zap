@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const AMBER = "oklch(0.769 0.188 70.08)";
@@ -72,11 +70,6 @@ export function AnalyticsRangePicker({
           );
         })}
       </div>
-      {plan === "free" ? (
-        <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-          <Link href="/settings">Upgrade</Link>
-        </Button>
-      ) : null}
     </div>
   );
 }

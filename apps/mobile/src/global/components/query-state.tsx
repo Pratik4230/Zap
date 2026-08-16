@@ -1,18 +1,12 @@
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Button, Column, ListItem, Text as ComposeText } from "@expo/ui/jetpack-compose";
 import { fillMaxWidth, padding } from "@expo/ui/jetpack-compose/modifiers";
-import {
-  BoltAnalyticsSkeleton,
-  BoltLinkListSkeleton,
-  BoltSpinner,
-} from "@/global/components/bolt-skeleton";
 import { useIsOnline } from "@/global/utils/network";
 import { colors } from "@/global/theme";
 
 type LoadingStateProps = {
   message?: string;
   padded?: boolean;
-  variant?: "list" | "analytics" | "inline";
 };
 
 type ErrorStateProps = {
@@ -31,32 +25,11 @@ function padModifiers(padded?: boolean) {
   return padded ? [fillMaxWidth(), padding(14, 0, 14, 0)] : [fillMaxWidth()];
 }
 
-/** Shared bolt loading UI — RN-only so it can live inside Compose LazyColumn. */
-export function LoadingState({
-  message = "Loading...",
-  padded,
-  variant = "list",
-}: LoadingStateProps) {
+export function LoadingState({ message, padded }: LoadingStateProps) {
   return (
-    <View
-      style={[
-        styles.container,
-        padded ? styles.containerPadded : null,
-      ]}
-    >
-      {variant === "analytics" ? (
-        <BoltAnalyticsSkeleton />
-      ) : variant === "inline" ? (
-        <View style={styles.inline}>
-          <BoltSpinner size={24} />
-          <Text style={styles.message}>{message}</Text>
-        </View>
-      ) : (
-        <>
-          <BoltLinkListSkeleton rows={5} />
-          {message ? <Text style={styles.listMessage}>{message}</Text> : null}
-        </>
-      )}
+    <View style={[styles.container, padded ? styles.containerPadded : null]}>
+      <ActivityIndicator color={colors.primary} />
+      {message ? <Text style={styles.message}>{message}</Text> : null}
     </View>
   );
 }
@@ -121,26 +94,17 @@ export function EmptyState({ title, description, padded }: EmptyStateProps) {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    paddingVertical: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 24,
   },
   containerPadded: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  inline: {
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
   },
   message: {
     color: colors.muted,
     fontSize: 13,
-    textAlign: "center",
-  },
-  listMessage: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 8,
     textAlign: "center",
   },
 });

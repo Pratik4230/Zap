@@ -1,6 +1,10 @@
 import axios from "axios";
 import { authClient } from "@/features/auth/utils/client";
 import { getBearerTokenSync } from "@/features/auth/utils/bearer";
+import {
+  getWorkspaceIdSync,
+  WORKSPACE_HEADER,
+} from "@/features/workspace/workspace-id";
 import { API_URL } from "@/global/config/env";
 import { ApiError } from "@/global/api/errors";
 
@@ -25,6 +29,10 @@ api.interceptors.request.use((config) => {
   const cookies = authClient.getCookie();
   if (cookies) {
     config.headers.set("Cookie", cookies);
+  }
+  const workspaceId = getWorkspaceIdSync();
+  if (workspaceId) {
+    config.headers.set(WORKSPACE_HEADER, workspaceId);
   }
   return config;
 });

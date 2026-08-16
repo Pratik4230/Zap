@@ -73,6 +73,32 @@ export function rewriteAppLinkPath(path: string): string {
     return `${normalized}${search}`;
   }
 
+  if (/^\/invite\/[^/]+$/.test(normalized)) {
+    return `${normalized}${search}`;
+  }
+
+  if (
+    normalized === "/workspaces" ||
+    normalized === "/workspace"
+  ) {
+    return `/workspace${search}`;
+  }
+  if (
+    normalized === "/workspaces/team" ||
+    normalized === "/workspace/team"
+  ) {
+    return `/workspace/team${search}`;
+  }
+  if (
+    normalized === "/workspaces/webhooks" ||
+    normalized === "/workspace/webhooks"
+  ) {
+    return `/workspace/webhooks${search}`;
+  }
+  if (/^\/workspaces\/webhooks\/[^/]+$/.test(normalized)) {
+    return `${normalized}${search}`;
+  }
+
   // Web dashboard root → mobile links tab (`/`).
   if (normalized === "/dashboard") {
     return `/${search}`;

@@ -9,7 +9,10 @@ let pendingPath: string | null = null;
 /** True for authenticated app paths we care about restoring post-login. */
 export function isRestorableAppPath(path: string): boolean {
   const pathname = path.split("?")[0] ?? path;
-  return /^\/links\/[^/]+(?:\/analytics)?$/.test(pathname);
+  return (
+    /^\/links\/[^/]+(?:\/analytics)?$/.test(pathname) ||
+    /^\/invite\/[^/]+$/.test(pathname)
+  );
 }
 
 export function setPendingDeepLink(path: string): void {

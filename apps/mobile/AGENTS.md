@@ -194,19 +194,23 @@ src/
       (tabs)/
         index                  → features/links
         analytics              → features/analytics
+        workspace/             nested top tabs: Manage / Team / Webhooks
         settings               → features/settings
-      links/[id]               detail (2.6, later)
+      links/[id]               detail
       links/[id]/analytics
+      workspaces/webhooks/[id] webhook detail (stack)
+      invite/[token]           accept team invite
 
   features/
     auth/
       screens/                 sign-in, sign-up, verify, forgot, reset
       components/              AuthScreen chrome, biometric lock
       utils/                   client, navigation, schemas, biometric
-    links/screens/             Links tab (+ list/create later)
+    links/screens/             Links tab
     analytics/screens/         Account analytics
-    settings/screens/          Profile, plan (web billing), sign out
-    billing/                   open-web-billing (expo-web-browser → xaply.in)
+    settings/screens/          Profile, plan (web billing), app lock, sign out
+    workspace/                 Native hub, team, webhooks, invite; persist x-workspace-id
+    billing/                   open-web-billing → xaply.in/settings only
     push/                      register + bootstrap
 
   global/
