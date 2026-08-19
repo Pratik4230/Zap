@@ -215,7 +215,7 @@ export const FREE_TIER = PRICING_PLANS[0].features
 export const FAQ = [
   {
     q: "What is Xaply?",
-    a: "Xaply is a free URL shortener with some of the fastest redirects on the web — short links resolve on Cloudflare's edge in under 10ms. You get analytics, QR codes, and password protection on go.xaply.in. Teams use Xaply as a URL shortener for business: seats, workspaces, and webhooks on the Business plan.",
+    a: "Xaply is a free URL shortener with some of the fastest redirects on the web. Short links resolve on Cloudflare's edge in under 10ms. You get analytics, QR codes, and password protection on go.xaply.in. Teams use Xaply as a URL shortener for business: seats, workspaces, and webhooks on the Business plan.",
   },
   {
     q: "Is Xaply free?",
@@ -239,7 +239,7 @@ export const FAQ = [
   },
   {
     q: "How does billing work?",
-    a: "Free accounts never need a card. Pro and Business are billed securely through Dodo Payments. You can upgrade, downgrade, or cancel anytime from your dashboard. Fees are non-refundable — see our Terms.",
+    a: "Free accounts never need a card. Pro and Business are billed securely through Dodo Payments. You can upgrade, downgrade, or cancel anytime from your dashboard. Fees are non-refundable. See our Terms.",
   },
   {
     q: "What does runs on Cloudflare Edge mean?",

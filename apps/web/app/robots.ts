@@ -2,7 +2,10 @@ import type { MetadataRoute } from "next";
 import { PRIVATE_PATHS } from "@/lib/seo";
 import { siteConfig } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 const disallow = [...PRIVATE_PATHS];
+const publicAllow = ["/", "/sign-up", "/contact", "/privacy", "/terms", "/llms.txt"];
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -14,27 +17,27 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: "GPTBot",
-        allow: ["/", "/sign-up"],
+        allow: publicAllow,
         disallow,
       },
       {
         userAgent: "ChatGPT-User",
-        allow: ["/", "/sign-up"],
+        allow: publicAllow,
         disallow,
       },
       {
         userAgent: "ClaudeBot",
-        allow: ["/", "/sign-up"],
+        allow: publicAllow,
         disallow,
       },
       {
         userAgent: "Google-Extended",
-        allow: ["/", "/sign-up"],
+        allow: publicAllow,
         disallow,
       },
       {
         userAgent: "PerplexityBot",
-        allow: ["/", "/sign-up"],
+        allow: publicAllow,
         disallow,
       },
     ],

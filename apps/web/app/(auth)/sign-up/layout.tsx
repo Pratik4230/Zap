@@ -1,9 +1,11 @@
 import { createPageMetadata } from "@/lib/seo";
 
+export const dynamic = "force-static";
+
 export const metadata = createPageMetadata({
   title: "Sign up free",
   description:
-    "Create a free Xaply account. Free URL shortener with the fastest edge redirects, analytics, and a Business plan for teams.",
+    "Create a free Xaply account. Shorten URLs with Cloudflare edge redirects, real-time analytics, QR codes, and a Business plan for teams.",
   path: "/sign-up",
   index: true,
 });

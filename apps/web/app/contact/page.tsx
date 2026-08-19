@@ -6,16 +6,35 @@ import { createPageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/site";
 
 export const dynamic = "force-static";
+export const revalidate = false;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Contact",
-  description: "Contact Xaply support for account, privacy, and product questions.",
+  description: "Contact Xaply support for account, privacy, billing, and product questions.",
   path: "/contact",
   index: true,
 });
 
 export default function ContactPage() {
+  const contactLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact Xaply",
+    url: `${siteConfig.url}/contact`,
+    description: "Contact Xaply support for account, privacy, billing, and product questions.",
+    isPartOf: {
+      "@type": "WebSite",
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactLd) }}
+      />
     <LegalShell
       title="Contact us"
       description="How to reach the person behind Xaply."
@@ -96,5 +115,6 @@ export default function ContactPage() {
         </ul>
       </section>
     </LegalShell>
+    </>
   );
 }

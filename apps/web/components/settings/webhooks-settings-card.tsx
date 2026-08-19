@@ -45,7 +45,7 @@ export function WebhooksSettingsCard() {
         body: JSON.stringify({ url, events: data?.events }),
       }),
     onSuccess: (result) => {
-      toast.success("Webhook created — copy the secret now");
+      toast.success("Webhook created. Copy the secret now");
       setUrl("");
       if (result.webhook.secret) {
         setRevealedSecret((current) => ({ ...current, [result.webhook.id]: result.webhook.secret! }));

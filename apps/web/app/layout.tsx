@@ -6,11 +6,16 @@ import { Providers } from "@/components/providers"
 import { cn } from "@/lib/utils";
 import { baseMetadata } from "@/lib/site";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'})
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  display: "swap",
 })
 
 export const metadata: Metadata = baseMetadata
@@ -29,6 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      dir="ltr"
       className={cn("dark antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
       <body>

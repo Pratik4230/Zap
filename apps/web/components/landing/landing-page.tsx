@@ -1,5 +1,3 @@
-"use client"
-
 import Link from "next/link"
 import { ArrowRight, Check } from "lucide-react"
 import { AppIcon } from "@/components/app-icon"
@@ -47,14 +45,22 @@ export function LandingPage() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex">
-            {["Features", "Pricing", "FAQ"].map((item) => (
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-6 md:flex"
+          >
+            {[
+              { href: "#features", label: "Features" },
+              { href: "#how-it-works", label: "How it works" },
+              { href: "#pricing", label: "Pricing" },
+              { href: "#faq", label: "FAQ" },
+            ].map((item) => (
               <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={item.href}
+                href={item.href}
                 className="landing-nav-link text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                {item}
+                {item.label}
               </a>
             ))}
           </nav>
@@ -98,7 +104,7 @@ export function LandingPage() {
 
             <p className="relative z-10 mx-auto mb-8 max-w-xl text-lg leading-relaxed text-muted-foreground">
               Free URL shortener with the fastest Cloudflare redirects. Turn
-              long URLs into {siteConfig.shortLinkDomain} links — analytics for
+              long URLs into {siteConfig.shortLinkDomain} links. Analytics for
               everyone, workspaces and webhooks for business teams.
             </p>
 
@@ -270,7 +276,10 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-neutral-950 px-6 py-24">
+        <section
+          id="how-it-works"
+          className="relative overflow-hidden bg-neutral-950 px-6 py-24"
+        >
           <div
             className="pointer-events-none absolute inset-0 flex items-center justify-center"
             aria-hidden
@@ -364,7 +373,7 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Footer">
             <Link
               href={siteConfig.legal.privacy}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -405,10 +414,10 @@ export function LandingPage() {
             >
               {siteConfig.owner.twitterHandle}
             </a>
-          </div>
+          </nav>
 
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Xaply. All rights reserved.
+            © {siteConfig.copyrightYear} Xaply. All rights reserved.
           </p>
         </div>
       </footer>

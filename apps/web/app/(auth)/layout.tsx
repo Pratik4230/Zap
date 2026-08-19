@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { AppIcon } from "@/components/app-icon";
+import { siteConfig } from "@/lib/site";
+
+export const dynamic = "force-static";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,7 +52,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <p className="mt-8 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Xaply. All rights reserved.
+        © {siteConfig.copyrightYear} Xaply. All rights reserved.
       </p>
     </div>
   );

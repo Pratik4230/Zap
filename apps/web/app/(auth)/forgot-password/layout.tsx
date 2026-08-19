@@ -1,5 +1,7 @@
 import { createPageMetadata } from "@/lib/seo";
 
+export const dynamic = "force-static";
+
 export const metadata = createPageMetadata({
   title: "Forgot password",
   description: "Reset your Xaply account password.",

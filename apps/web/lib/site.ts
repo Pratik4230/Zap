@@ -4,11 +4,12 @@ import { APP_DOMAIN, APP_URL, SHORT_LINK_DOMAIN } from "@xaply/db";
 export const siteConfig = {
   name: "Xaply",
   appIcon: "/icon-192.png",
-  title: "Xaply | Free URL Shortener | Fastest Redirects | URL Shortener for Business",
+  title: "Xaply | Free URL Shortener with the Fastest Redirects",
   tagline: "Short links that move fast",
   description:
-    "What is Xaply? A free URL shortener with the fastest Cloudflare edge redirects, real-time analytics, QR codes, and a Business plan for teams — workspaces, 50 seats, and webhooks. Best URL shortener for creators, marketers, and companies.",
+    "Xaply is a free URL shortener with the fastest Cloudflare edge redirects, real-time analytics, QR codes, and a Business plan for teams: workspaces, 50 seats, and webhooks. Built for creators, marketers, and companies.",
   url: APP_URL,
+  copyrightYear: 2026,
   appDomain: APP_DOMAIN,
   shortLinkDomain: SHORT_LINK_DOMAIN,
   keywords: [
@@ -84,7 +85,7 @@ const sharedMetadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Xaply — free URL shortener with the fastest redirects and a Business plan for teams",
+        alt: "Xaply: free URL shortener with the fastest redirects and a Business plan for teams",
       },
     ],
   },
@@ -94,15 +95,31 @@ const sharedMetadata = {
     description: siteConfig.description,
     site: siteConfig.owner.twitterHandle,
     creator: siteConfig.owner.twitterHandle,
-    images: ["/og-image.png"],
+    images: [
+      {
+        url: "/og-image.png",
+        alt: "Xaply: free URL shortener with the fastest redirects and a Business plan for teams",
+      },
+    ],
   },
   manifest: "/manifest.json",
+  formatDetection: {
+    telephone: false,
+    address: false,
+    email: false,
+  },
+  referrer: "origin-when-cross-origin" as const,
+  appleWebApp: {
+    capable: true,
+    title: siteConfig.name,
+    statusBarStyle: "black-translucent" as const,
+  },
 };
 
-/** Root layout defaults — no canonical; child routes set their own */
+/** Root layout defaults. Child routes set their own canonical. */
 export const baseMetadata: Metadata = sharedMetadata;
 
-/** Homepage — indexable with canonical */
+/** Homepage: indexable with canonical */
 export const homeMetadata: Metadata = {
   ...sharedMetadata,
   alternates: {
@@ -123,6 +140,7 @@ export const homeMetadata: Metadata = {
       follow: true,
       "max-image-preview": "large",
       "max-snippet": -1,
+      "max-video-preview": -1,
     },
   },
 };

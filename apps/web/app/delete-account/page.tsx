@@ -6,6 +6,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/site";
 
 export const dynamic = "force-static";
+export const revalidate = false;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Delete your Xaply account",
@@ -90,22 +91,22 @@ export default function DeleteAccountPage() {
         <h2>Data that may be retained</h2>
         <ul>
           <li>
-            <strong>Payment providers</strong> — if you subscribed to Pro, billing
+            <strong>Payment providers</strong>: if you subscribed to Pro, billing
             records may remain with Dodo Payments and/or Google Play (or Apple)
             under their retention rules. Cancel subscriptions in Settings or the
             store before or after deletion as needed.
           </li>
           <li>
-            <strong>Email delivery logs</strong> — transactional email providers
+            <strong>Email delivery logs</strong>: transactional email providers
             (e.g. Resend) may keep delivery metadata for a limited time.
           </li>
           <li>
-            <strong>Caches and rate-limit keys</strong> — short-lived Cloudflare KV
+            <strong>Caches and rate-limit keys</strong>: short-lived Cloudflare KV
             entries (plan cache, rate limits) expire automatically and are not kept
             as an account archive.
           </li>
           <li>
-            <strong>Legal holds</strong> — we may retain limited information if
+            <strong>Legal holds</strong>: we may retain limited information if
             required by law, to resolve disputes, or to prevent abuse.
           </li>
         </ul>

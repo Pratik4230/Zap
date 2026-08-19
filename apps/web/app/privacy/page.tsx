@@ -6,6 +6,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/site";
 
 export const dynamic = "force-static";
+export const revalidate = false;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Privacy Policy",
@@ -43,42 +44,42 @@ export default function PrivacyPage() {
         <p>Depending on how you use Xaply, we may process:</p>
         <ul>
           <li>
-            <strong>Account data</strong> — name, email address, email verification
+            <strong>Account data</strong>: name, email address, email verification
             status, profile image (if provided by you or an OAuth provider), and
             hashed passwords for email/password accounts.
           </li>
           <li>
-            <strong>Authentication data</strong> — session tokens, OAuth account
+            <strong>Authentication data</strong>: session tokens, OAuth account
             identifiers and tokens from Google or GitHub when you sign in with
             those providers, and session metadata such as IP address and user
             agent used to secure your login.
           </li>
           <li>
-            <strong>Link data you create</strong> — destination URLs, custom
+            <strong>Link data you create</strong>: destination URLs, custom
             slugs, titles, optional password hashes for protected links, expiry
             settings, click limits, and optional deep-link / store URLs.
           </li>
           <li>
-            <strong>Click analytics</strong> — when someone opens a short link we
+            <strong>Click analytics</strong>: when someone opens a short link we
             store aggregated visit details: approximate country and city (from
             edge network geo), device type, OS, browser family, referrer, and
             timestamp. We do <strong>not</strong> store the visitor’s raw IP
             address or full user-agent string in analytics records.
           </li>
           <li>
-            <strong>Billing data</strong> — if you subscribe to Pro, our payment
+            <strong>Billing data</strong>: if you subscribe to Pro, our payment
             processor (currently Dodo Payments on the web; mobile in-app purchases
             may use the platform store / RevenueCat when enabled) processes
             payment details. We store a customer reference ID and your plan
             status. We do not store full card numbers.
           </li>
           <li>
-            <strong>Transactional email</strong> — verification codes, password
+            <strong>Transactional email</strong>: verification codes, password
             resets, and operational notices (for example when you hit monthly
             visit limits) sent via our email provider (Resend).
           </li>
           <li>
-            <strong>Cookies and similar tech</strong> — session cookies for signed-in
+            <strong>Cookies and similar tech</strong>: session cookies for signed-in
             users, and short-lived unlock cookies for password-protected links.
           </li>
         </ul>
@@ -103,24 +104,24 @@ export default function PrivacyPage() {
         <p>We use trusted service providers that process data on our behalf:</p>
         <ul>
           <li>
-            <strong>Cloudflare</strong> — hosting, edge redirects, storage (e.g.
+            <strong>Cloudflare</strong>: hosting, edge redirects, storage (e.g.
             D1/KV), geo for analytics, and security
           </li>
           <li>
-            <strong>Better Auth</strong> — authentication library used in our app
+            <strong>Better Auth</strong>: authentication library used in our app
           </li>
           <li>
-            <strong>Google / GitHub</strong> — optional social sign-in
+            <strong>Google / GitHub</strong>: optional social sign-in
           </li>
           <li>
-            <strong>Resend</strong> — transactional email
+            <strong>Resend</strong>: transactional email
           </li>
           <li>
-            <strong>Dodo Payments</strong> — web subscriptions and billing portal
+            <strong>Dodo Payments</strong>: web subscriptions and billing portal
           </li>
           <li>
             <strong>Apple App Store / Google Play</strong> (and related billing
-            partners, if used) — mobile purchases when offered
+            partners, if used): mobile purchases when offered
           </li>
         </ul>
         <p>
@@ -150,17 +151,17 @@ export default function PrivacyPage() {
         <h2>6. Your choices</h2>
         <ul>
           <li>
-            <strong>Access / update</strong> — manage profile and password in{" "}
+            <strong>Access / update</strong>: manage profile and password in{" "}
             <Link href="/settings">Settings</Link>
           </li>
           <li>
-            <strong>Delete account</strong> — see{" "}
+            <strong>Delete account</strong>: see{" "}
             <Link href={siteConfig.legal.deleteAccount}>Delete your account</Link>{" "}
             for steps, or use Settings (Danger Zone). You can also email us at{" "}
             <a href={`mailto:${LEGAL_OPERATOR.email}`}>{LEGAL_OPERATOR.email}</a>
           </li>
           <li>
-            <strong>Billing</strong> — manage or cancel Pro via the billing portal
+            <strong>Billing</strong>: manage or cancel Pro via the billing portal
             in Settings (web) or the relevant app store (mobile IAP, when available)
           </li>
         </ul>

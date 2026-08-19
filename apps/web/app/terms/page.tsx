@@ -6,6 +6,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/site";
 
 export const dynamic = "force-static";
+export const revalidate = false;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Terms of Service",
@@ -66,12 +67,12 @@ export default function TermsPage() {
         <p>Current plans (subject to change with notice on the site):</p>
         <ul>
           <li>
-            <strong>Free</strong> — up to 50 active links, 5,000 tracked visits per
+            <strong>Free</strong>: up to 50 active links, 5,000 tracked visits per
             month (UTC), 7-day analytics history in the dashboard, custom slugs,
             QR codes, password and expiry controls.
           </li>
           <li>
-            <strong>Pro</strong> — $12/month: up to 500 active links, 50,000
+            <strong>Pro</strong>: $12/month: up to 500 active links, 50,000
             tracked visits per month, up to 1 year of analytics history, and
             priority email support.
           </li>

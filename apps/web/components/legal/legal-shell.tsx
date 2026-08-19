@@ -37,7 +37,7 @@ export function LegalShell({
             </div>
             <span className="text-base font-bold tracking-tight">Xaply</span>
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav aria-label="Legal" className="flex items-center gap-4">
             {LEGAL_NAV.map((item) => (
               <Link
                 key={item.href}
@@ -85,7 +85,7 @@ export function LegalShell({
 
       <footer className="border-t border-white/6 px-6 py-8">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Xaply. Operated by {siteConfig.owner.name}.</span>
+          <span>© {siteConfig.copyrightYear} Xaply. Operated by {siteConfig.owner.name}.</span>
           <div className="flex gap-4">
             {LEGAL_NAV.map((item) => (
               <Link

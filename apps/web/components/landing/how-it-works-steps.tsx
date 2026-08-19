@@ -1,5 +1,3 @@
-"use client";
-
 import { AppIcon } from "@/components/app-icon";
 import { AMBER, AMBER_BORDER, AMBER_DIM } from "@/lib/landing";
 
@@ -149,19 +147,9 @@ export function HowItWorksSteps() {
           <div key={number} className="flex flex-col">
             {/* card */}
             <div
-              className="group relative flex flex-1 flex-col rounded-2xl border px-6 pb-6 pt-10 transition-all duration-300 hover:scale-[1.02]"
+              className="group relative flex flex-1 flex-col rounded-2xl border border-white/8 bg-[oklch(0.08_0_0)] px-6 pt-10 pb-6 transition-all duration-300 hover:scale-[1.02] hover:border-amber-500/30 hover:shadow-[0_0_36px_oklch(0.769_0.188_70.08/12%)]"
               style={{
-                background: "oklch(0.08 0 0)",
-                borderColor: "oklch(1 0 0 / 8%)",
                 minHeight: "340px",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = AMBER_BORDER;
-                (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 36px ${AMBER}20`;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = "oklch(1 0 0 / 8%)";
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
               }}
             >
               {/* top amber accent shimmer */}

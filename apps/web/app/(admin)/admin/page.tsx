@@ -171,7 +171,7 @@ export default function AdminUsersPage() {
                                 : undefined
                             }
                           >
-                            {user.plan ?? "—"}
+                            {user.plan ?? "n/a"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
